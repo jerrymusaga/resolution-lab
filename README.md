@@ -1,300 +1,244 @@
-# Resolution Lab - Complete Local Setup Guide
+# Resolution Lab 🧪
 
-## Option 1: Download Everything (Recommended)
+> An AI-powered behavioral experimentation platform that helps you discover what actually motivates you.
 
-Download the `resolution-lab` folder from this conversation. It contains all the code.
+## Overview
 
-Then follow the steps below starting from **Step 2**.
+**Resolution Lab** is a personalized motivation discovery system that uses multi-armed bandit algorithms and AI to find your unique motivation formula. Instead of generic productivity advice, Resolution Lab runs systematic experiments with 8 different motivational strategies to identify what works best for you.
+
+### How It Works
+
+1. **Set Your Goals** - Define what you want to achieve (exercise, learning, habits, etc.)
+2. **Receive Smart Interventions** - Get AI-generated motivational messages using different psychological strategies
+3. **Track Your Response** - Check in on your progress and provide feedback
+4. **Discover Your Formula** - The system learns which strategies work best for you over time
+
+### The Science
+
+Resolution Lab tests 8 evidence-based motivational strategies:
+
+- **Gentle Reminder** - Warm, encouraging nudges
+- **Accountability** - Direct yes/no check-ins
+- **Streak Gamification** - Focus on maintaining progress streaks
+- **Social Comparison** - Leverage social proof and peer performance
+- **Loss Aversion** - Highlight what you might lose by not acting
+- **Reward Preview** - Emphasize benefits and positive outcomes
+- **Identity Reinforcement** - "Become the person who..."
+- **Micro-Commitment** - Lower the barrier with small first steps
+
+Using **multi-armed bandit optimization** (epsilon-greedy algorithm), the system balances exploration (trying different strategies) with exploitation (using what works), continuously adapting to your responses.
 
 ---
 
-## Option 2: Create From Scratch
+## Tech Stack
 
-If you prefer to create the project step by step, follow ALL steps below.
+### Backend (Python/FastAPI)
+- **FastAPI** - Modern async web framework
+- **Supabase** - PostgreSQL database with real-time capabilities
+- **LiteLLM** - Unified LLM interface (using Gemini 1.5 Flash)
+- **Opik (Comet)** - Experiment tracking and LLM observability
+- **AsyncPG** - High-performance async PostgreSQL driver
+
+### Frontend (Coming Soon)
+- **Next.js** - React framework
+- **TypeScript** - Type-safe development
+- **Tailwind CSS** - Utility-first styling
 
 ---
 
-## Step 1: Create Project Structure
+## Project Structure
 
-Open your terminal and run:
-
-```bash
-# Create main project folder
-mkdir resolution-lab
-cd resolution-lab
-
-# Create folder structure
-mkdir -p backend/routers backend/services backend/models backend/utils
-mkdir -p frontend docs scripts
+```
+resolution-lab/
+├── backend/
+│   ├── main.py                      # FastAPI application entry
+│   ├── config.py                    # Environment configuration
+│   ├── requirements.txt             # Python dependencies
+│   ├── models/
+│   │   ├── schemas.py              # Pydantic data models
+│   │   └── database.py             # Database schema & client
+│   ├── routers/
+│   │   ├── goals.py                # Goal management endpoints
+│   │   ├── interventions.py        # Intervention generation & tracking
+│   │   └── insights.py             # Analytics & recommendations
+│   └── services/
+│       ├── intervention_generator.py  # LLM-based message generation
+│       ├── experiment_engine.py       # Multi-armed bandit algorithm
+│       └── analysis_engine.py         # Sentiment & completion analysis
+├── frontend/                        # Next.js app (coming soon)
+├── docs/                           # Additional documentation
+└── scripts/                        # Utility scripts
 ```
 
 ---
 
-## Step 2: Set Up Python Environment
+## Quick Start
+
+### Prerequisites
+
+- Python 3.10+
+- Node.js 18+ (for frontend)
+- Accounts for:
+  - [Supabase](https://supabase.com) (free tier)
+  - [Comet/Opik](https://comet.com) (free tier)
+  - [Google AI Studio](https://aistudio.google.com) (free tier)
+
+### Setup Backend
 
 ```bash
-cd resolution-lab/backend
+# Create virtual environment
+python3 -m venv venv
 
-# Create virtual environment (recommended)
-python -m venv venv
-
-# Activate virtual environment
-# On macOS/Linux:
+# Activate it (Mac/Linux)
 source venv/bin/activate
-
-# On Windows:
-# venv\Scripts\activate
 
 # Install dependencies
-pip install fastapi==0.115.6 uvicorn[standard]==0.34.0 python-dotenv==1.0.1 pydantic==2.10.4 pydantic-settings==2.7.1 supabase==2.11.0 asyncpg==0.30.0 opik==1.3.4 litellm==1.56.4 google-generativeai==0.8.4 httpx==0.27.2 python-multipart==0.0.20
-```
-
----
-
-## Step 3: Get Your API Keys
-
-### 3.1 Opik (Comet) - For Observability
-1. Go to https://www.comet.com/signup
-2. Create a free account
-3. After login, go to **Settings** (gear icon) → **API Keys**
-4. Click **"Generate New API Key"**
-5. Copy the API key
-6. Note your workspace name (shown in the URL or settings)
-
-### 3.2 Google Gemini - For LLM
-1. Go to https://aistudio.google.com/apikey
-2. Sign in with your Google account
-3. Click **"Create API Key"**
-4. Select a project or create new one
-5. Copy the API key
-
-### 3.3 Supabase - For Database
-1. Go to https://supabase.com/dashboard
-2. Create a free account
-3. Click **"New Project"**
-4. Fill in:
-   - Project name: `resolution-lab`
-   - Database password: (save this!)
-   - Region: Choose closest to you
-5. Wait for project to be created (~2 minutes)
-6. Go to **Settings** → **API**
-7. Copy:
-   - **Project URL** (looks like `https://xxxxx.supabase.co`)
-   - **anon public** key
-   - **service_role** key (click to reveal)
-
----
-
-## Step 4: Create Environment File
-
-Create a file called `.env` in the `backend` folder:
-
-```bash
-cd resolution-lab/backend
-```
-
-Create `.env` with this content (fill in YOUR keys):
-
-```env
-# App Configuration
-DEBUG=true
-
-# Supabase - Get from https://supabase.com/dashboard/project/YOUR_PROJECT/settings/api
-SUPABASE_URL=https://your-project-id.supabase.co
-SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...your_anon_key
-SUPABASE_SERVICE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...your_service_key
-
-# Opik (Comet) - Get from https://www.comet.com/account-settings/apiKeys
-OPIK_API_KEY=your_opik_api_key_here
-OPIK_WORKSPACE=your_workspace_name
-OPIK_PROJECT_NAME=resolution-lab
-
-# Google Gemini - Get from https://aistudio.google.com/apikey
-GOOGLE_API_KEY=your_gemini_api_key_here
-```
-
----
-
-## Step 5: Set Up Database
-
-1. Go to your Supabase project dashboard
-2. Click **SQL Editor** in the left sidebar
-3. Click **"New Query"**
-4. Copy and paste this SQL:
-
-```sql
--- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
--- Users table (extends Supabase auth.users)
-CREATE TABLE IF NOT EXISTS user_profiles (
-    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    display_name TEXT,
-    timezone TEXT DEFAULT 'UTC',
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Goals table
-CREATE TABLE IF NOT EXISTS goals (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES user_profiles(id) ON DELETE CASCADE,
-    title TEXT NOT NULL,
-    description TEXT,
-    frequency TEXT NOT NULL DEFAULT 'daily',
-    target_count INTEGER DEFAULT 1,
-    start_date DATE NOT NULL DEFAULT CURRENT_DATE,
-    end_date DATE,
-    status TEXT DEFAULT 'active',
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Interventions sent to users
-CREATE TABLE IF NOT EXISTS interventions (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES user_profiles(id) ON DELETE CASCADE,
-    goal_id UUID NOT NULL REFERENCES goals(id) ON DELETE CASCADE,
-    strategy TEXT NOT NULL,
-    message TEXT NOT NULL,
-    sent_at TIMESTAMPTZ DEFAULT NOW(),
-    opik_trace_id TEXT
-);
-
--- User outcomes (check-ins)
-CREATE TABLE IF NOT EXISTS outcomes (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    intervention_id UUID NOT NULL REFERENCES interventions(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES user_profiles(id) ON DELETE CASCADE,
-    goal_id UUID NOT NULL REFERENCES goals(id) ON DELETE CASCADE,
-    completed BOOLEAN NOT NULL,
-    response_time_seconds INTEGER,
-    user_feedback TEXT,
-    recorded_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Aggregated strategy statistics per user
-CREATE TABLE IF NOT EXISTS user_strategy_stats (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES user_profiles(id) ON DELETE CASCADE,
-    strategy TEXT NOT NULL,
-    total_interventions INTEGER DEFAULT 0,
-    successful_completions INTEGER DEFAULT 0,
-    avg_response_time_seconds FLOAT,
-    effectiveness_score FLOAT DEFAULT 0.0,
-    last_updated TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(user_id, strategy)
-);
-
--- Indexes for performance
-CREATE INDEX IF NOT EXISTS idx_goals_user ON goals(user_id);
-CREATE INDEX IF NOT EXISTS idx_goals_status ON goals(status);
-CREATE INDEX IF NOT EXISTS idx_interventions_user ON interventions(user_id);
-CREATE INDEX IF NOT EXISTS idx_interventions_goal ON interventions(goal_id);
-CREATE INDEX IF NOT EXISTS idx_outcomes_user ON outcomes(user_id);
-CREATE INDEX IF NOT EXISTS idx_stats_user ON user_strategy_stats(user_id);
-```
-
-5. Click **"Run"** (or Cmd+Enter / Ctrl+Enter)
-6. You should see "Success. No rows returned"
-
----
-
-## Step 6: Run the Backend Server
-
-```bash
-cd resolution-lab/backend
-
-# Make sure virtual environment is activated
-# On macOS/Linux:
-source venv/bin/activate
-# On Windows:
-# venv\Scripts\activate
-
-# Start the server
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
-You should see:
-```
-INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process
-🚀 Starting Resolution Lab v0.1.0
-✅ Opik configured for project: resolution-lab
-✅ Google Gemini API configured
-✅ LiteLLM Opik callback enabled
-```
-
----
-
-## Step 7: Test the API
-
-Open your browser and go to:
-
-**http://localhost:8000/docs**
-
-This opens the Swagger UI where you can test all endpoints!
-
-### Quick Test:
-
-1. **Test Health Check:**
-   - Click on `GET /health`
-   - Click "Try it out" → "Execute"
-   - Should return: `{"status": "healthy", "app": "Resolution Lab", "version": "0.1.0"}`
-
-2. **Test Simulation (no auth needed):**
-   - Click on `POST /api/interventions/demo/simulate`
-   - Click "Try it out"
-   - Set `user_id` to any UUID like: `123e4567-e89b-12d3-a456-426614174000`
-   - Set `num_interventions` to `20`
-   - Click "Execute"
-   - You'll see simulated experiment results!
-
-3. **Test Insights:**
-   - Click on `GET /api/insights`
-   - Use the same `user_id` from step 2
-   - Click "Execute"
-   - You'll see strategy effectiveness data!
-
----
-
-## Step 8: View Opik Dashboard
-
-1. Go to https://www.comet.com/opik
-2. Log in to your account
-3. Look for project "resolution-lab"
-4. You should see traces appearing from your API calls!
-
----
-
-## 🎉 Backend is Running!
-
-You now have:
-- ✅ FastAPI server running locally
-- ✅ Opik tracing working
-- ✅ LLM integration (Gemini)
-- ✅ Database ready (Supabase)
-
----
-
-## Troubleshooting
-
-### "Module not found" error
-```bash
 pip install -r requirements.txt
 ```
 
-### "OPIK_API_KEY not set" warning
-Make sure your `.env` file is in the `backend` folder and has the correct key.
+### Configure Environment
 
-### "Connection refused" to Supabase
-Check that your `SUPABASE_URL` doesn't have a trailing slash.
+Copy the example environment file and add your API keys:
 
-### LLM calls failing
-Check your `GOOGLE_API_KEY` is correct. Test it at https://aistudio.google.com/
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and add your credentials:
+- **Supabase**: Get from [your Supabase dashboard](https://supabase.com/dashboard) → Settings → API
+- **Opik**: Get from [Comet settings](https://www.comet.com/account-settings/apiKeys)
+- **Google Gemini**: Get from [AI Studio](https://aistudio.google.com/apikey)
+
+### Initialize Database
+
+Run the SQL schema in your Supabase SQL Editor (found in `backend/models/database.py`).
+
+### Start the Server
+
+```bash
+uvicorn main:app --reload
+```
+
+The API will be available at:
+- **API**: http://localhost:8000
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
 
 ---
 
-## Next: Build the Frontend
+## Features
 
-Once backend is working, tell me **"let's build the frontend"** and I'll create the Next.js app!
+### Core Functionality
+
+- **Goal Management** - Create, track, and manage behavioral goals
+- **Smart Interventions** - AI-generated motivational messages tailored to each strategy
+- **Multi-Armed Bandit** - Automatically learns which strategies work best for each user
+- **Sentiment Analysis** - Analyzes user feedback to understand emotional responses
+- **Strategy Insights** - View detailed analytics on strategy effectiveness
+- **Full Observability** - All LLM calls traced in Opik for debugging and analysis
+
+### API Endpoints
+
+#### Goals
+- `POST /api/goals` - Create a new goal
+- `GET /api/goals` - List goals with filtering
+- `PATCH /api/goals/{id}` - Update goal
+- `DELETE /api/goals/{id}` - Delete goal
+- `POST /api/goals/{id}/complete` - Mark as completed
+
+#### Interventions
+- `POST /api/interventions/generate` - Generate new intervention
+- `POST /api/interventions/check-in` - Record user response
+- `GET /api/interventions/history` - View past interventions
+- `GET /api/interventions/strategies` - List all strategies
+
+#### Insights
+- `GET /api/insights` - Overall user insights
+- `GET /api/insights/strategy/{strategy}` - Strategy-specific stats
+- `GET /api/insights/comparison` - Compare strategies
+- `GET /api/insights/recommendation` - Get AI recommendation
+
+---
+
+## Development
+
+### Project Architecture
+
+The backend follows a clean architecture pattern:
+
+- **Routers** - Handle HTTP requests and responses
+- **Services** - Contain business logic
+- **Models** - Define data structures and database schema
+- **Config** - Manage environment and settings
+
+### Running Tests
+
+```bash
+pytest
+```
+
+### Code Quality
+
+```bash
+# Format code
+black .
+
+# Type checking
+mypy .
+
+# Linting
+ruff check .
+```
+
+---
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
+
+## License
+
+This project is open source and available under the [MIT License](LICENSE).
+
+---
+
+## Roadmap
+
+- [x] Backend API with FastAPI
+- [x] Multi-armed bandit experiment engine
+- [x] LLM integration with Gemini
+- [x] Full observability with Opik
+- [ ] Frontend with Next.js
+- [ ] User authentication
+- [ ] Mobile app (React Native)
+- [ ] Email/SMS notifications
+- [ ] Advanced analytics dashboard
+- [ ] Social features & challenges
+- [ ] Integration with fitness trackers
+
+---
+
+## Acknowledgments
+
+- Built with [FastAPI](https://fastapi.tiangolo.com/)
+- Powered by [Google Gemini](https://ai.google.dev/)
+- Tracked with [Opik](https://www.comet.com/opik)
+- Database by [Supabase](https://supabase.com)
+
+---
+
+## Contact
+
+For questions or feedback, please open an issue on GitHub.
+
+---
+
+**Made with 🧪 by the Resolution Lab team**

@@ -28,6 +28,25 @@ from .analysis_engine import (
     EngagementMetric,
 )
 
+from .coach_agent import (
+    AICoachAgent,
+    coach_agent,
+    CoachAgentResponse,
+    AgentThought,
+    AgentPlan,
+    AgentAction,
+    AgentEvaluation,
+)
+
+from .opik_experiments import (
+    PromptExperiment,
+    prompt_experiment,
+    PROMPT_VARIANTS,
+    MessageQualityMetric,
+    StrategyAlignmentMetric,
+    CUSTOM_METRICS,
+)
+
 __all__ = [
     # Intervention Generator
     "generate_intervention_message",
@@ -50,4 +69,21 @@ __all__ = [
     "generate_user_recommendation",
     "InterventionEffectivenessMetric",
     "EngagementMetric",
+    
+    # AI Coach Agent
+    "AICoachAgent",
+    "coach_agent",
+    "CoachAgentResponse",
+    "AgentThought",
+    "AgentPlan",
+    "AgentAction",
+    "AgentEvaluation",
+    
+    # Opik Experiments
+    "PromptExperiment",
+    "prompt_experiment",
+    "PROMPT_VARIANTS",
+    "MessageQualityMetric",
+    "StrategyAlignmentMetric",
+    "CUSTOM_METRICS",
 ]

@@ -418,7 +418,7 @@ def test_experiment_engine():
     for stat in insights['strategy_stats']:
         print(f"    {stat['strategy']}: {stat['completion_rate']*100:.0f}% completion, {stat['effectiveness_score']:.2f} score")
     
-    print("\n Experiment engine test complete!")
+    print("\n✅ Experiment engine test complete!")
 
 
 if __name__ == "__main__":

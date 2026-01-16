@@ -8,6 +8,7 @@ import {
   BarChart3, 
   CheckCircle2, 
   FlaskConical,
+  Brain,
   Menu,
   X
 } from 'lucide-react';
@@ -17,6 +18,7 @@ const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Target },
   { href: '/goals', label: 'Goals', icon: CheckCircle2 },
   { href: '/insights', label: 'Insights', icon: BarChart3 },
+  { href: '/agent', label: 'AI Agent', icon: Brain },
   { href: '/experiment', label: 'Experiment', icon: FlaskConical },
 ];
 

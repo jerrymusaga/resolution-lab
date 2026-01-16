@@ -12,7 +12,7 @@ import opik
 import litellm
 
 from config import get_settings
-from routers import goals_router, interventions_router, insights_router
+from routers import goals_router, interventions_router, insights_router, agent_router
 
 # Load settings
 settings = get_settings()
@@ -80,6 +80,7 @@ app.add_middleware(
 app.include_router(goals_router, prefix="/api")
 app.include_router(interventions_router, prefix="/api")
 app.include_router(insights_router, prefix="/api")
+app.include_router(agent_router)  # Agent has its own /api/agent prefix
 
 
 # Health check endpoint

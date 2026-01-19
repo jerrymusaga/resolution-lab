@@ -24,6 +24,7 @@ import random
 
 from models.schemas import InterventionStrategy, STRATEGY_DESCRIPTIONS
 from services.experiment_engine import experiment_engine
+from services.evaluators import comprehensive_evaluator
 
 
 class AgentThought(BaseModel):
@@ -58,6 +59,11 @@ class AgentEvaluation(BaseModel):
     personalization_score: float  # 0-1
     overall_score: float  # 0-1
     improvement_suggestions: list[str]
+    # Custom evaluator scores (new)
+    strategy_alignment_score: Optional[float] = None
+    motivation_effectiveness_score: Optional[float] = None
+    tone_consistency_score: Optional[float] = None
+    evaluator_grade: Optional[str] = None  # A, B, C, D, F
 
 
 class CoachAgentResponse(BaseModel):
@@ -414,7 +420,7 @@ Respond in JSON:
         
         return action
     
-    @track(name="agent_evaluate", tags=["agent", "evaluate", "llm-judge"])
+    @track(name="agent_evaluate", tags=["agent", "evaluate", "llm-judge", "custom-evaluators"])
     async def _evaluate(
         self,
         action: AgentAction,
@@ -423,10 +429,42 @@ Respond in JSON:
     ) -> AgentEvaluation:
         """
         EVALUATE: Self-assess the quality of the generated output.
-        
-        Uses LLM-as-judge pattern to score the intervention.
+
+        Uses a two-stage evaluation:
+        1. Custom Opik evaluators (fast, rule-based scoring)
+        2. LLM-as-judge pattern (deep, contextual scoring)
+
+        This demonstrates advanced Opik integration with custom evaluators.
         """
-        
+
+        # ========================================
+        # Stage 1: Custom Opik Evaluators (NEW!)
+        # ========================================
+        # Run comprehensive evaluation using our custom evaluators
+        custom_eval_result = await comprehensive_evaluator.evaluate(
+            message=action.message,
+            strategy=plan.chosen_strategy,
+            goal_title=goal_title,
+            user_context=None  # Could pass user stats here
+        )
+
+        # Extract custom evaluator scores
+        custom_scores = custom_eval_result.get("individual_scores", {})
+        strategy_alignment = custom_scores.get("strategy_alignment", 0.5)
+        motivation_effectiveness = custom_scores.get("motivation_effectiveness", 0.5)
+        personalization = custom_scores.get("personalization", 0.5)
+        tone_consistency = custom_scores.get("tone_consistency", 0.5)
+        evaluator_grade = custom_eval_result.get("grade", "C")
+
+        # Log custom evaluator results to Opik
+        opik.track_current().log_output({
+            "custom_evaluators": custom_eval_result,
+            "stage": "custom_evaluators"
+        })
+
+        # ========================================
+        # Stage 2: LLM-as-Judge (Deep Evaluation)
+        # ========================================
         prompt = f"""Evaluate this motivation message as an impartial judge.
 
 GOAL: {goal_title}
@@ -435,6 +473,12 @@ REASONING: {plan.reasoning}
 
 GENERATED MESSAGE: "{action.message}"
 TONE: {action.tone}
+
+CUSTOM EVALUATOR SCORES (for context):
+- Strategy Alignment: {strategy_alignment:.2f}
+- Motivation Effectiveness: {motivation_effectiveness:.2f}
+- Personalization: {personalization:.2f}
+- Tone Consistency: {tone_consistency:.2f}
 
 Score each dimension from 0.0 to 1.0:
 
@@ -460,31 +504,59 @@ Respond in JSON:
                 response_format={"type": "json_object"},
                 temperature=0.3  # Lower temp for more consistent judging
             )
-            
+
             result = json.loads(response.choices[0].message.content)
+
+            # Combine LLM scores with custom evaluator scores
+            llm_quality = float(result.get("quality_score", 0.7))
+            llm_relevance = float(result.get("relevance_score", 0.7))
+            llm_personalization = float(result.get("personalization_score", 0.6))
+            llm_overall = float(result.get("overall_score", 0.7))
+
+            # Calculate final scores: blend custom evaluators (40%) + LLM judge (60%)
+            final_personalization = (personalization * 0.4) + (llm_personalization * 0.6)
+            final_overall = (custom_eval_result.get("overall_score", 0.5) * 0.4) + (llm_overall * 0.6)
+
+            # Merge improvement suggestions from both sources
+            llm_suggestions = result.get("improvement_suggestions", [])[:2]
+            custom_suggestions = custom_eval_result.get("top_suggestions", [])[:2]
+            all_suggestions = list(set(llm_suggestions + custom_suggestions))[:5]
+
             evaluation = AgentEvaluation(
-                quality_score=float(result.get("quality_score", 0.7)),
-                relevance_score=float(result.get("relevance_score", 0.7)),
-                personalization_score=float(result.get("personalization_score", 0.6)),
-                overall_score=float(result.get("overall_score", 0.7)),
-                improvement_suggestions=result.get("improvement_suggestions", [])[:3]
+                quality_score=llm_quality,
+                relevance_score=llm_relevance,
+                personalization_score=round(final_personalization, 3),
+                overall_score=round(final_overall, 3),
+                improvement_suggestions=all_suggestions,
+                # Custom evaluator fields (NEW!)
+                strategy_alignment_score=round(strategy_alignment, 3),
+                motivation_effectiveness_score=round(motivation_effectiveness, 3),
+                tone_consistency_score=round(tone_consistency, 3),
+                evaluator_grade=evaluator_grade
             )
-            
+
         except Exception as e:
+            # Fallback: use custom evaluator scores only
             evaluation = AgentEvaluation(
                 quality_score=0.7,
                 relevance_score=0.7,
-                personalization_score=0.6,
-                overall_score=0.7,
-                improvement_suggestions=["Could not perform full evaluation"]
+                personalization_score=round(personalization, 3),
+                overall_score=round(custom_eval_result.get("overall_score", 0.6), 3),
+                improvement_suggestions=custom_eval_result.get("top_suggestions", ["LLM evaluation failed"])[:3],
+                strategy_alignment_score=round(strategy_alignment, 3),
+                motivation_effectiveness_score=round(motivation_effectiveness, 3),
+                tone_consistency_score=round(tone_consistency, 3),
+                evaluator_grade=evaluator_grade
             )
-        
-        # Log evaluation metrics to Opik
+
+        # Log combined evaluation metrics to Opik
         opik.track_current().log_output({
             "evaluation": evaluation.model_dump(),
-            "pass_threshold": evaluation.overall_score >= 0.6
+            "pass_threshold": evaluation.overall_score >= 0.6,
+            "custom_evaluator_grade": evaluator_grade,
+            "evaluation_method": "hybrid_custom_plus_llm"
         })
-        
+
         return evaluation
     
     @track(name="agent_learn", tags=["agent", "learn", "update"])

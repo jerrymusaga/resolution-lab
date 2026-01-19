@@ -503,21 +503,68 @@ export default function AgentPage() {
                   {/* EVALUATE step */}
                   {step.step === 5 && step.data.overall_score !== undefined && (
                     <div className="space-y-4">
+                      {/* Grade Badge */}
+                      {step.data.evaluator_grade && (
+                        <div className="flex items-center justify-center">
+                          <div className={cn(
+                            "w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold text-white shadow-lg",
+                            step.data.evaluator_grade === 'A' ? "bg-gradient-to-br from-emerald-400 to-emerald-600" :
+                            step.data.evaluator_grade === 'B' ? "bg-gradient-to-br from-blue-400 to-blue-600" :
+                            step.data.evaluator_grade === 'C' ? "bg-gradient-to-br from-amber-400 to-amber-600" :
+                            step.data.evaluator_grade === 'D' ? "bg-gradient-to-br from-orange-400 to-orange-600" :
+                            "bg-gradient-to-br from-red-400 to-red-600"
+                          )}>
+                            {step.data.evaluator_grade}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Custom Evaluator Scores - NEW! */}
+                      {(step.data.strategy_alignment_score !== undefined || step.data.motivation_effectiveness_score !== undefined) && (
+                        <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
+                          <span className="font-semibold text-indigo-700 mb-3 block flex items-center gap-2">
+                            <Sparkles className="w-4 h-4" />
+                            Custom Opik Evaluators
+                          </span>
+                          <div className="grid grid-cols-2 gap-3">
+                            {[
+                              { label: 'Strategy Alignment', value: step.data.strategy_alignment_score, color: 'indigo' },
+                              { label: 'Motivation Power', value: step.data.motivation_effectiveness_score, color: 'purple' },
+                              { label: 'Personalization', value: step.data.personalization_score, color: 'violet' },
+                              { label: 'Tone Match', value: step.data.tone_consistency_score, color: 'fuchsia' },
+                            ].filter(m => m.value !== undefined).map((metric) => (
+                              <div key={metric.label} className="bg-white rounded-lg p-3 border border-indigo-100">
+                                <span className="text-xs font-medium text-gray-600 block mb-1">{metric.label}</span>
+                                <div className="flex items-center space-x-2">
+                                  <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
+                                    <div
+                                      className="h-2 rounded-full transition-all bg-indigo-500"
+                                      style={{ width: `${(metric.value || 0) * 100}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-sm font-bold text-indigo-700">{((metric.value || 0) * 100).toFixed(0)}%</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* LLM Judge Scores */}
                       <div className="grid grid-cols-2 gap-4">
                         {[
                           { label: 'Quality', value: step.data.quality_score, color: 'pink' },
                           { label: 'Relevance', value: step.data.relevance_score, color: 'pink' },
-                          { label: 'Personalization', value: step.data.personalization_score, color: 'pink' },
                           { label: 'Overall Score', value: step.data.overall_score, color: 'emerald', highlight: true },
                         ].map((metric) => (
                           <div key={metric.label} className={cn(
                             "bg-white rounded-lg p-4 border",
-                            metric.highlight ? "border-emerald-200 bg-emerald-50" : "border-gray-100"
+                            metric.highlight ? "border-emerald-200 bg-emerald-50 col-span-2" : "border-gray-100"
                           )}>
                             <span className={cn(
                               "text-sm font-medium block mb-2",
                               metric.highlight ? "text-emerald-700" : "text-gray-600"
-                            )}>{metric.label}</span>
+                            )}>{metric.label} {metric.highlight && "(Hybrid Score)"}</span>
                             <div className="flex items-center space-x-2">
                               <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
                                 <div

@@ -21,10 +21,15 @@ settings = get_settings()
 def configure_opik():
     """Configure Opik for tracing and observability."""
     if settings.opik_api_key:
+        # Set environment variables for Opik
+        os.environ["OPIK_API_KEY"] = settings.opik_api_key
+        os.environ["OPIK_WORKSPACE"] = settings.opik_workspace
+        os.environ["OPIK_PROJECT_NAME"] = settings.opik_project_name
+
+        # Configure Opik client
         opik.configure(
             api_key=settings.opik_api_key,
             workspace=settings.opik_workspace,
-            project_name=settings.opik_project_name,
         )
         print(f"✅ Opik configured for project: {settings.opik_project_name}")
     else:

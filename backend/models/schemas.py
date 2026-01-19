@@ -41,6 +41,19 @@ class InterventionStrategy(str, Enum):
     MICRO_COMMITMENT = "micro_commitment"
 
 
+# Strategy descriptions for LLM prompts and UI
+STRATEGY_DESCRIPTIONS = {
+    InterventionStrategy.GENTLE_REMINDER: "Warm, friendly nudges that gently remind without pressure. Uses encouraging language and emojis.",
+    InterventionStrategy.ACCOUNTABILITY: "Direct, no-nonsense check-ins that ask for a clear yes/no commitment. Focuses on personal responsibility.",
+    InterventionStrategy.STREAK_GAMIFICATION: "Emphasizes streaks, progress tracking, and gamification elements. Uses fire emojis and celebrates consistency.",
+    InterventionStrategy.SOCIAL_COMPARISON: "Leverages social proof by mentioning what others with similar goals are doing. Creates healthy competition.",
+    InterventionStrategy.LOSS_AVERSION: "Highlights what the user might lose by not acting - progress, streaks, momentum. Taps into fear of loss.",
+    InterventionStrategy.REWARD_PREVIEW: "Focuses on the positive outcomes and feelings that await after completing the goal. Paints a vivid picture of success.",
+    InterventionStrategy.IDENTITY_REINFORCEMENT: "Frames the goal as part of who the user is becoming. Uses identity-based language like 'You're someone who...'",
+    InterventionStrategy.MICRO_COMMITMENT: "Lowers the barrier by asking for a tiny commitment first - just 5 minutes, just one step. Reduces overwhelm.",
+}
+
+
 class UserSentiment(str, Enum):
     """Sentiment of user's response to intervention."""
     POSITIVE = "positive"

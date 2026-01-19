@@ -605,6 +605,262 @@ class ComprehensiveMessageEvaluator:
 
 
 # ===========================================
+# Insight/Recommendation Evaluator
+# ===========================================
+
+class InsightQualityEvaluator:
+    """
+    Evaluates the quality of AI-generated insights and recommendations.
+
+    Used for evaluating outputs from analysis_engine.py like
+    generate_user_recommendation() which produce different content
+    than motivation messages.
+
+    Quality criteria:
+    - Actionability: Does it give concrete suggestions?
+    - Data-grounded: Does it reference actual user data?
+    - Personalization: Is it specific to this user?
+    - Clarity: Is it easy to understand?
+    """
+
+    name = "insight_quality"
+
+    ACTIONABILITY_MARKERS = [
+        "consider", "try", "you could", "experiment with",
+        "focus on", "lean into", "double down", "embrace",
+        "set up", "create", "schedule", "plan"
+    ]
+
+    DATA_GROUNDED_MARKERS = [
+        "%", "percent", "rate", "times", "days",
+        "data", "shows", "based on", "your results",
+        "completion", "success", "streak"
+    ]
+
+    PERSONALIZATION_MARKERS = [
+        "you respond", "works for you", "your pattern",
+        "you prefer", "motivates you", "your style",
+        "for you specifically", "in your case"
+    ]
+
+    GENERIC_INSIGHT_PHRASES = [
+        "keep it up",
+        "you're doing great",
+        "stay consistent",
+        "everyone is different"
+    ]
+
+    @track(name="eval_insight_quality", tags=["evaluator", "insight"])
+    def score(
+        self,
+        insight: str,
+        data_points: int = 0,
+        best_strategy: str = "",
+        **kwargs
+    ) -> dict:
+        """
+        Score the quality of an insight/recommendation.
+
+        Args:
+            insight: The generated insight text
+            data_points: Number of data points the insight is based on
+            best_strategy: The best performing strategy for context
+
+        Returns:
+            dict with score (0-1), breakdown, and suggestions
+        """
+        if not insight:
+            return {"score": 0.0, "explanation": "Empty insight"}
+
+        insight_lower = insight.lower()
+
+        # Score dimensions
+        scores = {}
+
+        # Actionability (30% weight)
+        action_matches = sum(1 for am in self.ACTIONABILITY_MARKERS if am in insight_lower)
+        scores["actionability"] = min(action_matches / 2, 1.0)
+
+        # Data-grounded (30% weight)
+        data_matches = sum(1 for dm in self.DATA_GROUNDED_MARKERS if dm in insight_lower)
+        scores["data_grounded"] = min(data_matches / 2, 1.0)
+
+        # Bonus for referencing actual data points
+        if data_points > 0 and str(data_points) in insight:
+            scores["data_grounded"] = min(scores["data_grounded"] + 0.2, 1.0)
+
+        # Personalization (25% weight)
+        personal_matches = sum(1 for pm in self.PERSONALIZATION_MARKERS if pm in insight_lower)
+        scores["personalization"] = min(personal_matches / 2, 1.0)
+
+        # Bonus for mentioning the best strategy
+        if best_strategy and best_strategy.lower().replace("_", " ") in insight_lower:
+            scores["personalization"] = min(scores["personalization"] + 0.3, 1.0)
+
+        # Clarity (15% weight) - penalize too short or too long
+        word_count = len(insight.split())
+        if 20 <= word_count <= 60:
+            scores["clarity"] = 1.0
+        elif 15 <= word_count < 20 or 60 < word_count <= 80:
+            scores["clarity"] = 0.7
+        else:
+            scores["clarity"] = 0.4
+
+        # Generic phrase penalty
+        generic_count = sum(1 for gp in self.GENERIC_INSIGHT_PHRASES if gp in insight_lower)
+        generic_penalty = generic_count * 0.1
+
+        # Calculate weighted score
+        weighted_score = (
+            scores["actionability"] * 0.30 +
+            scores["data_grounded"] * 0.30 +
+            scores["personalization"] * 0.25 +
+            scores["clarity"] * 0.15
+        ) - generic_penalty
+
+        final_score = max(0.0, min(1.0, weighted_score))
+
+        # Generate suggestions
+        suggestions = []
+        if scores["actionability"] < 0.5:
+            suggestions.append("Add specific, actionable recommendations")
+        if scores["data_grounded"] < 0.5:
+            suggestions.append("Reference specific data points and statistics")
+        if scores["personalization"] < 0.5:
+            suggestions.append("Make the insight more specific to this user's patterns")
+        if generic_count > 0:
+            suggestions.append("Replace generic phrases with specific observations")
+
+        # Grade
+        if final_score >= 0.85:
+            grade = "A"
+        elif final_score >= 0.7:
+            grade = "B"
+        elif final_score >= 0.55:
+            grade = "C"
+        elif final_score >= 0.4:
+            grade = "D"
+        else:
+            grade = "F"
+
+        result = {
+            "score": round(final_score, 3),
+            "grade": grade,
+            "breakdown": scores,
+            "generic_phrases_found": generic_count,
+            "suggestions": suggestions[:3],
+            "explanation": self._generate_explanation(final_score, scores)
+        }
+
+        # Log to Opik
+        opik.track_current().log_output(result)
+
+        return result
+
+    def _generate_explanation(self, score: float, breakdown: dict) -> str:
+        if score >= 0.8:
+            return "High-quality insight with actionable, data-grounded recommendations"
+        elif score >= 0.6:
+            return "Good insight - could be more specific or actionable"
+        elif score >= 0.4:
+            return "Moderate quality - needs more data references and specific suggestions"
+        else:
+            return "Low quality insight - too generic or lacking actionability"
+
+
+# ===========================================
+# Synchronous Wrapper for Message Evaluation
+# ===========================================
+
+class SyncMessageEvaluator:
+    """
+    Synchronous wrapper for evaluating motivation messages.
+
+    Used by intervention_generator.py which uses synchronous litellm.completion()
+    instead of async acompletion().
+    """
+
+    name = "sync_message_evaluation"
+
+    def __init__(self):
+        self.strategy_evaluator = StrategyAlignmentEvaluator()
+        self.effectiveness_evaluator = MotivationEffectivenessEvaluator()
+        self.personalization_evaluator = PersonalizationEvaluator()
+        self.tone_evaluator = ToneConsistencyEvaluator()
+
+    @track(name="eval_sync_comprehensive", tags=["evaluator", "sync", "comprehensive"])
+    def evaluate(
+        self,
+        message: str,
+        strategy: InterventionStrategy,
+        goal_title: str,
+        user_context: dict = None,
+    ) -> dict:
+        """
+        Synchronously evaluate a motivation message.
+
+        Returns:
+            dict with scores, grade, and suggestions
+        """
+        # Run all evaluators (they're all synchronous internally)
+        strategy_result = self.strategy_evaluator.score(message, strategy)
+        effectiveness_result = self.effectiveness_evaluator.score(message, goal_title)
+        personalization_result = self.personalization_evaluator.score(
+            message, goal_title, user_context
+        )
+        tone_result = self.tone_evaluator.score(message, strategy)
+
+        # Calculate weighted overall score
+        weights = {
+            "strategy_alignment": 0.30,
+            "motivation_effectiveness": 0.25,
+            "personalization": 0.25,
+            "tone_consistency": 0.20
+        }
+
+        overall_score = (
+            strategy_result["score"] * weights["strategy_alignment"] +
+            effectiveness_result["score"] * weights["motivation_effectiveness"] +
+            personalization_result["score"] * weights["personalization"] +
+            tone_result["score"] * weights["tone_consistency"]
+        )
+
+        # Grade
+        if overall_score >= 0.85:
+            grade = "A"
+        elif overall_score >= 0.7:
+            grade = "B"
+        elif overall_score >= 0.6:
+            grade = "C"
+        elif overall_score >= 0.4:
+            grade = "D"
+        else:
+            grade = "F"
+
+        # Collect suggestions
+        all_suggestions = []
+        all_suggestions.extend(effectiveness_result.get("suggestions", []))
+        all_suggestions.extend(personalization_result.get("suggestions", []))
+
+        result = {
+            "overall_score": round(overall_score, 3),
+            "grade": grade,
+            "individual_scores": {
+                "strategy_alignment": strategy_result["score"],
+                "motivation_effectiveness": effectiveness_result["score"],
+                "personalization": personalization_result["score"],
+                "tone_consistency": tone_result["score"]
+            },
+            "top_suggestions": all_suggestions[:3]
+        }
+
+        # Log to Opik
+        opik.track_current().log_output(result)
+
+        return result
+
+
+# ===========================================
 # Global Evaluator Instances
 # ===========================================
 
@@ -613,6 +869,8 @@ motivation_effectiveness_evaluator = MotivationEffectivenessEvaluator()
 personalization_evaluator = PersonalizationEvaluator()
 tone_consistency_evaluator = ToneConsistencyEvaluator()
 comprehensive_evaluator = ComprehensiveMessageEvaluator()
+insight_quality_evaluator = InsightQualityEvaluator()
+sync_message_evaluator = SyncMessageEvaluator()
 
 
 # ===========================================
@@ -623,7 +881,8 @@ CUSTOM_EVALUATORS = [
     strategy_alignment_evaluator,
     motivation_effectiveness_evaluator,
     personalization_evaluator,
-    tone_consistency_evaluator
+    tone_consistency_evaluator,
+    insight_quality_evaluator
 ]
 
 __all__ = [
@@ -632,6 +891,10 @@ __all__ = [
     "PersonalizationEvaluator",
     "ToneConsistencyEvaluator",
     "ComprehensiveMessageEvaluator",
+    "InsightQualityEvaluator",
+    "SyncMessageEvaluator",
     "comprehensive_evaluator",
+    "insight_quality_evaluator",
+    "sync_message_evaluator",
     "CUSTOM_EVALUATORS"
 ]

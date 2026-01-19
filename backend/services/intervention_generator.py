@@ -1,6 +1,8 @@
 """
 Resolution Lab - Intervention Generator Service
 Generates personalized motivation messages using LLM with Opik tracing.
+
+Now includes custom Opik evaluators for comprehensive message quality assessment.
 """
 
 import opik
@@ -12,6 +14,7 @@ import sys
 sys.path.append('..')
 from config import get_settings
 from models.schemas import InterventionStrategy
+from services.evaluators import sync_message_evaluator
 
 settings = get_settings()
 
@@ -100,13 +103,15 @@ def generate_intervention_message(
     current_streak: int = 0,
     user_name: Optional[str] = None,
     time_of_day: Optional[str] = None,
-) -> str:
+    include_evaluation: bool = True,
+) -> dict:
     """
     Generate a personalized intervention message using LLM.
-    
+
     This function is tracked by Opik for observability.
     All LLM calls are automatically traced via litellm callback.
-    
+    Now includes custom Opik evaluators for quality assessment.
+
     Args:
         goal_title: The user's goal title
         goal_description: Optional goal description for context
@@ -114,16 +119,17 @@ def generate_intervention_message(
         current_streak: User's current streak count
         user_name: Optional user's name for personalization
         time_of_day: Optional time context (morning/afternoon/evening)
-    
+        include_evaluation: Whether to run quality evaluation (default True)
+
     Returns:
-        Generated intervention message string
+        dict with message, evaluation scores, and metadata
     """
     # Build the strategy-specific prompt
     strategy_instruction = STRATEGY_PROMPTS.get(
-        strategy, 
+        strategy,
         STRATEGY_PROMPTS[InterventionStrategy.GENTLE_REMINDER]
     )
-    
+
     # Build context
     context_parts = [f"Goal: {goal_title}"]
     if goal_description:
@@ -134,9 +140,9 @@ def generate_intervention_message(
         context_parts.append(f"User's name: {user_name}")
     if time_of_day:
         context_parts.append(f"Time of day: {time_of_day}")
-    
+
     context = "\n".join(context_parts)
-    
+
     user_prompt = f"""Strategy to use:
 {strategy_instruction}
 
@@ -156,28 +162,72 @@ Generate the intervention message now:"""
             max_tokens=150,
             temperature=0.7,
         )
-        
+
         message = response.choices[0].message.content.strip()
-        
+
+        # Run custom Opik evaluators
+        evaluation = None
+        if include_evaluation:
+            user_context = {"streak": current_streak} if current_streak > 0 else None
+            evaluation = sync_message_evaluator.evaluate(
+                message=message,
+                strategy=strategy,
+                goal_title=goal_title,
+                user_context=user_context
+            )
+
         # Log to Opik span
-        opik.track_current_span().log_metadata({
+        try:
+            span = opik.get_current_span()
+            if span:
+                span.log_metadata({
+                    "strategy": strategy.value,
+                    "goal_title": goal_title,
+                    "current_streak": current_streak,
+                    "message_length": len(message),
+                    "evaluation_grade": evaluation["grade"] if evaluation else None,
+                    "evaluation_score": evaluation["overall_score"] if evaluation else None,
+                })
+        except:
+            pass
+
+        return {
+            "message": message,
             "strategy": strategy.value,
-            "goal_title": goal_title,
-            "current_streak": current_streak,
-            "message_length": len(message),
-        })
-        
-        return message
-        
+            "evaluation": evaluation,
+            "metadata": {
+                "goal_title": goal_title,
+                "current_streak": current_streak,
+                "time_of_day": time_of_day
+            }
+        }
+
     except Exception as e:
         # Log error and return fallback message
-        opik.track_current_span().log_metadata({
-            "error": str(e),
-            "strategy": strategy.value,
-        })
-        
+        try:
+            span = opik.get_current_span()
+            if span:
+                span.log_metadata({
+                    "error": str(e),
+                    "strategy": strategy.value,
+                })
+        except:
+            pass
+
         # Return strategy-specific fallback
-        return get_fallback_message(goal_title, strategy)
+        fallback_message = get_fallback_message(goal_title, strategy)
+        return {
+            "message": fallback_message,
+            "strategy": strategy.value,
+            "evaluation": None,
+            "metadata": {
+                "goal_title": goal_title,
+                "current_streak": current_streak,
+                "time_of_day": time_of_day,
+                "is_fallback": True,
+                "error": str(e)
+            }
+        }
 
 
 def get_fallback_message(goal_title: str, strategy: InterventionStrategy) -> str:
@@ -200,22 +250,48 @@ def batch_generate_interventions(
     goal_title: str,
     goal_description: Optional[str],
     strategies: list[InterventionStrategy],
-) -> dict[InterventionStrategy, str]:
+    include_evaluation: bool = True,
+) -> dict[InterventionStrategy, dict]:
     """
     Generate intervention messages for multiple strategies at once.
     Useful for A/B testing or pre-generating messages.
-    
+
+    Now includes evaluation scores for each generated message.
+
     Returns:
-        Dict mapping strategy to generated message
+        Dict mapping strategy to generation result (message + evaluation)
     """
     results = {}
     for strategy in strategies:
-        message = generate_intervention_message(
+        result = generate_intervention_message(
             goal_title=goal_title,
             goal_description=goal_description,
             strategy=strategy,
+            include_evaluation=include_evaluation,
         )
-        results[strategy] = message
+        results[strategy] = result
+
+    # Log batch summary to Opik
+    if include_evaluation:
+        avg_score = sum(
+            r["evaluation"]["overall_score"]
+            for r in results.values()
+            if r.get("evaluation")
+        ) / max(len([r for r in results.values() if r.get("evaluation")]), 1)
+
+        grades = [r["evaluation"]["grade"] for r in results.values() if r.get("evaluation")]
+
+        try:
+            span = opik.get_current_span()
+            if span:
+                span.log_metadata({
+                    "batch_size": len(strategies),
+                    "avg_evaluation_score": round(avg_score, 3),
+                    "grades_distribution": {g: grades.count(g) for g in set(grades)},
+                })
+        except:
+            pass
+
     return results
 
 
@@ -224,26 +300,40 @@ def batch_generate_interventions(
 # ===================
 
 def test_generator():
-    """Test the intervention generator locally."""
-    print("Testing Intervention Generator...")
-    print("=" * 50)
-    
+    """Test the intervention generator with custom evaluators."""
+    print("Testing Intervention Generator with Custom Opik Evaluators...")
+    print("=" * 60)
+
     goal = "Exercise for 30 minutes"
     description = "Daily workout routine to stay healthy"
-    
+
     for strategy in InterventionStrategy:
         print(f"\n📨 Strategy: {strategy.value}")
-        print("-" * 40)
-        message = generate_intervention_message(
+        print("-" * 50)
+        result = generate_intervention_message(
             goal_title=goal,
             goal_description=description,
             strategy=strategy,
             current_streak=5,
+            include_evaluation=True,
         )
-        print(f"Message: {message}")
-    
-    print("\n" + "=" * 50)
-    print("✅ Generator test complete!")
+        print(f"Message: {result['message']}")
+
+        if result.get("evaluation"):
+            eval_data = result["evaluation"]
+            print(f"\n📊 Evaluation:")
+            print(f"   Grade: {eval_data['grade']}")
+            print(f"   Overall Score: {eval_data['overall_score']:.2f}")
+            print(f"   Scores:")
+            for key, score in eval_data["individual_scores"].items():
+                print(f"      - {key}: {score:.2f}")
+            if eval_data.get("top_suggestions"):
+                print(f"   Suggestions:")
+                for suggestion in eval_data["top_suggestions"][:2]:
+                    print(f"      • {suggestion}")
+
+    print("\n" + "=" * 60)
+    print("✅ Generator test complete with evaluations!")
 
 
 if __name__ == "__main__":

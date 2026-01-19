@@ -168,8 +168,19 @@ export interface SimulationResult {
   simulations: Array<{
     iteration: number;
     strategy: InterventionStrategy;
+    message?: string;
     completed: boolean;
     effectiveness: number;
+    evaluation?: {
+      grade: string;
+      overall_score: number;
+      individual_scores?: {
+        strategy_alignment: number;
+        motivation_effectiveness: number;
+        personalization: number;
+        tone_consistency: number;
+      };
+    };
   }>;
   insights: {
     user_id: string;
@@ -185,6 +196,11 @@ export interface SimulationResult {
     experiment_phase: string;
     total_interventions: number;
     strategies_tested: number;
+  };
+  evaluation_summary?: {
+    total_evaluated: number;
+    average_score: number;
+    grade_distribution: Record<string, number>;
   };
 }
 

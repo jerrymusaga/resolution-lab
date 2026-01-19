@@ -25,8 +25,11 @@ import {
   Trophy,
   Beaker,
   Zap,
-  HelpCircle
+  HelpCircle,
+  Award,
+  MessageSquare
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import {
   BarChart,
   Bar,
@@ -351,6 +354,112 @@ export default function ExperimentPage() {
             </CardContent>
           </Card>
 
+          {/* Custom Opik Evaluators Summary - NEW! */}
+          {result.evaluation_summary && result.evaluation_summary.total_evaluated > 0 && (
+            <Card variant="bordered" className="bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Award className="w-5 h-5 mr-2 text-indigo-600" />
+                  Custom Opik Evaluators
+                  <span className="ml-2 text-xs font-normal bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">
+                    AI Quality Assessment
+                  </span>
+                </CardTitle>
+                <p className="text-sm text-gray-600 mt-1">
+                  Every generated message was evaluated by our custom Opik evaluators for quality
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Average Score */}
+                  <div className="bg-white rounded-xl p-6 border border-indigo-100">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-sm font-medium text-gray-600">Average Quality Score</span>
+                      <span className="text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
+                        {result.evaluation_summary.total_evaluated} messages
+                      </span>
+                    </div>
+                    <div className="flex items-end space-x-3">
+                      <span className="text-4xl font-bold text-indigo-600">
+                        {(result.evaluation_summary.average_score * 100).toFixed(0)}%
+                      </span>
+                      <span className={cn(
+                        "text-lg font-semibold mb-1",
+                        result.evaluation_summary.average_score >= 0.7 ? "text-green-600" :
+                        result.evaluation_summary.average_score >= 0.5 ? "text-yellow-600" :
+                        "text-red-600"
+                      )}>
+                        {result.evaluation_summary.average_score >= 0.85 ? "Excellent" :
+                         result.evaluation_summary.average_score >= 0.7 ? "Good" :
+                         result.evaluation_summary.average_score >= 0.55 ? "Fair" : "Needs Work"}
+                      </span>
+                    </div>
+                    <div className="mt-3 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all"
+                        style={{ width: `${result.evaluation_summary.average_score * 100}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Grade Distribution */}
+                  <div className="bg-white rounded-xl p-6 border border-indigo-100">
+                    <span className="text-sm font-medium text-gray-600 block mb-4">Grade Distribution</span>
+                    <div className="flex items-end justify-between h-24">
+                      {['A', 'B', 'C', 'D', 'F'].map((grade) => {
+                        const count = result.evaluation_summary?.grade_distribution?.[grade] || 0;
+                        const total = result.evaluation_summary?.total_evaluated || 1;
+                        const percentage = (count / total) * 100;
+                        const gradeColors: Record<string, string> = {
+                          A: 'bg-emerald-500',
+                          B: 'bg-blue-500',
+                          C: 'bg-amber-500',
+                          D: 'bg-orange-500',
+                          F: 'bg-red-500'
+                        };
+                        return (
+                          <div key={grade} className="flex flex-col items-center flex-1">
+                            <div className="w-full px-1">
+                              <div
+                                className={cn(
+                                  "w-full rounded-t transition-all",
+                                  gradeColors[grade]
+                                )}
+                                style={{ height: `${Math.max(percentage * 0.8, count > 0 ? 8 : 0)}px` }}
+                              />
+                            </div>
+                            <span className="text-xs font-semibold text-gray-700 mt-1">{grade}</span>
+                            <span className="text-xs text-gray-400">{count}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Evaluation Dimensions */}
+                <div className="mt-4 p-4 bg-white rounded-lg border border-indigo-100">
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
+                    Evaluated Dimensions
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {[
+                      { name: 'Strategy Alignment', desc: 'Message matches intended strategy', color: 'indigo' },
+                      { name: 'Motivation Power', desc: 'Likely to motivate action', color: 'purple' },
+                      { name: 'Personalization', desc: 'Feels tailored, not generic', color: 'violet' },
+                      { name: 'Tone Consistency', desc: 'Tone matches strategy style', color: 'fuchsia' },
+                    ].map((dim) => (
+                      <div key={dim.name} className={`p-3 rounded-lg bg-${dim.color}-50 border border-${dim.color}-100`}>
+                        <span className={`text-sm font-medium text-${dim.color}-700`}>{dim.name}</span>
+                        <p className="text-xs text-gray-500 mt-0.5">{dim.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Strategy Rankings */}
           <Card variant="bordered">
             <CardHeader>
@@ -569,11 +678,18 @@ export default function ExperimentPage() {
             {showSimulations && (
               <CardContent>
                 <p className="text-sm text-gray-500 mb-4">
-                  Each row shows one simulated check-in: which strategy was used and whether it resulted in goal completion.
+                  Each row shows one simulated check-in: strategy used, message quality grade, and goal completion.
                 </p>
                 <div className="max-h-96 overflow-y-auto space-y-2 border rounded-lg p-2">
                   {result.simulations.map((sim, index) => {
                     const info = STRATEGY_INFO[sim.strategy as keyof typeof STRATEGY_INFO];
+                    const gradeColors: Record<string, string> = {
+                      A: 'bg-emerald-100 text-emerald-700',
+                      B: 'bg-blue-100 text-blue-700',
+                      C: 'bg-amber-100 text-amber-700',
+                      D: 'bg-orange-100 text-orange-700',
+                      F: 'bg-red-100 text-red-700'
+                    };
                     return (
                       <div
                         key={index}
@@ -589,6 +705,15 @@ export default function ExperimentPage() {
                           </span>
                         </div>
                         <div className="flex items-center space-x-3">
+                          {/* Evaluation Grade Badge */}
+                          {sim.evaluation && (
+                            <span className={cn(
+                              "text-xs font-bold px-2 py-0.5 rounded-full",
+                              gradeColors[sim.evaluation.grade] || 'bg-gray-100 text-gray-700'
+                            )}>
+                              {sim.evaluation.grade}
+                            </span>
+                          )}
                           <span className={`text-xs px-2 py-0.5 rounded-full ${
                             sim.completed
                               ? 'bg-green-100 text-green-700'

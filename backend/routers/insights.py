@@ -60,10 +60,12 @@ async def get_user_insights(
     
     # Generate personalized recommendation using LLM
     try:
-        recommendation = generate_user_recommendation(
+        result = generate_user_recommendation(
             strategy_stats=raw_insights["strategy_stats"],
             total_interventions=raw_insights["total_interventions"],
+            include_evaluation=False,  # Skip evaluation for this endpoint
         )
+        recommendation = result.get("insight", "Keep responding to check-ins to discover your motivation patterns!")
     except Exception:
         recommendation = "Keep responding to check-ins to discover your motivation patterns!"
     
@@ -208,24 +210,41 @@ async def get_recommendation(
 ):
     """
     Get a personalized recommendation based on experiment data.
-    
+
     Uses LLM to generate human-readable insights.
+    Now includes custom Opik evaluator scores for insight quality.
     """
     raw_insights = experiment_engine.get_user_insights(user_id)
-    
+
     try:
-        recommendation = generate_user_recommendation(
+        result = generate_user_recommendation(
             strategy_stats=raw_insights["strategy_stats"],
             total_interventions=raw_insights["total_interventions"],
+            include_evaluation=True,
         )
+
+        recommendation = result.get("insight", "Keep responding to check-ins to discover your motivation patterns!")
+        evaluation = result.get("evaluation")
+
     except Exception as e:
         recommendation = "Keep responding to check-ins to discover your motivation patterns!"
-    
-    return {
+        evaluation = None
+
+    response = {
         "recommendation": recommendation,
         "based_on_data_points": raw_insights["total_interventions"],
         "confidence": "high" if raw_insights["total_interventions"] >= 20 else "medium" if raw_insights["total_interventions"] >= 10 else "low",
     }
+
+    # Include evaluation if available
+    if evaluation:
+        response["evaluation"] = {
+            "grade": evaluation.get("grade"),
+            "score": evaluation.get("score"),
+            "breakdown": evaluation.get("breakdown"),
+        }
+
+    return response
 
 
 # ===================

@@ -60,11 +60,24 @@ const STRATEGY_ICONS: Record<InterventionStrategy, React.ReactNode> = {
   micro_commitment: <Target className="w-5 h-5" />,
 };
 
+// Evaluation type for insight quality
+interface InsightEvaluation {
+  grade: string;
+  score: number;
+  breakdown?: {
+    actionability: number;
+    data_grounded: number;
+    personalization: number;
+    clarity: number;
+  };
+}
+
 export default function InsightsPage() {
   const [userId, setUserId] = useState<string>('');
   const [insights, setInsights] = useState<UserInsights | null>(null);
   const [comparison, setComparison] = useState<InsightsComparison | null>(null);
   const [recommendation, setRecommendation] = useState<string>('');
+  const [recommendationEval, setRecommendationEval] = useState<InsightEvaluation | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showReveal, setShowReveal] = useState(false);
@@ -102,12 +115,13 @@ export default function InsightsPage() {
       const [insightsData, comparisonData, recData] = await Promise.all([
         getUserInsights(uid).catch(() => null),
         getStrategyComparison(uid).catch(() => null),
-        getRecommendation(uid).catch(() => ({ recommendation: '' })),
+        getRecommendation(uid).catch(() => ({ recommendation: '', evaluation: null })),
       ]);
 
       setInsights(insightsData);
       setComparison(comparisonData);
       setRecommendation(recData?.recommendation || '');
+      setRecommendationEval(recData?.evaluation || null);
     } catch (err) {
       console.error('Failed to load insights:', err);
       setError('Failed to load insights. Make sure the backend is running.');
@@ -381,11 +395,52 @@ export default function InsightsPage() {
                         <Lightbulb className="w-6 h-6 text-amber-600" />
                       </div>
                     </div>
-                    <div>
-                      <h4 className="font-bold text-gray-900 mb-2">What This Means For You</h4>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-bold text-gray-900">What This Means For You</h4>
+                        {/* Evaluation Badge */}
+                        {recommendationEval && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500">AI Insight Quality</span>
+                            <span className={cn(
+                              "text-sm font-bold px-2 py-0.5 rounded-full",
+                              recommendationEval.grade === 'A' ? "bg-emerald-100 text-emerald-700" :
+                              recommendationEval.grade === 'B' ? "bg-blue-100 text-blue-700" :
+                              recommendationEval.grade === 'C' ? "bg-amber-100 text-amber-700" :
+                              recommendationEval.grade === 'D' ? "bg-orange-100 text-orange-700" :
+                              "bg-red-100 text-red-700"
+                            )}>
+                              {recommendationEval.grade}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                       <p className="text-gray-700 leading-relaxed">
                         {recommendation || `You respond ${improvementPercent}% better to ${bestStrategy?.info?.name?.toLowerCase()} than ${worstStrategy?.info?.name?.toLowerCase()}. When you need motivation, messages that ${bestStrategy?.info?.description?.toLowerCase()} will be most effective for you.`}
                       </p>
+                      {/* Evaluation breakdown */}
+                      {recommendationEval?.breakdown && (
+                        <div className="mt-4 pt-4 border-t border-amber-200">
+                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                            Custom Opik Evaluator Scores
+                          </p>
+                          <div className="grid grid-cols-4 gap-2">
+                            {[
+                              { label: 'Actionability', value: recommendationEval.breakdown.actionability },
+                              { label: 'Data-grounded', value: recommendationEval.breakdown.data_grounded },
+                              { label: 'Personalization', value: recommendationEval.breakdown.personalization },
+                              { label: 'Clarity', value: recommendationEval.breakdown.clarity },
+                            ].map((metric) => (
+                              <div key={metric.label} className="text-center">
+                                <div className="text-lg font-bold text-amber-700">
+                                  {(metric.value * 100).toFixed(0)}%
+                                </div>
+                                <div className="text-xs text-gray-500">{metric.label}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

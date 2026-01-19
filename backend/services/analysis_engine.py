@@ -1,6 +1,8 @@
 """
 Resolution Lab - Analysis Engine Service
 Handles sentiment analysis, effectiveness scoring, and Opik evaluation metrics.
+
+Now includes custom Opik evaluators for insight quality assessment.
 """
 
 import json
@@ -13,6 +15,7 @@ import sys
 sys.path.append('..')
 from config import get_settings
 from models.schemas import UserSentiment, InterventionStrategy
+from services.evaluators import insight_quality_evaluator
 
 settings = get_settings()
 
@@ -298,27 +301,42 @@ class EngagementMetric:
 def generate_user_recommendation(
     strategy_stats: list[dict],
     total_interventions: int,
-) -> str:
+    include_evaluation: bool = True,
+) -> dict:
     """
     Generate a personalized recommendation based on experiment data.
-    
+
     Uses LLM to create a human-readable insight about what motivates the user.
+    Now includes custom Opik evaluators for insight quality assessment.
+
+    Returns:
+        dict with insight text, evaluation scores, and metadata
     """
     if total_interventions < 5:
-        return "Keep going! We need more data to understand what motivates you best. Try responding to a few more check-ins."
-    
+        return {
+            "insight": "Keep going! We need more data to understand what motivates you best. Try responding to a few more check-ins.",
+            "evaluation": None,
+            "is_early_stage": True,
+            "data_points": total_interventions
+        }
+
     if not strategy_stats:
-        return "No strategy data available yet. Complete some check-ins to discover your motivation patterns."
-    
+        return {
+            "insight": "No strategy data available yet. Complete some check-ins to discover your motivation patterns.",
+            "evaluation": None,
+            "is_early_stage": True,
+            "data_points": 0
+        }
+
     # Build context for LLM
     stats_text = "\n".join([
         f"- {s['strategy']}: {s['completion_rate']*100:.0f}% completion rate, {s['total_interventions']} samples"
         for s in strategy_stats[:5]  # Top 5
     ])
-    
+
     best = strategy_stats[0] if strategy_stats else None
     worst = strategy_stats[-1] if len(strategy_stats) > 1 else None
-    
+
     prompt = f"""Based on this user's motivation experiment data, write a brief, personalized insight.
 
 Strategy Performance:
@@ -344,14 +362,57 @@ Write the insight now:"""
             max_tokens=200,
             temperature=0.7,
         )
-        
-        return response.choices[0].message.content.strip()
-        
+
+        insight = response.choices[0].message.content.strip()
+
+        # Run custom Opik evaluator for insight quality
+        evaluation = None
+        if include_evaluation:
+            evaluation = insight_quality_evaluator.score(
+                insight=insight,
+                data_points=total_interventions,
+                best_strategy=best['strategy'] if best else ""
+            )
+
+        # Log to Opik
+        try:
+            span = opik.get_current_span()
+            if span:
+                span.log_metadata({
+                    "total_interventions": total_interventions,
+                    "best_strategy": best['strategy'] if best else None,
+                    "best_rate": best['completion_rate'] if best else None,
+                    "insight_length": len(insight),
+                    "evaluation_grade": evaluation["grade"] if evaluation else None,
+                    "evaluation_score": evaluation["score"] if evaluation else None,
+                })
+        except:
+            pass
+
+        return {
+            "insight": insight,
+            "evaluation": evaluation,
+            "is_early_stage": False,
+            "data_points": total_interventions,
+            "best_strategy": best['strategy'] if best else None,
+            "best_rate": best['completion_rate'] if best else None,
+        }
+
     except Exception as e:
         # Fallback to template-based recommendation
         if best:
-            return f"Based on {total_interventions} check-ins, {best['strategy'].replace('_', ' ')} works best for you with a {best['completion_rate']*100:.0f}% success rate. Keep it up!"
-        return "Keep responding to check-ins to discover your motivation patterns!"
+            fallback_insight = f"Based on {total_interventions} check-ins, {best['strategy'].replace('_', ' ')} works best for you with a {best['completion_rate']*100:.0f}% success rate. Keep it up!"
+        else:
+            fallback_insight = "Keep responding to check-ins to discover your motivation patterns!"
+
+        return {
+            "insight": fallback_insight,
+            "evaluation": None,
+            "is_early_stage": False,
+            "is_fallback": True,
+            "error": str(e),
+            "data_points": total_interventions
+        }
 
 
 # ===================
@@ -359,10 +420,10 @@ Write the insight now:"""
 # ===================
 
 def test_analysis_engine():
-    """Test the analysis engine."""
-    print("Testing Analysis Engine...")
-    print("=" * 50)
-    
+    """Test the analysis engine with custom evaluators."""
+    print("Testing Analysis Engine with Custom Opik Evaluators...")
+    print("=" * 60)
+
     # Test sentiment analysis
     print("\n📊 Testing Sentiment Analysis:")
     result = analyze_user_sentiment(
@@ -373,7 +434,7 @@ def test_analysis_engine():
     print(f"  Helpfulness: {result['helpfulness']}")
     print(f"  Confidence: {result['confidence']}")
     print(f"  Reasoning: {result['reasoning']}")
-    
+
     # Test goal completion judgment
     print("\n📊 Testing Goal Completion Judge:")
     result = judge_goal_completion(
@@ -383,7 +444,7 @@ def test_analysis_engine():
     print(f"  Completed: {result['completed']}")
     print(f"  Confidence: {result['confidence']}")
     print(f"  Evidence: {result['evidence']}")
-    
+
     # Test effectiveness metric
     print("\n📊 Testing Effectiveness Metric:")
     metric = InterventionEffectivenessMetric()
@@ -394,9 +455,31 @@ def test_analysis_engine():
         user_sentiment="positive"
     )
     print(f"  Effectiveness Score: {score:.3f}")
-    
-    print("\n" + "=" * 50)
-    print("✅ Analysis engine test complete!")
+
+    # Test recommendation generation with evaluation
+    print("\n📊 Testing User Recommendation with Insight Evaluator:")
+    mock_stats = [
+        {"strategy": "accountability", "completion_rate": 0.85, "total_interventions": 12},
+        {"strategy": "streak_gamification", "completion_rate": 0.72, "total_interventions": 8},
+        {"strategy": "gentle_reminder", "completion_rate": 0.45, "total_interventions": 10},
+    ]
+    result = generate_user_recommendation(
+        strategy_stats=mock_stats,
+        total_interventions=30,
+        include_evaluation=True
+    )
+    print(f"  Insight: {result['insight']}")
+    if result.get("evaluation"):
+        eval_data = result["evaluation"]
+        print(f"\n  📈 Evaluation:")
+        print(f"     Grade: {eval_data['grade']}")
+        print(f"     Score: {eval_data['score']:.2f}")
+        print(f"     Breakdown:")
+        for key, value in eval_data.get("breakdown", {}).items():
+            print(f"        - {key}: {value:.2f}")
+
+    print("\n" + "=" * 60)
+    print("✅ Analysis engine test complete with evaluations!")
 
 
 if __name__ == "__main__":

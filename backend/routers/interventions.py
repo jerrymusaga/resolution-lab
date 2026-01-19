@@ -301,26 +301,71 @@ async def simulate_experiment(
     user_id: str = Query(..., description="User ID"),
     goal_title: str = Query("Exercise for 30 minutes", description="Goal title"),
     num_interventions: int = Query(10, ge=1, le=50, description="Number of interventions to simulate"),
+    use_llm: bool = Query(False, description="Use LLM to generate messages (includes evaluations)"),
 ):
     """
     Simulate multiple interventions for demo purposes.
-    
+
     This generates interventions using different strategies and simulates
     random outcomes to populate the experiment data.
-    
+
+    When use_llm=True, generates real LLM messages with custom Opik evaluator scores.
+    When use_llm=False (default), uses fast fallback messages.
+
     Useful for quickly generating data to show in the insights dashboard.
     """
     import random
-    
+    from services.evaluators import sync_message_evaluator
+
     results = []
-    
+    evaluation_summary = {
+        "total_evaluated": 0,
+        "average_score": 0.0,
+        "grade_distribution": {"A": 0, "B": 0, "C": 0, "D": 0, "F": 0}
+    }
+    total_score = 0.0
+
     for i in range(num_interventions):
         # Select strategy
         strategy = experiment_engine.select_strategy(user_id)
-        
-        # Generate message (fallback to avoid LLM costs in demo)
-        message = get_fallback_message(goal_title, strategy)
-        
+
+        # Generate message
+        message = None
+        evaluation = None
+
+        if use_llm:
+            # Generate with LLM and evaluate
+            result = generate_intervention_message(
+                goal_title=goal_title,
+                goal_description=None,
+                strategy=strategy,
+                include_evaluation=True,
+            )
+            message = result["message"]
+            evaluation = result.get("evaluation")
+
+            if evaluation:
+                evaluation_summary["total_evaluated"] += 1
+                total_score += evaluation["overall_score"]
+                grade = evaluation.get("grade", "C")
+                if grade in evaluation_summary["grade_distribution"]:
+                    evaluation_summary["grade_distribution"][grade] += 1
+        else:
+            # Fast fallback (no LLM)
+            message = get_fallback_message(goal_title, strategy)
+
+            # Still run evaluator on fallback messages to show Opik integration
+            evaluation = sync_message_evaluator.evaluate(
+                message=message,
+                strategy=strategy,
+                goal_title=goal_title,
+            )
+            evaluation_summary["total_evaluated"] += 1
+            total_score += evaluation["overall_score"]
+            grade = evaluation.get("grade", "C")
+            if grade in evaluation_summary["grade_distribution"]:
+                evaluation_summary["grade_distribution"][grade] += 1
+
         # Simulate outcome with varying success rates per strategy
         success_rates = {
             InterventionStrategy.ACCOUNTABILITY: 0.75,
@@ -332,11 +377,11 @@ async def simulate_experiment(
             InterventionStrategy.SOCIAL_COMPARISON: 0.40,
             InterventionStrategy.GENTLE_REMINDER: 0.30,
         }
-        
+
         completed = random.random() < success_rates.get(strategy, 0.5)
         response_time = random.randint(300, 7200)
         sentiment = random.choice(["positive", "neutral", "negative"])
-        
+
         # Record outcome
         effectiveness = experiment_engine.record_outcome(
             user_id=user_id,
@@ -345,18 +390,36 @@ async def simulate_experiment(
             response_time_seconds=response_time,
             sentiment=sentiment,
         )
-        
-        results.append({
+
+        result_item = {
             "iteration": i + 1,
             "strategy": strategy.value,
+            "message": message,
             "completed": completed,
             "effectiveness": round(effectiveness, 3),
-        })
-    
+        }
+
+        # Include evaluation if available
+        if evaluation:
+            result_item["evaluation"] = {
+                "grade": evaluation.get("grade"),
+                "overall_score": evaluation.get("overall_score"),
+                "individual_scores": evaluation.get("individual_scores"),
+            }
+
+        results.append(result_item)
+
+    # Calculate average score
+    if evaluation_summary["total_evaluated"] > 0:
+        evaluation_summary["average_score"] = round(
+            total_score / evaluation_summary["total_evaluated"], 3
+        )
+
     # Get updated insights
     insights = experiment_engine.get_user_insights(user_id)
-    
+
     return {
         "simulations": results,
         "insights": insights,
+        "evaluation_summary": evaluation_summary,
     }

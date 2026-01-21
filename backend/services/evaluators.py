@@ -9,7 +9,6 @@ KEY DIFFERENTIATOR: Shows production-ready evaluation patterns
 that go beyond basic tracing.
 """
 
-import opik
 from opik import track
 from opik.evaluation.metrics import base_metric, score_result
 import litellm
@@ -123,9 +122,6 @@ class StrategyAlignmentEvaluator:
             "explanation": self._generate_explanation(score, keyword_matches, tone_matches, negative_matches, strategy)
         }
 
-        # Log to Opik
-        opik.track_current().log_output(result)
-
         return result
 
     def _generate_explanation(self, score: float, kw: int, tone: int, neg: int, strategy: InterventionStrategy) -> str:
@@ -238,9 +234,6 @@ class MotivationEffectivenessEvaluator:
             "suggestions": suggestions[:3],
             "explanation": self._generate_explanation(final_score, scores)
         }
-
-        # Log to Opik
-        opik.track_current().log_output(result)
 
         return result
 
@@ -381,9 +374,6 @@ class PersonalizationEvaluator:
             "explanation": self._generate_explanation(final_score, goal_referenced, generic_count)
         }
 
-        # Log to Opik
-        opik.track_current().log_output(result)
-
         return result
 
     def _generate_explanation(self, score: float, goal_ref: bool, generic: int) -> str:
@@ -490,9 +480,6 @@ class ToneConsistencyEvaluator:
             "explanation": f"Message {'matches' if final_score >= 0.6 else 'could better match'} expected {expected_tone} tone for {strategy.value}"
         }
 
-        # Log to Opik
-        opik.track_current().log_output(result)
-
         return result
 
 
@@ -597,9 +584,6 @@ class ComprehensiveMessageEvaluator:
             "top_suggestions": all_suggestions[:5],
             "message_evaluated": message[:100] + "..." if len(message) > 100 else message
         }
-
-        # Log comprehensive result to Opik
-        opik.track_current().log_output(result)
 
         return result
 
@@ -752,9 +736,6 @@ class InsightQualityEvaluator:
             "explanation": self._generate_explanation(final_score, scores)
         }
 
-        # Log to Opik
-        opik.track_current().log_output(result)
-
         return result
 
     def _generate_explanation(self, score: float, breakdown: dict) -> str:
@@ -853,9 +834,6 @@ class SyncMessageEvaluator:
             },
             "top_suggestions": all_suggestions[:3]
         }
-
-        # Log to Opik
-        opik.track_current().log_output(result)
 
         return result
 

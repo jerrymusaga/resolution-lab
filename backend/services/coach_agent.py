@@ -11,7 +11,6 @@ This is the KEY DIFFERENTIATOR for the hackathon - it shows:
 4. LLM-as-judge evaluation
 """
 
-import opik
 from opik import track
 from opik.evaluation import metrics
 import litellm
@@ -177,10 +176,7 @@ class AICoachAgent:
                 "is_weekend": datetime.utcnow().weekday() >= 5
             }
         }
-        
-        # Log observation to Opik
-        opik.track_current().log_output(observation)
-        
+
         return observation
     
     @track(name="agent_think", tags=["agent", "think", "reasoning"])
@@ -246,10 +242,7 @@ Respond in JSON format:
                 hypothesis="Need more data to form reliable hypothesis" if observation['total_data_points'] < 10 else "User responds well to their best strategy",
                 confidence=min(observation['total_data_points'] / 20, 0.9)
             )
-        
-        # Log thought process to Opik
-        opik.track_current().log_output(thought.model_dump())
-        
+
         return thought
     
     @track(name="agent_plan", tags=["agent", "plan", "strategy"])
@@ -328,10 +321,7 @@ Create a plan. Respond in JSON:
                 alternative_strategies=[],
                 personalization_notes="Focus on the goal and user's progress"
             )
-        
-        # Log plan to Opik
-        opik.track_current().log_output(plan.model_dump())
-        
+
         return plan
     
     @track(name="agent_act", tags=["agent", "act", "generation"])
@@ -414,10 +404,7 @@ Respond in JSON:
                 tone="encouraging",
                 estimated_impact=0.5
             )
-        
-        # Log action to Opik
-        opik.track_current().log_output(action.model_dump())
-        
+
         return action
     
     @track(name="agent_evaluate", tags=["agent", "evaluate", "llm-judge", "custom-evaluators"])
@@ -455,12 +442,6 @@ Respond in JSON:
         personalization = custom_scores.get("personalization", 0.5)
         tone_consistency = custom_scores.get("tone_consistency", 0.5)
         evaluator_grade = custom_eval_result.get("grade", "C")
-
-        # Log custom evaluator results to Opik
-        opik.track_current().log_output({
-            "custom_evaluators": custom_eval_result,
-            "stage": "custom_evaluators"
-        })
 
         # ========================================
         # Stage 2: LLM-as-Judge (Deep Evaluation)
@@ -549,14 +530,6 @@ Respond in JSON:
                 evaluator_grade=evaluator_grade
             )
 
-        # Log combined evaluation metrics to Opik
-        opik.track_current().log_output({
-            "evaluation": evaluation.model_dump(),
-            "pass_threshold": evaluation.overall_score >= 0.6,
-            "custom_evaluator_grade": evaluator_grade,
-            "evaluation_method": "hybrid_custom_plus_llm"
-        })
-
         return evaluation
     
     @track(name="agent_learn", tags=["agent", "learn", "update"])
@@ -565,7 +538,7 @@ Respond in JSON:
         user_id: str,
         strategy: InterventionStrategy,
         evaluation: AgentEvaluation
-    ) -> None:
+    ) -> dict:
         """
         LEARN: Update internal models based on evaluation.
         
@@ -582,9 +555,9 @@ Respond in JSON:
             "improvement_areas": evaluation.improvement_suggestions,
             "action": "logged_for_future_training"
         }
-        
-        # Log learning to Opik for future analysis
-        opik.track_current().log_output(learning_signal)
+
+        # Learning signal is returned and will be logged by @track decorator
+        return learning_signal
     
     def _get_time_of_day(self) -> str:
         """Get time of day category"""

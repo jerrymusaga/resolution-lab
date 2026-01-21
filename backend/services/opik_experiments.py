@@ -7,7 +7,6 @@ and track which ones perform best.
 This is a KEY DIFFERENTIATOR - shows advanced Opik usage beyond basic tracing.
 """
 
-import opik
 from opik import track, Opik
 from opik.evaluation import metrics
 from typing import Optional
@@ -105,10 +104,7 @@ class PromptExperiment:
             "selection_reason": selection_reason,
             "current_stats": self.variant_stats[variant_id].copy()
         }
-        
-        # Log to Opik
-        opik.track_current().log_output(result)
-        
+
         return result
     
     @track(name="prompt_experiment_record", tags=["experiment", "result"])
@@ -145,10 +141,7 @@ class PromptExperiment:
             "updated_stats": stats.copy(),
             "timestamp": datetime.utcnow().isoformat()
         }
-        
-        # Log to Opik
-        opik.track_current().log_output(result)
-        
+
         return result
     
     @track(name="prompt_experiment_report", tags=["experiment", "analysis"])
@@ -184,10 +177,7 @@ class PromptExperiment:
             "ready_for_conclusion": total_experiments >= 20,
             "recommendation": self._generate_recommendation(variants_ranked, total_experiments)
         }
-        
-        # Log to Opik
-        opik.track_current().log_output(report)
-        
+
         return report
     
     def _generate_recommendation(self, variants: list, total: int) -> str:

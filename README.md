@@ -114,7 +114,7 @@ AGENT TRACES (Nested)
     ├── agent_think
     ├── agent_plan
     ├── agent_act
-    ├── agent_evaluate
+    ├── agent_evaluate ← Uses custom evaluators!
     └── agent_learn
 
 A/B EXPERIMENTS
@@ -122,17 +122,33 @@ A/B EXPERIMENTS
 ├── prompt_experiment_record
 └── prompt_experiment_report
 
-CUSTOM METRICS
-├── MessageQualityMetric
-├── StrategyAlignmentMetric
-├── InterventionEffectivenessMetric
-└── EngagementMetric
+CUSTOM OPIK EVALUATORS (NEW!)
+├── StrategyAlignmentEvaluator ─── Message matches intended strategy
+├── MotivationEffectivenessEvaluator ─── Likely to motivate action
+├── PersonalizationEvaluator ───── Feels tailored, not generic
+├── ToneConsistencyEvaluator ───── Tone matches strategy style
+├── InsightQualityEvaluator ────── Insight is actionable & data-grounded
+└── ComprehensiveMessageEvaluator ─ Combines all with A-F grades
 
 LLM-AS-JUDGE
 ├── analyze_user_sentiment
 ├── judge_goal_completion
-└── agent_evaluate (self-assessment)
+└── agent_evaluate (hybrid: custom evaluators + LLM judge)
 ```
+
+### Custom Opik Evaluators - App-Wide Quality Assessment
+
+Every AI-generated output is now evaluated by custom Opik evaluators:
+
+| Evaluator | What it Measures | Used In |
+|-----------|------------------|---------|
+| Strategy Alignment | Does message match intended strategy keywords/tone? | Agent, Experiment |
+| Motivation Effectiveness | Will this actually motivate action? | Agent, Experiment |
+| Personalization | Is it tailored or generic? | Agent, Experiment |
+| Tone Consistency | Does tone match strategy expectations? | Agent, Experiment |
+| Insight Quality | Is the insight actionable & data-grounded? | Insights page |
+
+**Hybrid Evaluation (Agent)**: Custom evaluators (40%) + LLM-as-Judge (60%) = Overall score with letter grades (A-F)
 
 ---
 
@@ -183,20 +199,24 @@ See `USER_STORIES.md` for complete scenarios.
 |----------|----------------|
 | ✅ True Agent | 6-step cognitive loop, not just LLM wrapper |
 | ✅ Deep Opik | Nested traces, experiments, custom metrics |
-| ✅ LLM-as-Judge | Self-evaluation of outputs |
+| ✅ Custom Evaluators | 6 evaluators assess ALL AI outputs with grades (A-F) |
+| ✅ Hybrid Evaluation | Custom evaluators (40%) + LLM-as-Judge (60%) |
 | ✅ Novel Use Case | Expose experiment data TO users |
-| ✅ Production Ready | Full-stack, polished UI |
+| ✅ Production Ready | Full-stack, polished UI with evaluator visualizations |
 
 ---
 
 ## 📁 Key Files
 
 ```
-backend/services/coach_agent.py    # 🤖 AI Agent (6-step loop)
+backend/services/coach_agent.py        # 🤖 AI Agent (6-step loop)
+backend/services/evaluators.py         # 🎯 Custom Opik Evaluators (NEW!)
 backend/services/experiment_engine.py  # Multi-armed bandit
-backend/services/opik_experiments.py   # A/B testing
-frontend/src/app/agent/page.tsx    # Agent visualization
-frontend/src/app/insights/page.tsx # User insights dashboard
+backend/services/intervention_generator.py  # Message generation + evaluation
+backend/services/analysis_engine.py    # Insight generation + evaluation
+frontend/src/app/agent/page.tsx        # Agent visualization with evaluator scores
+frontend/src/app/experiment/page.tsx   # Experiment page with grade distribution
+frontend/src/app/insights/page.tsx     # User insights with insight quality grades
 ```
 
 ---

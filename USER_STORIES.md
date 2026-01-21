@@ -15,6 +15,7 @@ A comprehensive guide to how Resolution Lab works from the user's perspective.
 7. [Running a Simulation Demo](#7-running-a-simulation-demo)
 8. [Long-term Usage Patterns](#8-long-term-usage-patterns)
 9. [Edge Cases & Error Handling](#9-edge-cases--error-handling)
+10. [Custom Opik Evaluators - Technical Deep Dive](#custom-opik-evaluators---technical-deep-dive)
 
 ---
 
@@ -291,10 +292,23 @@ AGENT STEPS VISUALIZATION
 
 ✅ Step 5: EVALUATE
 ┌─────────────────────────────────────────────┐
-│ Quality:        ████████░░ 82%              │
-│ Relevance:      █████████░ 88%              │
-│ Personalization: ███████░░░ 75%             │
-│ Overall:        ████████░░ 81%              │
+│ ┌─────────────────────────────────────────┐ │
+│ │           GRADE: B                      │ │
+│ │        (Custom Opik Evaluators)         │ │
+│ └─────────────────────────────────────────┘ │
+│                                             │
+│ Custom Evaluator Scores:                    │
+│ ├─ Strategy Alignment:   85%               │
+│ ├─ Motivation Power:     78%               │
+│ ├─ Personalization:      72%               │
+│ └─ Tone Consistency:     80%               │
+│                                             │
+│ LLM Judge Scores:                           │
+│ ├─ Quality:              82%               │
+│ └─ Relevance:            88%               │
+│                                             │
+│ Overall (Hybrid):        81%               │
+│ (40% custom + 60% LLM judge)               │
 │                                             │
 │ Suggestions:                                │
 │ • Could reference specific past achievements│
@@ -304,12 +318,14 @@ AGENT STEPS VISUALIZATION
 └─ Learning signals logged to Opik
 
 ✓ All steps traced in Opik with nested relationships
+✓ Custom evaluators grade every message A-F
 ```
 
 **What Sarah learns:**
 - The AI actually reasons about her data
 - It's not random - there's logic behind each message
 - She can see WHY a strategy was chosen
+- Message quality is graded (A-F) for transparency
 - Transparency builds trust
 
 ---
@@ -333,7 +349,7 @@ Personal experiment results
 └──────────┘ └──────────┘ └──────────┘ └──────────┘
 
 ┌─────────────────────────────────────────────────┐
-│ 💡 YOUR PERSONAL INSIGHT                        │
+│ 💡 YOUR PERSONAL INSIGHT            Grade: [A]  │
 │                                                 │
 │ "You respond best to Identity Reinforcement     │
 │  messages (82% success rate). You're motivated  │
@@ -341,6 +357,11 @@ Personal experiment results
 │  fear of loss. Consider framing your goals as   │
 │  identity statements: 'I am someone who         │
 │  exercises' rather than 'I should exercise'"    │
+│                                                 │
+│ ─────────────────────────────────────────────── │
+│ Custom Opik Evaluator Scores:                   │
+│ Actionability: 92%  Data-grounded: 88%          │
+│ Personalization: 85%  Clarity: 90%              │
 └─────────────────────────────────────────────────┘
 
 STRATEGY COMPARISON CHART
@@ -452,14 +473,32 @@ Strategies Tested: 8
 Best Strategy Found: micro_commitment (78%)
 Experiment Phase: Optimizing 🎯
 
+┌─────────────────────────────────────────────────┐
+│ 🎯 CUSTOM OPIK EVALUATORS                       │
+│ Every message evaluated for quality!            │
+│                                                 │
+│ Average Quality Score: 72%  [Good]              │
+│ ████████████████████░░░░░░░                     │
+│                                                 │
+│ Grade Distribution:                             │
+│ A: ██ 3   B: ████████ 12   C: ██████ 10        │
+│ D: ██ 4   F: █ 1                                │
+│                                                 │
+│ Dimensions Evaluated:                           │
+│ • Strategy Alignment - Message matches strategy │
+│ • Motivation Power - Likely to motivate action  │
+│ • Personalization - Feels tailored, not generic │
+│ • Tone Consistency - Tone matches strategy      │
+└─────────────────────────────────────────────────┘
+
 ┌─────────────────────────────────────────────┐
-│ micro_commitment        ████████████████  78% │
-│ identity_reinforcement  ██████████████░░  72% │
-│ gentle_reminder         ████████████░░░░  65% │
+│ micro_commitment     [B] ████████████████  78% │
+│ identity_reinforcement [A] ██████████████░░ 72% │
+│ gentle_reminder      [C] ████████████░░░░  65% │
 │ ...                                         │
 └─────────────────────────────────────────────┘
 
-💡 This is simulated data. Create a real goal to 
+💡 This is simulated data. Create a real goal to
    discover YOUR personal motivation formula!
 
 [Create Real Goal]  [Run Another Simulation]
@@ -606,6 +645,37 @@ LONG-TERM VALUE
 3. **Personal insights**: Data about YOUR psychology
 4. **No guilt**: Failures are data, not judgment
 5. **Adaptive**: System improves over time for each user
+6. **Quality Assurance**: Every AI output graded A-F by custom Opik evaluators
+
+---
+
+## Custom Opik Evaluators - Technical Deep Dive
+
+Resolution Lab uses 6 custom Opik evaluators to assess ALL AI-generated content:
+
+### Message Evaluators (Used in Agent & Experiment pages)
+
+| Evaluator | What it Measures | How it Works |
+|-----------|------------------|--------------|
+| **Strategy Alignment** | Does message match intended strategy? | Keyword/phrase matching for strategy-specific language |
+| **Motivation Effectiveness** | Will this actually motivate action? | Checks for call-to-action, emotional engagement, self-efficacy |
+| **Personalization** | Is it tailored or generic? | Detects generic phrases vs. goal-specific references |
+| **Tone Consistency** | Does tone match strategy? | Validates tone markers match expected strategy style |
+
+### Insight Evaluator (Used in Insights page)
+
+| Evaluator | What it Measures | How it Works |
+|-----------|------------------|--------------|
+| **Insight Quality** | Is recommendation actionable & data-grounded? | Checks actionability, data references, personalization, clarity |
+
+### Hybrid Evaluation (Agent Page)
+
+The AI Agent uses a **hybrid evaluation approach**:
+- **40% weight**: Custom Opik evaluators (fast, deterministic)
+- **60% weight**: LLM-as-Judge (nuanced, contextual)
+- **Result**: Overall score + Letter grade (A-F)
+
+This demonstrates production-ready evaluation patterns that go beyond basic tracing.
 
 ---
 

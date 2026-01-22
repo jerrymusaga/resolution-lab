@@ -113,8 +113,8 @@ class AICoachAgent:
         # Step 2: THINK - Reason about the observations
         thought = await self._think(observation, goal_title, insights)
         
-        # Step 3: PLAN - Decide on strategy
-        plan = await self._plan(thought, goal_title, goal_description, insights)
+        # Step 3: PLAN - Decide on strategy (pass user_id for formula lookup)
+        plan = await self._plan(user_id, thought, goal_title, goal_description, insights)
         
         # Step 4: ACT - Generate the intervention
         action = await self._act(plan, goal_title, goal_description, thought)
@@ -248,6 +248,7 @@ Respond in JSON format:
     @track(name="agent_plan", tags=["agent", "plan", "strategy"])
     async def _plan(
         self,
+        user_id: str,
         thought: AgentThought,
         goal_title: str,
         goal_description: str,
@@ -255,18 +256,28 @@ Respond in JSON format:
     ) -> AgentPlan:
         """
         PLAN: Decide on the intervention strategy.
-        
+
         Uses the multi-armed bandit algorithm informed by reasoning.
+        If user has applied their formula, prioritizes their preferred strategy.
         """
-        
-        # Get strategy from bandit algorithm
+
+        # Get strategy from bandit algorithm (respects user's formula if applied)
         strategy_result = experiment_engine.select_strategy(
-            user_id="planning",  # Placeholder for planning phase
-            goal_id="planning"
+            user_id=user_id,
+            goal_id=goal_title
         )
         chosen_strategy = InterventionStrategy(strategy_result["strategy"])
+        formula_active = strategy_result.get("formula_active", False)
+        selection_reason = strategy_result.get("reason", "unknown")
         
         # Generate planning reasoning with LLM
+        formula_context = ""
+        if formula_active:
+            formula_context = f"""
+IMPORTANT: This user has APPLIED THEIR MOTIVATION FORMULA.
+Their experiments showed that '{chosen_strategy.value}' works best for them.
+Use this strategy with high confidence - it's personalized to this user."""
+
         prompt = f"""You are planning a motivation intervention.
 
 USER ANALYSIS:
@@ -274,8 +285,9 @@ USER ANALYSIS:
 
 GOAL: {goal_title}
 {f"DESCRIPTION: {goal_description}" if goal_description else ""}
-
-ALGORITHM SUGGESTION: {chosen_strategy.value}
+{formula_context}
+SELECTED STRATEGY: {chosen_strategy.value}
+SELECTION REASON: {selection_reason}
 
 Available strategies and their descriptions:
 {json.dumps({s.value: STRATEGY_DESCRIPTIONS[s] for s in InterventionStrategy}, indent=2)}
@@ -314,10 +326,18 @@ Create a plan. Respond in JSON:
             )
             
         except Exception as e:
+            # Create reasoning based on whether formula is applied
+            if formula_active:
+                reasoning = f"Using your personalized motivation formula: {chosen_strategy.value} works best for you!"
+                effectiveness = 0.75  # Higher confidence when formula is applied
+            else:
+                reasoning = f"Selected based on multi-armed bandit algorithm ({selection_reason})"
+                effectiveness = 0.5
+
             plan = AgentPlan(
                 chosen_strategy=chosen_strategy,
-                reasoning=f"Selected based on multi-armed bandit algorithm ({strategy_result.get('reason', 'exploration')})",
-                expected_effectiveness=0.5,
+                reasoning=reasoning,
+                expected_effectiveness=effectiveness,
                 alternative_strategies=[],
                 personalization_notes="Focus on the goal and user's progress"
             )

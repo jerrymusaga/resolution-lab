@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input } from '@/components/ui';
 import Progress from '@/components/ui/Progress';
-import { getOrCreateUserId, simulateExperiment } from '@/lib/api';
+import { getOrCreateUserId, simulateExperiment, getFormulaStatus, applyFormula, clearFormula, FormulaStatus } from '@/lib/api';
 import { SimulationResult, STRATEGY_INFO, InterventionStrategy } from '@/types';
 import { getStrategyColor } from '@/lib/utils';
 import {
@@ -61,6 +61,65 @@ export default function ExperimentPage() {
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [showSimulations, setShowSimulations] = useState(false);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
+
+  // Formula state
+  const [formulaStatus, setFormulaStatus] = useState<FormulaStatus | null>(null);
+  const [applyingFormula, setApplyingFormula] = useState(false);
+  const [formulaMessage, setFormulaMessage] = useState<string | null>(null);
+
+  // Fetch formula status on mount and after simulation
+  useEffect(() => {
+    const fetchFormulaStatus = async () => {
+      try {
+        const userId = getOrCreateUserId();
+        const status = await getFormulaStatus(userId);
+        setFormulaStatus(status);
+      } catch (err) {
+        console.error('Failed to fetch formula status:', err);
+      }
+    };
+    fetchFormulaStatus();
+  }, [result]); // Re-fetch when result changes
+
+  const handleApplyFormula = async () => {
+    try {
+      setApplyingFormula(true);
+      setFormulaMessage(null);
+      const userId = getOrCreateUserId();
+      const response = await applyFormula(userId);
+      if (response.success) {
+        setFormulaMessage(response.message || 'Formula applied successfully!');
+        // Refresh formula status
+        const status = await getFormulaStatus(userId);
+        setFormulaStatus(status);
+      } else {
+        setFormulaMessage(response.reason || 'Failed to apply formula');
+      }
+    } catch (err) {
+      setFormulaMessage('Failed to apply formula. Please try again.');
+    } finally {
+      setApplyingFormula(false);
+    }
+  };
+
+  const handleClearFormula = async () => {
+    try {
+      setApplyingFormula(true);
+      setFormulaMessage(null);
+      const userId = getOrCreateUserId();
+      const response = await clearFormula(userId);
+      if (response.success) {
+        setFormulaMessage(response.message || 'Formula cleared. Back to experimenting!');
+        // Refresh formula status
+        const status = await getFormulaStatus(userId);
+        setFormulaStatus(status);
+      }
+    } catch (err) {
+      setFormulaMessage('Failed to clear formula. Please try again.');
+    } finally {
+      setApplyingFormula(false);
+    }
+  };
 
   const runSimulation = async () => {
     try {
@@ -350,6 +409,112 @@ export default function ExperimentPage() {
                   </p>
                   <p className="text-sm text-gray-500">Current Phase</p>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Apply Your Formula Card - NEW! */}
+          <Card variant="elevated" className={cn(
+            "border-2 transition-all",
+            formulaStatus?.formula_applied
+              ? "bg-gradient-to-r from-emerald-50 to-green-50 border-green-300"
+              : "bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-300"
+          )}>
+            <CardContent className="py-6">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex items-center space-x-4">
+                  <div className={cn(
+                    "p-3 rounded-full",
+                    formulaStatus?.formula_applied ? "bg-green-100" : "bg-amber-100"
+                  )}>
+                    {formulaStatus?.formula_applied ? (
+                      <CheckCircle2 className="w-8 h-8 text-green-600" />
+                    ) : (
+                      <Zap className="w-8 h-8 text-amber-600" />
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">
+                      {formulaStatus?.formula_applied
+                        ? "Your Formula is Active!"
+                        : "Apply Your Motivation Formula"
+                      }
+                    </h3>
+                    <p className="text-gray-600 mt-1">
+                      {formulaStatus?.formula_applied ? (
+                        <>
+                          The AI is now using <span className="font-semibold text-green-700">
+                            {STRATEGY_ICONS[formulaStatus.preferred_strategy || '']} {
+                              STRATEGY_INFO[formulaStatus.preferred_strategy as keyof typeof STRATEGY_INFO]?.name || formulaStatus.preferred_strategy
+                            }
+                          </span> for your check-ins (90% of the time)
+                        </>
+                      ) : (
+                        <>
+                          Lock in <span className="font-semibold text-amber-700">
+                            {STRATEGY_ICONS[bestStrategyData?.strategy || '']} {bestStrategyData?.name}
+                          </span> as your preferred strategy so the AI uses it automatically
+                        </>
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-center gap-2">
+                  {formulaStatus?.formula_applied ? (
+                    <Button
+                      variant="outline"
+                      onClick={handleClearFormula}
+                      isLoading={applyingFormula}
+                      className="border-green-300 text-green-700 hover:bg-green-50"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Resume Experimenting
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleApplyFormula}
+                      isLoading={applyingFormula}
+                      size="lg"
+                      className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white shadow-lg"
+                    >
+                      <Sparkles className="w-5 h-5 mr-2" />
+                      Apply My Formula
+                    </Button>
+                  )}
+                  {formulaMessage && (
+                    <p className={cn(
+                      "text-sm font-medium",
+                      formulaMessage.includes('success') || formulaMessage.includes('active')
+                        ? "text-green-600"
+                        : "text-amber-600"
+                    )}>
+                      {formulaMessage}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* What happens when formula is applied */}
+              <div className={cn(
+                "mt-4 p-4 rounded-lg border",
+                formulaStatus?.formula_applied
+                  ? "bg-white border-green-200"
+                  : "bg-white border-amber-200"
+              )}>
+                <p className="text-sm text-gray-600">
+                  {formulaStatus?.formula_applied ? (
+                    <>
+                      <strong className="text-green-700">What&apos;s happening now:</strong> When you use the AI Agent,
+                      it will prioritize your best strategy. You&apos;ll still see occasional variety (10%) to keep learning.
+                    </>
+                  ) : (
+                    <>
+                      <strong className="text-amber-700">What this does:</strong> The AI Agent will use your winning strategy
+                      90% of the time, while still exploring 10% to keep improving. Your formula can be updated anytime.
+                    </>
+                  )}
+                </p>
               </div>
             </CardContent>
           </Card>

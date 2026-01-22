@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input } from '@/components/ui';
 import { cn } from '@/lib/utils';
+import { getOrCreateUserId, getFormulaStatus, FormulaStatus } from '@/lib/api';
+import { STRATEGY_INFO } from '@/types';
 import {
   Brain,
   Eye,
@@ -19,7 +21,8 @@ import {
   Loader2,
   Zap,
   ArrowRight,
-  RotateCw
+  RotateCw,
+  FlaskConical
 } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -37,6 +40,18 @@ interface AgentStep {
   isActive: boolean;
 }
 
+// Strategy icons mapping
+const STRATEGY_ICONS: Record<string, string> = {
+  gentle_reminder: '🌟',
+  accountability: '✅',
+  streak_gamification: '🔥',
+  social_comparison: '👥',
+  loss_aversion: '⚠️',
+  reward_preview: '🎁',
+  identity_reinforcement: '💪',
+  micro_commitment: '🎯',
+};
+
 export default function AgentPage() {
   const [goalTitle, setGoalTitle] = useState('Exercise for 30 minutes');
   const [loading, setLoading] = useState(false);
@@ -44,6 +59,23 @@ export default function AgentPage() {
   const [agentResponse, setAgentResponse] = useState<any>(null);
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set([1, 2, 3, 4, 5, 6]));
   const [currentStep, setCurrentStep] = useState(0);
+
+  // Formula status
+  const [formulaStatus, setFormulaStatus] = useState<FormulaStatus | null>(null);
+
+  // Fetch formula status on mount
+  useEffect(() => {
+    const fetchFormulaStatus = async () => {
+      try {
+        const userId = getOrCreateUserId();
+        const status = await getFormulaStatus(userId);
+        setFormulaStatus(status);
+      } catch (err) {
+        console.error('Failed to fetch formula status:', err);
+      }
+    };
+    fetchFormulaStatus();
+  }, []);
 
   const runAgent = async () => {
     try {
@@ -269,6 +301,72 @@ export default function AgentPage() {
           </div>
         </Card>
       </div>
+
+      {/* Formula Status Banner */}
+      {formulaStatus?.formula_applied && formulaStatus.preferred_strategy && (
+        <Card variant="bordered" className="mb-4 bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-200">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-emerald-100 rounded-full">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-emerald-800">Your Motivation Formula is Active</p>
+                  <p className="text-sm text-emerald-600">
+                    Using{' '}
+                    <span className="font-bold">
+                      {STRATEGY_ICONS[formulaStatus.preferred_strategy]}{' '}
+                      {STRATEGY_INFO[formulaStatus.preferred_strategy as keyof typeof STRATEGY_INFO]?.name || formulaStatus.preferred_strategy}
+                    </span>{' '}
+                    for your check-ins (90% of the time)
+                  </p>
+                </div>
+              </div>
+              <a
+                href="/experiment"
+                className="text-sm text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
+              >
+                <FlaskConical className="w-4 h-4" />
+                Manage
+              </a>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* No Formula Banner - Encourage to experiment */}
+      {formulaStatus && !formulaStatus.formula_applied && formulaStatus.ready_to_apply && (
+        <Card variant="bordered" className="mb-4 bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-amber-100 rounded-full">
+                  <Sparkles className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-amber-800">Your Motivation Formula is Ready!</p>
+                  <p className="text-sm text-amber-600">
+                    Based on your experiments,{' '}
+                    <span className="font-bold">
+                      {STRATEGY_ICONS[formulaStatus.best_strategy || '']}{' '}
+                      {STRATEGY_INFO[formulaStatus.best_strategy as keyof typeof STRATEGY_INFO]?.name || formulaStatus.best_strategy}
+                    </span>{' '}
+                    works best for you. Apply it to supercharge your check-ins!
+                  </p>
+                </div>
+              </div>
+              <a
+                href="/experiment"
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium flex items-center gap-1"
+              >
+                <Zap className="w-4 h-4" />
+                Apply Formula
+              </a>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Input Section */}
       <Card variant="bordered" className="mb-8 overflow-hidden">

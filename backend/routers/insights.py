@@ -79,6 +79,12 @@ async def get_user_insights(
     if raw_insights["worst_strategy"]:
         worst_strategy = InterventionStrategy(raw_insights["worst_strategy"])
     
+    # Check formula status
+    formula_applied = raw_insights.get("formula_applied", False)
+    preferred_strategy = None
+    if raw_insights.get("preferred_strategy"):
+        preferred_strategy = InterventionStrategy(raw_insights["preferred_strategy"])
+
     return UserInsights(
         user_id=user_id,
         total_goals=0,  # Would come from goals DB
@@ -91,6 +97,8 @@ async def get_user_insights(
         experiment_phase=raw_insights["experiment_phase"],
         strategies_tested=raw_insights["strategies_tested"],
         data_points_collected=raw_insights["total_interventions"],
+        formula_applied=formula_applied,
+        preferred_strategy=preferred_strategy,
     )
 
 
@@ -202,6 +210,61 @@ async def get_insights_summary(
         } if best else None,
         "ready_for_optimization": raw_insights["experiment_phase"] == "optimizing",
     }
+
+
+@router.get("/formula/status", response_model=dict)
+async def get_formula_status(
+    user_id: str = Query(..., description="User ID"),
+):
+    """
+    Get the status of user's motivation formula.
+
+    Returns whether formula is applied, what their preferred strategy is,
+    and whether they're ready to apply a formula.
+    """
+    return experiment_engine.get_formula_status(user_id)
+
+
+@router.post("/formula/apply", response_model=dict)
+async def apply_formula(
+    user_id: str = Query(..., description="User ID"),
+    strategy: Optional[str] = Query(None, description="Specific strategy to apply (uses best if not provided)"),
+):
+    """
+    Apply the user's discovered motivation formula.
+
+    This locks in their best-performing strategy so the AI agent
+    will prioritize it in future interventions.
+
+    Once applied:
+    - 90% of interventions will use the preferred strategy
+    - 10% will still explore to continue learning
+    """
+    result = experiment_engine.apply_user_formula(user_id, strategy)
+
+    if result["success"]:
+        # Also get updated insights to return
+        insights = experiment_engine.get_user_insights(user_id)
+        result["insights"] = {
+            "formula_applied": insights["formula_applied"],
+            "preferred_strategy": insights["preferred_strategy"],
+            "best_strategy": insights["best_strategy"],
+        }
+
+    return result
+
+
+@router.post("/formula/clear", response_model=dict)
+async def clear_formula(
+    user_id: str = Query(..., description="User ID"),
+):
+    """
+    Clear the user's formula and return to experimentation mode.
+
+    This allows the AI to resume testing different strategies
+    to potentially find a better formula.
+    """
+    return experiment_engine.clear_user_formula(user_id)
 
 
 @router.get("/recommendation", response_model=dict)

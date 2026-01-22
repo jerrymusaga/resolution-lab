@@ -212,19 +212,23 @@ class UserInsights(BaseModel):
     total_goals: int
     active_goals: int
     overall_completion_rate: float
-    
+
     # Strategy effectiveness ranking
     strategy_stats: List[StrategyStats]
     best_strategy: Optional[InterventionStrategy] = None
     worst_strategy: Optional[InterventionStrategy] = None
-    
+
     # Recommendations
     recommendation: str
-    
+
     # Experiment status
     experiment_phase: str  # "exploring" or "optimizing"
     strategies_tested: int
     data_points_collected: int
+
+    # Formula application status (NEW)
+    formula_applied: bool = False
+    preferred_strategy: Optional[InterventionStrategy] = None
 
 
 # ===================

@@ -125,6 +125,9 @@ export interface UserInsights {
   experiment_phase: 'exploring' | 'optimizing';
   strategies_tested: number;
   data_points_collected: number;
+  // Formula application status
+  formula_applied?: boolean;
+  preferred_strategy?: InterventionStrategy;
 }
 
 export interface StrategyComparison {

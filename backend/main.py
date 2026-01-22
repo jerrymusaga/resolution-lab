@@ -13,6 +13,8 @@ import litellm
 
 from config import get_settings
 from routers import goals_router, interventions_router, insights_router, agent_router
+from routers.auth import router as auth_router
+from routers.opik_stats import router as opik_router
 
 # Load settings
 settings = get_settings()
@@ -82,6 +84,8 @@ app.add_middleware(
 )
 
 # Include routers
+app.include_router(auth_router)  # Auth has its own /api/auth prefix
+app.include_router(opik_router)  # Opik has its own /api/opik prefix
 app.include_router(goals_router, prefix="/api")
 app.include_router(interventions_router, prefix="/api")
 app.include_router(insights_router, prefix="/api")

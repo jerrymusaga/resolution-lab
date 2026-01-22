@@ -12,6 +12,7 @@ from collections import defaultdict
 import opik
 
 from models.schemas import InterventionStrategy, StrategyStats
+from services import database as db
 
 
 # ===================
@@ -141,25 +142,115 @@ class UserBanditState:
 class ExperimentEngine:
     """
     Multi-armed bandit experiment engine.
-    
+
     Uses epsilon-greedy strategy:
     - With probability epsilon: explore (try random strategy)
     - With probability 1-epsilon: exploit (use best known strategy)
-    
+
     During initial exploration phase, ensures each strategy is tried
     at least MIN_SAMPLES_FOR_EXPLOITATION times.
+
+    Persists state to Supabase database for production use.
     """
-    
+
     def __init__(self, epsilon: float = EPSILON):
         self.epsilon = epsilon
-        # In-memory state (in production, this would be backed by database)
+        # In-memory cache (backed by database)
         self._user_states: dict[str, UserBanditState] = {}
-    
+        self._use_database = True  # Set to False to use in-memory only (for testing)
+
     def get_user_state(self, user_id: str) -> UserBanditState:
-        """Get or create bandit state for a user."""
-        if user_id not in self._user_states:
-            self._user_states[user_id] = UserBanditState(user_id=user_id)
-        return self._user_states[user_id]
+        """Get or create bandit state for a user, loading from database if available."""
+        # Check cache first
+        if user_id in self._user_states:
+            return self._user_states[user_id]
+
+        # Try to load from database
+        if self._use_database:
+            try:
+                state = self._load_state_from_db(user_id)
+                if state:
+                    self._user_states[user_id] = state
+                    return state
+            except Exception as e:
+                print(f"Warning: Could not load from database: {e}")
+
+        # Create new state
+        state = UserBanditState(user_id=user_id)
+        self._user_states[user_id] = state
+
+        # Initialize in database
+        if self._use_database:
+            try:
+                self._save_state_to_db(state)
+            except Exception as e:
+                print(f"Warning: Could not save to database: {e}")
+
+        return state
+
+    def _load_state_from_db(self, user_id: str) -> Optional[UserBanditState]:
+        """Load user state from database."""
+        # Get experiment state
+        exp_state = db.get_experiment_state(user_id)
+        arms_data = db.get_strategy_arms(user_id)
+
+        if not exp_state and not arms_data:
+            return None
+
+        # Create state object
+        state = UserBanditState(user_id=user_id)
+
+        # Load experiment state
+        if exp_state:
+            state.total_interventions = exp_state.get("total_interventions", 0)
+            state.formula_applied = exp_state.get("formula_applied", False)
+            if exp_state.get("preferred_strategy"):
+                try:
+                    state.preferred_strategy = InterventionStrategy(exp_state["preferred_strategy"])
+                except ValueError:
+                    pass
+
+        # Load arms
+        for arm_data in arms_data:
+            try:
+                strategy = InterventionStrategy(arm_data["strategy"])
+                arm = state.get_arm(strategy)
+                arm.total_pulls = arm_data.get("total_pulls", 0)
+                arm.total_reward = arm_data.get("total_reward", 0.0)
+                arm.successes = arm_data.get("successes", 0)
+            except ValueError:
+                pass
+
+        return state
+
+    def _save_state_to_db(self, state: UserBanditState):
+        """Save user state to database."""
+        # Save experiment state
+        db.upsert_experiment_state(state.user_id, {
+            "total_interventions": state.total_interventions,
+            "formula_applied": state.formula_applied,
+            "preferred_strategy": state.preferred_strategy.value if state.preferred_strategy else None,
+            "experiment_phase": "exploring" if state.exploration_phase else "optimizing"
+        })
+
+        # Save arms
+        for strategy, arm in state.arms.items():
+            if arm.total_pulls > 0:
+                db.upsert_strategy_arm(
+                    state.user_id,
+                    strategy.value,
+                    arm.total_pulls,
+                    arm.total_reward,
+                    arm.successes
+                )
+
+    def _save_arm_update(self, user_id: str, strategy: InterventionStrategy, reward: float, success: bool):
+        """Save a single arm update to database."""
+        if self._use_database:
+            try:
+                db.update_strategy_arm(user_id, strategy.value, reward, success)
+            except Exception as e:
+                print(f"Warning: Could not update arm in database: {e}")
     
     def load_user_state_from_stats(
         self, 
@@ -301,31 +392,39 @@ class ExperimentEngine:
     ) -> float:
         """
         Record the outcome of an intervention.
-        
+
         Args:
             user_id: The user's ID
             strategy: The strategy that was used
             completed: Whether the user completed their goal
             response_time_seconds: Time from intervention to response
             sentiment: User's sentiment (positive/neutral/negative)
-        
+
         Returns:
             Calculated effectiveness score
         """
         state = self.get_user_state(user_id)
         arm = state.get_arm(strategy)
-        
+
         # Calculate effectiveness score
         effectiveness = self.calculate_effectiveness(
             completed=completed,
             response_time_seconds=response_time_seconds,
             sentiment=sentiment
         )
-        
-        # Update arm statistics
+
+        # Update arm statistics (in memory)
         arm.update(reward=effectiveness, success=completed)
         state.total_interventions += 1
-        
+
+        # Persist to database
+        self._save_arm_update(user_id, strategy, effectiveness, completed)
+        if self._use_database:
+            try:
+                db.increment_interventions(user_id)
+            except Exception as e:
+                print(f"Warning: Could not increment interventions: {e}")
+
         # Log to Opik
         try:
             span = opik.get_current_span()
@@ -343,7 +442,7 @@ class ExperimentEngine:
                 })
         except:
             pass
-        
+
         return effectiveness
     
     def calculate_effectiveness(
@@ -464,7 +563,16 @@ class ExperimentEngine:
             except ValueError:
                 return {"success": False, "reason": f"Invalid strategy: {strategy}"}
 
-        return state.apply_formula(strategy_enum)
+        result = state.apply_formula(strategy_enum)
+
+        # Persist to database
+        if result.get("success") and self._use_database:
+            try:
+                db.apply_formula(user_id, state.preferred_strategy.value)
+            except Exception as e:
+                print(f"Warning: Could not save formula to database: {e}")
+
+        return result
 
     def clear_user_formula(self, user_id: str) -> dict:
         """
@@ -477,7 +585,16 @@ class ExperimentEngine:
             dict with result
         """
         state = self.get_user_state(user_id)
-        return state.clear_formula()
+        result = state.clear_formula()
+
+        # Persist to database
+        if result.get("success") and self._use_database:
+            try:
+                db.clear_formula(user_id)
+            except Exception as e:
+                print(f"Warning: Could not clear formula in database: {e}")
+
+        return result
 
     def get_formula_status(self, user_id: str) -> dict:
         """

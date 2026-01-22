@@ -3,16 +3,20 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { 
-  Target, 
-  BarChart3, 
-  CheckCircle2, 
+import {
+  Target,
+  BarChart3,
+  CheckCircle2,
   FlaskConical,
   Brain,
   Menu,
-  X
+  X,
+  LogOut,
+  User
 } from 'lucide-react';
 import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Target },
@@ -25,6 +29,7 @@ const navItems = [
 export default function Header() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, loading, signInWithGoogle, signOut } = useAuth();
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -45,7 +50,7 @@ export default function Header() {
             {navItems.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
               const Icon = item.icon;
-              
+
               return (
                 <Link
                   key={item.href}
@@ -63,6 +68,45 @@ export default function Header() {
               );
             })}
           </nav>
+
+          {/* Auth section */}
+          <div className="hidden md:flex items-center space-x-3">
+            {loading ? (
+              <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
+            ) : user ? (
+              <div className="flex items-center space-x-3">
+                {user.avatar_url ? (
+                  <img
+                    src={user.avatar_url}
+                    alt={user.full_name || user.email}
+                    className="w-8 h-8 rounded-full border border-gray-200"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
+                    <User className="w-4 h-4 text-primary-600" />
+                  </div>
+                )}
+                <span className="text-sm font-medium text-gray-700 max-w-[120px] truncate">
+                  {user.full_name || user.email}
+                </span>
+                <button
+                  onClick={signOut}
+                  className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                  title="Sign out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <Button
+                onClick={signInWithGoogle}
+                variant="outline"
+                size="sm"
+              >
+                Sign In
+              </Button>
+            )}
+          </div>
 
           {/* Mobile menu button */}
           <button
@@ -85,7 +129,7 @@ export default function Header() {
             {navItems.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
               const Icon = item.icon;
-              
+
               return (
                 <Link
                   key={item.href}
@@ -103,6 +147,51 @@ export default function Header() {
                 </Link>
               );
             })}
+
+            {/* Mobile Auth */}
+            <div className="border-t border-gray-200 pt-3 mt-3">
+              {user ? (
+                <div className="px-4 py-2">
+                  <div className="flex items-center space-x-3 mb-3">
+                    {user.avatar_url ? (
+                      <img
+                        src={user.avatar_url}
+                        alt={user.full_name || user.email}
+                        className="w-10 h-10 rounded-full border border-gray-200"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
+                        <User className="w-5 h-5 text-primary-600" />
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-medium text-gray-900">{user.full_name || 'User'}</p>
+                      <p className="text-sm text-gray-500">{user.email}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      signOut();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="flex items-center space-x-3 w-full px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    <LogOut className="w-5 h-5" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    signInWithGoogle();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex items-center justify-center space-x-2 w-full px-4 py-3 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 transition-colors"
+                >
+                  <span>Sign In with Google</span>
+                </button>
+              )}
+            </div>
           </nav>
         </div>
       )}

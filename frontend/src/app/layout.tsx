@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/Header";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 export const metadata: Metadata = {
   title: "Resolution Lab - Discover Your Motivation Formula",
@@ -16,10 +17,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-sans antialiased">
-        <div className="min-h-screen bg-gray-50">
-          <Header />
-          <main>{children}</main>
-        </div>
+        <AuthProvider>
+          <div className="min-h-screen bg-gray-50">
+            <Header />
+            <main>{children}</main>
+          </div>
+        </AuthProvider>
       </body>
     </html>
   );

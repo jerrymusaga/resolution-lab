@@ -21,8 +21,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // If supabase is not configured, skip auth
+    const client = supabase;
+    if (!client) {
+      setLoading(false);
+      return;
+    }
+
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    client.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
         setUser({
@@ -38,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = client.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session?.user) {
         setUser({
@@ -57,7 +64,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
+    const client = supabase;
+    if (!client) {
+      console.error('Supabase not configured');
+      return;
+    }
+    const { error } = await client.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
@@ -70,7 +82,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
+    const client = supabase;
+    if (!client) {
+      setUser(null);
+      setSession(null);
+      return;
+    }
+    const { error } = await client.auth.signOut();
     if (error) {
       console.error('Error signing out:', error);
       throw error;

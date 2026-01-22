@@ -326,8 +326,9 @@ async def simulate_experiment(
     total_score = 0.0
 
     for i in range(num_interventions):
-        # Select strategy
-        strategy = experiment_engine.select_strategy(user_id)
+        # Select strategy - returns dict with strategy key
+        strategy_result = experiment_engine.select_strategy(user_id)
+        strategy = InterventionStrategy(strategy_result["strategy"])
 
         # Generate message
         message = None

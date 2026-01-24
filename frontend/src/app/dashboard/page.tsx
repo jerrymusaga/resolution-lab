@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardContent, Button } from '@/components/ui';
 import GoalCard from '@/components/GoalCard';
 import CheckInModal from '@/components/CheckInModal';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import {
-  getOrCreateUserId,
   listGoals,
   generateIntervention,
   recordCheckIn,
@@ -16,7 +16,7 @@ import {
   completeGoal,
   deleteGoal
 } from '@/lib/api';
-import { Goal, InterventionResponse, InsightsSummary, STRATEGY_INFO } from '@/types';
+import { Goal, InterventionResponse, InsightsSummary } from '@/types';
 import { cn, formatPercent } from '@/lib/utils';
 import {
   Plus,
@@ -26,7 +26,6 @@ import {
   ArrowRight,
   Sparkles,
   AlertCircle,
-  Flame,
   Trophy,
   Brain,
   Rocket,
@@ -36,9 +35,10 @@ import {
   Clock,
   CheckCircle2
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
-export default function DashboardPage() {
-  const [userId, setUserId] = useState<string>('');
+function DashboardContent() {
+  const { user } = useAuth();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [summary, setSummary] = useState<InsightsSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,11 +50,14 @@ export default function DashboardPage() {
   const [currentIntervention, setCurrentIntervention] = useState<InterventionResponse | null>(null);
   const [checkInLoading, setCheckInLoading] = useState(false);
 
+  // Use authenticated user ID
+  const userId = user?.id || '';
+
   useEffect(() => {
-    const id = getOrCreateUserId();
-    setUserId(id);
-    loadData(id);
-  }, []);
+    if (userId) {
+      loadData(userId);
+    }
+  }, [userId]);
 
   const loadData = async (uid: string) => {
     try {
@@ -570,5 +573,13 @@ export default function DashboardPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <ProtectedRoute>
+      <DashboardContent />
+    </ProtectedRoute>
   );
 }

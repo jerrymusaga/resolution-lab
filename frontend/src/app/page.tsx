@@ -1,19 +1,52 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui';
-import { 
-  FlaskConical, 
-  BarChart3, 
-  Sparkles, 
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  FlaskConical,
+  BarChart3,
+  Sparkles,
   Target,
   Brain,
   Zap,
   ArrowRight,
-  CheckCircle2
+  CheckCircle2,
+  Loader2
 } from 'lucide-react';
 
 export default function HomePage() {
+  const { user, loading, signInWithGoogle } = useAuth();
+  const router = useRouter();
+
+  // Redirect to dashboard if already logged in
+  useEffect(() => {
+    if (user && !loading) {
+      router.push('/dashboard');
+    }
+  }, [user, loading, router]);
+
+  // Show loading while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-primary-600" />
+      </div>
+    );
+  }
+
+  // If user is logged in, show loading (will redirect)
+  if (user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-primary-600" />
+        <p className="ml-3 text-gray-600">Redirecting to dashboard...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -21,14 +54,14 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
         <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500 rounded-full filter blur-3xl opacity-20 animate-pulse-slow" />
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-primary-400 rounded-full filter blur-3xl opacity-20 animate-pulse-slow" />
-        
+
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
           <div className="text-center">
             <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-sm mb-8">
               <FlaskConical className="w-4 h-4" />
               <span>AI-Powered Behavioral Experiments</span>
             </div>
-            
+
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight">
               Discover What Actually
               <br />
@@ -36,26 +69,28 @@ export default function HomePage() {
                 Motivates You
               </span>
             </h1>
-            
+
             <p className="mt-6 text-xl text-primary-100 max-w-2xl mx-auto">
-              Stop guessing. Start experimenting. Resolution Lab runs real behavioral 
+              Stop guessing. Start experimenting. Resolution Lab runs real behavioral
               experiments to find YOUR personal motivation formula.
             </p>
-            
+
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/dashboard">
-                <Button size="lg" className="bg-white text-primary-700 hover:bg-gray-100">
-                  Get Started Free
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </Link>
-              <Link href="/experiment">
+              <Button
+                size="lg"
+                className="bg-white text-primary-700 hover:bg-gray-100"
+                onClick={signInWithGoogle}
+              >
+                Get Started Free
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+              <Link href="/login">
                 <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
-                  See Demo
+                  Sign In
                 </Button>
               </Link>
             </div>
-            
+
             {/* Stats */}
             <div className="mt-16 grid grid-cols-3 gap-8 max-w-2xl mx-auto">
               <div>
@@ -81,11 +116,11 @@ export default function HomePage() {
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900">The Problem with Generic Advice</h2>
             <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-              "Just set reminders" doesn't work for everyone. What motivates your friend 
+              "Just set reminders" doesn't work for everyone. What motivates your friend
               might actually demotivate you.
             </p>
           </div>
-          
+
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center p-6">
               <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -122,11 +157,11 @@ export default function HomePage() {
             </div>
             <h2 className="text-3xl font-bold text-gray-900">Run Experiments on Yourself</h2>
             <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-              Like A/B testing, but for your motivation. We systematically test different 
+              Like A/B testing, but for your motivation. We systematically test different
               strategies and show you the data.
             </p>
           </div>
-          
+
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mb-4">
@@ -135,7 +170,7 @@ export default function HomePage() {
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Set Your Goals</h3>
               <p className="text-gray-600 text-sm">Define what you want to achieve - exercise, reading, meditation, anything.</p>
             </div>
-            
+
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
                 <Brain className="w-6 h-6 text-purple-600" />
@@ -143,7 +178,7 @@ export default function HomePage() {
               <h3 className="text-lg font-semibold text-gray-900 mb-2">AI Tests Strategies</h3>
               <p className="text-gray-600 text-sm">Our AI tries 8 different motivation styles using personalized messages.</p>
             </div>
-            
+
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
                 <CheckCircle2 className="w-6 h-6 text-green-600" />
@@ -151,7 +186,7 @@ export default function HomePage() {
               <h3 className="text-lg font-semibold text-gray-900 mb-2">You Check In</h3>
               <p className="text-gray-600 text-sm">Simple yes/no responses. We track what works and what doesn't.</p>
             </div>
-            
+
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
                 <BarChart3 className="w-6 h-6 text-orange-600" />
@@ -170,7 +205,7 @@ export default function HomePage() {
             <h2 className="text-3xl font-bold text-gray-900">8 Motivation Strategies We Test</h2>
             <p className="mt-4 text-lg text-gray-600">Each based on behavioral science research</p>
           </div>
-          
+
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               { name: 'Gentle Reminder', emoji: '🌟', color: 'bg-blue-50' },
@@ -199,12 +234,14 @@ export default function HomePage() {
           <p className="text-xl text-gray-300 mb-8">
             Start your personal motivation experiment today. It's free.
           </p>
-          <Link href="/dashboard">
-            <Button size="lg" className="bg-primary-500 hover:bg-primary-600">
-              Start Your Experiment
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
-          </Link>
+          <Button
+            size="lg"
+            className="bg-primary-500 hover:bg-primary-600"
+            onClick={signInWithGoogle}
+          >
+            Start Your Experiment
+            <ArrowRight className="w-5 h-5 ml-2" />
+          </Button>
         </div>
       </section>
 

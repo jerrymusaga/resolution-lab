@@ -5,9 +5,10 @@ import Link from 'next/link';
 import { Button } from '@/components/ui';
 import GoalCard from '@/components/GoalCard';
 import CheckInModal from '@/components/CheckInModal';
-import { 
-  getOrCreateUserId, 
-  listGoals, 
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  listGoals,
   generateIntervention,
   recordCheckIn,
   pauseGoal,
@@ -21,22 +22,24 @@ import { cn } from '@/lib/utils';
 
 type FilterStatus = 'all' | 'active' | 'paused' | 'completed';
 
-export default function GoalsPage() {
-  const [userId, setUserId] = useState<string>('');
+function GoalsContent() {
+  const { user } = useAuth();
+  const userId = user?.id || '';
+
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterStatus>('all');
-  
+
   // Check-in modal state
   const [checkInGoalId, setCheckInGoalId] = useState<string | null>(null);
   const [currentIntervention, setCurrentIntervention] = useState<InterventionResponse | null>(null);
   const [checkInLoading, setCheckInLoading] = useState(false);
 
   useEffect(() => {
-    const id = getOrCreateUserId();
-    setUserId(id);
-    loadGoals(id);
-  }, []);
+    if (userId) {
+      loadGoals(userId);
+    }
+  }, [userId]);
 
   const loadGoals = async (uid: string) => {
     try {
@@ -66,7 +69,7 @@ export default function GoalsPage() {
 
   const handleCheckInSubmit = async (completed: boolean, feedback?: string) => {
     if (!currentIntervention) return;
-    
+
     try {
       setCheckInLoading(true);
       await recordCheckIn(userId, {
@@ -113,7 +116,7 @@ export default function GoalsPage() {
 
   const handleDeleteGoal = async (goalId: string) => {
     if (!confirm('Are you sure you want to delete this goal?')) return;
-    
+
     try {
       await deleteGoal(userId, goalId);
       await loadGoals(userId);
@@ -184,7 +187,7 @@ export default function GoalsPage() {
             {filter === 'all' ? 'No goals yet' : `No ${filter} goals`}
           </h3>
           <p className="text-gray-500 mb-6">
-            {filter === 'all' 
+            {filter === 'all'
               ? 'Create your first goal to start your motivation experiment'
               : `You don't have any ${filter} goals at the moment`
             }
@@ -227,5 +230,13 @@ export default function GoalsPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function GoalsPage() {
+  return (
+    <ProtectedRoute>
+      <GoalsContent />
+    </ProtectedRoute>
   );
 }

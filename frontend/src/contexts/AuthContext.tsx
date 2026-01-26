@@ -28,35 +28,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Get initial session - using getUser() which validates with Supabase Auth server
-    const initializeAuth = async () => {
-      try {
-        // First get the session from cookies
-        const { data: { session: currentSession } } = await client.auth.getSession();
+    let initialSessionHandled = false;
 
-        if (currentSession) {
-          setSession(currentSession);
-          setUser({
-            id: currentSession.user.id,
-            email: currentSession.user.email || '',
-            full_name: currentSession.user.user_metadata?.full_name,
-            avatar_url: currentSession.user.user_metadata?.avatar_url,
-          });
-        }
-      } catch (error) {
-        console.error('Error initializing auth:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initializeAuth();
-
-    // Listen for auth changes - this handles sign in, sign out, token refresh
+    // Listen for auth changes - this handles ALL auth events including initial session
     const {
       data: { subscription },
     } = client.auth.onAuthStateChange((event, session) => {
       console.log('Auth state changed:', event, session?.user?.email);
+
+      // Update session and user state
       setSession(session);
       if (session?.user) {
         setUser({
@@ -68,10 +48,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setUser(null);
       }
-      setLoading(false);
+
+      // Only set loading to false after initial session is handled
+      if (event === 'INITIAL_SESSION') {
+        initialSessionHandled = true;
+        setLoading(false);
+      } else if (initialSessionHandled) {
+        setLoading(false);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    // Fallback: if INITIAL_SESSION doesn't fire within 2 seconds, stop loading
+    const timeout = setTimeout(() => {
+      if (!initialSessionHandled) {
+        console.log('Auth timeout - setting loading to false');
+        setLoading(false);
+      }
+    }, 2000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
   }, []);
 
   const signInWithGoogle = async () => {

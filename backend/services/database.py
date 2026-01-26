@@ -5,7 +5,7 @@ Handles all Supabase database operations.
 
 import os
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from supabase import create_client, Client
 from dotenv import load_dotenv
 
@@ -255,7 +255,7 @@ def update_intervention_outcome(
     """Update intervention with outcome."""
     data = {
         "outcome": outcome,
-        "completed_at": datetime.utcnow().isoformat()
+        "completed_at": datetime.now(timezone.utc).isoformat()
     }
     if effectiveness_score is not None:
         data["effectiveness_score"] = effectiveness_score

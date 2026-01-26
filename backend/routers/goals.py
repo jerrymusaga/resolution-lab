@@ -4,7 +4,7 @@ API endpoints for goal management.
 Uses Supabase for persistence, with in-memory fallback.
 """
 
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import List, Optional
 from uuid import UUID, uuid4
 
@@ -52,7 +52,7 @@ def _db_row_to_goal(row: dict) -> Goal:
     if isinstance(created_at, str):
         created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
     elif created_at is None:
-        created_at = datetime.utcnow()
+        created_at = datetime.now(timezone.utc)
 
     start_date_val = row.get("start_date")
     if isinstance(start_date_val, str):
@@ -84,7 +84,7 @@ def _db_row_to_goal(row: dict) -> Goal:
 def _create_mock_goal(goal_create: GoalCreate, user_id: str) -> Goal:
     """Create a Goal object from GoalCreate data (for in-memory fallback)."""
     goal_id = uuid4()
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     return Goal(
         id=goal_id,

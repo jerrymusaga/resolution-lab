@@ -4,7 +4,7 @@ API endpoints for generating and tracking motivational interventions.
 Uses Supabase for persistence.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 from uuid import UUID, uuid4
 
@@ -50,7 +50,7 @@ def _db_row_to_intervention(row: dict) -> Intervention:
     if isinstance(created_at, str):
         created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
     elif created_at is None:
-        created_at = datetime.utcnow()
+        created_at = datetime.now(timezone.utc)
 
     return Intervention(
         id=UUID(row["id"]),
@@ -109,7 +109,7 @@ async def generate_intervention(
         # Fallback if LLM fails
         message = get_fallback_message(goal.title, strategy)
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     # Store in database
     if DB_ENABLED:
@@ -161,12 +161,12 @@ async def record_check_in(
         if isinstance(created_at_str, str):
             intervention_sent_at = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
         else:
-            intervention_sent_at = datetime.utcnow()
+            intervention_sent_at = datetime.now(timezone.utc)
     else:
         raise HTTPException(status_code=500, detail="Database not configured")
 
     # Calculate response time
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     response_time_seconds = int((now - intervention_sent_at).total_seconds())
 
     # Analyze sentiment if user provided feedback

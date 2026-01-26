@@ -38,13 +38,16 @@ function GoalsContent() {
 
   useEffect(() => {
     if (userId) {
-      loadGoals(userId);
+      loadGoals(userId, true);
     }
   }, [userId]);
 
-  const loadGoals = async (uid: string) => {
+  const loadGoals = async (uid: string, showLoading = false) => {
     try {
-      setLoading(true);
+      // Only show loading skeleton on initial load, not on refresh after actions
+      if (showLoading) {
+        setLoading(true);
+      }
       const data = await listGoalsWithCheckInStatus(uid);
       setGoals(data);
     } catch (err) {
@@ -75,6 +78,7 @@ function GoalsContent() {
 
     try {
       setCheckInLoading(true);
+      setCheckInError(null);
       await recordCheckIn(userId, {
         intervention_id: currentIntervention.intervention_id,
         completed,
@@ -85,6 +89,9 @@ function GoalsContent() {
       await loadGoals(userId);
     } catch (err) {
       console.error('Failed to record check-in:', err);
+      setCheckInError(err instanceof Error ? err.message : 'Failed to record check-in. Please try again.');
+      setCheckInGoalId(null);
+      setCurrentIntervention(null);
     } finally {
       setCheckInLoading(false);
     }

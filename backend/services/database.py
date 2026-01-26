@@ -123,9 +123,9 @@ def update_goal_stats(goal_id: str, completed: bool) -> Optional[dict]:
     new_completions = (goal.get("total_completions") or 0) + (1 if completed else 0)
     new_streak = (goal.get("current_streak") or 0) + 1 if completed else 0
 
-    # Calculate completion rate
-    total_checks = (goal.get("total_completions") or 0) + 1
-    new_rate = new_completions / total_checks if total_checks > 0 else 0.0
+    # Calculate completion rate based on total check-ins
+    total_checkins = (goal.get("total_completions") or 0) + 1
+    new_rate = new_completions / total_checkins if total_checkins > 0 else 0.0
 
     return update_goal(goal_id, {
         "total_completions": new_completions,
@@ -232,14 +232,17 @@ def create_intervention(
     formula_active: bool = False
 ) -> dict:
     """Record a new intervention."""
-    result = supabase.table("interventions").insert({
-        "user_id": user_id,
-        "goal_id": goal_id,
-        "strategy": strategy,
-        "message": message,
-        "formula_active": formula_active
-    }).execute()
-    return result.data[0] if result.data else None
+    try:
+        result = supabase.table("interventions").insert({
+            "user_id": user_id,
+            "goal_id": goal_id,
+            "strategy": strategy,
+            "message": message,
+            "formula_active": formula_active
+        }).execute()
+        return result.data[0] if result.data else None
+    except Exception:
+        return None
 
 
 def update_intervention_outcome(
@@ -277,8 +280,10 @@ def get_user_interventions(user_id: str, limit: int = 50, goal_id: str = None) -
 def get_intervention_by_id(intervention_id: str) -> Optional[dict]:
     """Get a specific intervention by ID."""
     try:
-        result = supabase.table("interventions").select("*").eq("id", intervention_id).single().execute()
-        return result.data if result.data else None
+        result = supabase.table("interventions").select("*").eq("id", intervention_id).limit(1).execute()
+        if result.data and len(result.data) > 0:
+            return result.data[0]
+        return None
     except Exception:
         return None
 

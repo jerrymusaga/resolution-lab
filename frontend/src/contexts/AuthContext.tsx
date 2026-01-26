@@ -1,8 +1,8 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { supabase, User } from '@/lib/supabase';
-import { Session } from '@supabase/supabase-js';
+import { getSupabase, User } from '@/lib/supabase';
+import { Session, AuthChangeEvent } from '@supabase/supabase-js';
 
 interface AuthContextType {
   user: User | null;
@@ -22,7 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // If supabase is not configured, skip auth
-    const client = supabase;
+    const client = getSupabase();
     if (!client) {
       setLoading(false);
       return;
@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Listen for auth changes - this handles ALL auth events including initial session
     const {
       data: { subscription },
-    } = client.auth.onAuthStateChange((event, session) => {
+    } = client.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
       console.log('Auth state changed:', event, session?.user?.email);
 
       // Update session and user state
@@ -73,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signInWithGoogle = async () => {
-    const client = supabase;
+    const client = getSupabase();
     if (!client) {
       console.error('Supabase not configured');
       return;
@@ -91,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    const client = supabase;
+    const client = getSupabase();
     if (!client) {
       setUser(null);
       setSession(null);

@@ -1,6 +1,7 @@
 """
 Resolution Lab - Interventions Router
 API endpoints for generating and tracking motivational interventions.
+Uses Supabase for persistence.
 """
 
 from datetime import datetime
@@ -24,15 +25,42 @@ from services.experiment_engine import experiment_engine
 from services.analysis_engine import analyze_user_sentiment
 from routers.goals import get_goal_by_id, update_goal_stats
 
+# Import database service
+try:
+    from services.database import (
+        DB_ENABLED,
+        create_intervention as db_create_intervention,
+        get_intervention_by_id as db_get_intervention_by_id,
+        get_user_interventions as db_get_user_interventions,
+        update_intervention_outcome as db_update_intervention_outcome,
+    )
+except ImportError:
+    DB_ENABLED = False
+
 router = APIRouter(prefix="/interventions", tags=["Interventions"])
 
 
 # ===================
-# In-Memory Storage (for development)
+# Helper Functions
 # ===================
 
-_interventions_db: dict[str, Intervention] = {}
-_outcomes_db: dict[str, Outcome] = {}
+def _db_row_to_intervention(row: dict) -> Intervention:
+    """Convert database row to Intervention model."""
+    created_at = row.get("created_at")
+    if isinstance(created_at, str):
+        created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+    elif created_at is None:
+        created_at = datetime.utcnow()
+
+    return Intervention(
+        id=UUID(row["id"]),
+        user_id=UUID(row["user_id"]),
+        goal_id=UUID(row["goal_id"]) if row.get("goal_id") else None,
+        strategy=InterventionStrategy(row["strategy"]),
+        message=row["message"],
+        sent_at=created_at,
+        opik_trace_id=row.get("opik_trace_id"),
+    )
 
 
 # ===================
@@ -45,34 +73,28 @@ async def generate_intervention(
     goal_id: UUID,
     user_id: str = Query(..., description="User ID"),
     force_strategy: Optional[InterventionStrategy] = Query(
-        None, 
+        None,
         description="Force a specific strategy (for testing). If not provided, the experiment engine chooses."
     ),
 ):
     """
     Generate a new intervention for a goal.
-    
-    The experiment engine selects the best strategy based on the user's
-    historical response patterns (multi-armed bandit algorithm).
-    
-    The LLM generates a personalized message using the selected strategy.
-    
-    This endpoint is fully traced in Opik for observability.
     """
     # Get the goal
     goal = get_goal_by_id(str(goal_id))
     if not goal:
         raise HTTPException(status_code=404, detail="Goal not found")
-    
+
     if str(goal.user_id) != user_id:
         raise HTTPException(status_code=403, detail="Not authorized")
-    
+
     # Select strategy using experiment engine (or use forced strategy)
     if force_strategy:
         strategy = force_strategy
     else:
-        strategy = experiment_engine.select_strategy(user_id)
-    
+        strategy_result = experiment_engine.select_strategy(user_id)
+        strategy = InterventionStrategy(strategy_result["strategy"])
+
     # Generate personalized message using LLM
     try:
         message = generate_intervention_message(
@@ -84,23 +106,25 @@ async def generate_intervention(
     except Exception as e:
         # Fallback if LLM fails
         message = get_fallback_message(goal.title, strategy)
-    
-    # Create intervention record
-    intervention_id = uuid4()
+
     now = datetime.utcnow()
-    
-    intervention = Intervention(
-        id=intervention_id,
-        user_id=UUID(user_id),
-        goal_id=goal_id,
-        strategy=strategy,
-        message=message,
-        sent_at=now,
-        opik_trace_id=None,  # Would be populated by Opik in production
-    )
-    
-    _interventions_db[str(intervention_id)] = intervention
-    
+
+    # Store in database
+    if DB_ENABLED:
+        db_intervention = db_create_intervention(
+            user_id=user_id,
+            strategy=strategy.value,
+            message=message,
+            goal_id=str(goal_id),
+            formula_active=False,
+        )
+        if db_intervention:
+            intervention_id = UUID(db_intervention["id"])
+        else:
+            raise HTTPException(status_code=500, detail="Failed to create intervention")
+    else:
+        intervention_id = uuid4()
+
     # Return response
     return InterventionResponse(
         intervention_id=intervention_id,
@@ -119,63 +143,76 @@ async def record_check_in(
 ):
     """
     Record a user's check-in response to an intervention.
-    
-    This updates the experiment engine with the outcome data,
-    which improves future strategy selection for this user.
-    
-    If user provides feedback, LLM-as-judge analyzes sentiment.
     """
     # Get the intervention
-    intervention = _interventions_db.get(str(outcome.intervention_id))
-    if not intervention:
-        raise HTTPException(status_code=404, detail="Intervention not found")
-    
-    if str(intervention.user_id) != user_id:
-        raise HTTPException(status_code=403, detail="Not authorized")
-    
+    if DB_ENABLED:
+        db_intervention = db_get_intervention_by_id(str(outcome.intervention_id))
+        if not db_intervention:
+            raise HTTPException(status_code=404, detail="Intervention not found")
+        if db_intervention["user_id"] != user_id:
+            raise HTTPException(status_code=403, detail="Not authorized")
+
+        intervention_strategy = InterventionStrategy(db_intervention["strategy"])
+        intervention_message = db_intervention["message"]
+        intervention_goal_id = db_intervention.get("goal_id")
+        created_at_str = db_intervention.get("created_at")
+        if isinstance(created_at_str, str):
+            intervention_sent_at = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
+        else:
+            intervention_sent_at = datetime.utcnow()
+    else:
+        raise HTTPException(status_code=500, detail="Database not configured")
+
     # Calculate response time
     now = datetime.utcnow()
-    response_time_seconds = int((now - intervention.sent_at).total_seconds())
-    
+    response_time_seconds = int((now - intervention_sent_at).total_seconds())
+
     # Analyze sentiment if user provided feedback
     sentiment = "neutral"
     if outcome.user_feedback:
         try:
             sentiment_result = analyze_user_sentiment(
-                intervention_message=intervention.message,
+                intervention_message=intervention_message,
                 user_response=outcome.user_feedback,
             )
             sentiment = sentiment_result.get("sentiment", "neutral")
         except Exception:
             sentiment = "neutral"
-    
+
     # Record outcome in experiment engine
     effectiveness = experiment_engine.record_outcome(
         user_id=user_id,
-        strategy=intervention.strategy,
+        strategy=intervention_strategy,
         completed=outcome.completed,
         response_time_seconds=response_time_seconds,
         sentiment=sentiment,
     )
-    
+
     # Update goal statistics
-    update_goal_stats(str(intervention.goal_id), outcome.completed)
-    
+    if intervention_goal_id:
+        update_goal_stats(str(intervention_goal_id), outcome.completed)
+
+    # Update intervention in database
+    if DB_ENABLED:
+        db_update_intervention_outcome(
+            intervention_id=str(outcome.intervention_id),
+            outcome="completed" if outcome.completed else "dismissed",
+            effectiveness_score=effectiveness,
+        )
+
     # Create outcome record
     outcome_id = uuid4()
     outcome_record = Outcome(
         id=outcome_id,
         intervention_id=outcome.intervention_id,
         user_id=UUID(user_id),
-        goal_id=intervention.goal_id,
+        goal_id=UUID(intervention_goal_id) if intervention_goal_id else None,
         completed=outcome.completed,
         response_time_seconds=response_time_seconds,
         user_feedback=outcome.user_feedback,
         recorded_at=now,
     )
-    
-    _outcomes_db[str(outcome_id)] = outcome_record
-    
+
     return outcome_record
 
 
@@ -187,18 +224,13 @@ async def get_intervention_history(
     offset: int = Query(0, ge=0),
 ):
     """Get intervention history for a user."""
-    interventions = [
-        i for i in _interventions_db.values()
-        if str(i.user_id) == user_id
-    ]
-    
-    if goal_id:
-        interventions = [i for i in interventions if i.goal_id == goal_id]
-    
-    # Sort by sent_at descending
-    interventions.sort(key=lambda i: i.sent_at, reverse=True)
-    
-    return interventions[offset:offset + limit]
+    if DB_ENABLED:
+        goal_id_str = str(goal_id) if goal_id else None
+        db_interventions = db_get_user_interventions(user_id, limit=limit + offset, goal_id=goal_id_str)
+        interventions = [_db_row_to_intervention(row) for row in db_interventions]
+        return interventions[offset:offset + limit]
+    else:
+        return []
 
 
 @router.get("/strategies", response_model=dict)
@@ -208,17 +240,17 @@ async def list_strategies():
         InterventionStrategy.GENTLE_REMINDER: {
             "name": "Gentle Reminder",
             "description": "Warm, friendly nudges that don't pressure",
-            "example": "Hey! Just a friendly reminder about your goal today 🌟",
+            "example": "Hey! Just a friendly reminder about your goal today",
         },
         InterventionStrategy.ACCOUNTABILITY: {
-            "name": "Direct Accountability", 
+            "name": "Direct Accountability",
             "description": "Clear, direct check-ins asking if you did the thing",
             "example": "Did you complete your goal today? Yes or No?",
         },
         InterventionStrategy.STREAK_GAMIFICATION: {
             "name": "Streak & Gamification",
             "description": "Focus on maintaining streaks and progress",
-            "example": "🔥 Day 5 streak! Don't break the chain.",
+            "example": "Day 5 streak! Don't break the chain.",
         },
         InterventionStrategy.SOCIAL_COMPARISON: {
             "name": "Social Proof",
@@ -246,7 +278,7 @@ async def list_strategies():
             "example": "Can you commit to just 5 minutes? That's all.",
         },
     }
-    
+
     return {
         "strategies": strategies,
         "total": len(strategies),
@@ -259,37 +291,15 @@ async def get_intervention(
     user_id: str = Query(..., description="User ID"),
 ):
     """Get a specific intervention by ID."""
-    intervention = _interventions_db.get(str(intervention_id))
-    
-    if not intervention:
-        raise HTTPException(status_code=404, detail="Intervention not found")
-    
-    if str(intervention.user_id) != user_id:
-        raise HTTPException(status_code=403, detail="Not authorized")
-    
-    return intervention
-
-
-@router.get("/{intervention_id}/outcome", response_model=Optional[Outcome])
-async def get_intervention_outcome(
-    intervention_id: UUID,
-    user_id: str = Query(..., description="User ID"),
-):
-    """Get the outcome for a specific intervention."""
-    intervention = _interventions_db.get(str(intervention_id))
-    
-    if not intervention:
-        raise HTTPException(status_code=404, detail="Intervention not found")
-    
-    if str(intervention.user_id) != user_id:
-        raise HTTPException(status_code=403, detail="Not authorized")
-    
-    # Find outcome for this intervention
-    for outcome in _outcomes_db.values():
-        if outcome.intervention_id == intervention_id:
-            return outcome
-    
-    return None
+    if DB_ENABLED:
+        db_intervention = db_get_intervention_by_id(str(intervention_id))
+        if not db_intervention:
+            raise HTTPException(status_code=404, detail="Intervention not found")
+        if db_intervention["user_id"] != user_id:
+            raise HTTPException(status_code=403, detail="Not authorized")
+        return _db_row_to_intervention(db_intervention)
+    else:
+        raise HTTPException(status_code=500, detail="Database not configured")
 
 
 # ===================
@@ -305,14 +315,6 @@ async def simulate_experiment(
 ):
     """
     Simulate multiple interventions for demo purposes.
-
-    This generates interventions using different strategies and simulates
-    random outcomes to populate the experiment data.
-
-    When use_llm=True, generates real LLM messages with custom Opik evaluator scores.
-    When use_llm=False (default), uses fast fallback messages.
-
-    Useful for quickly generating data to show in the insights dashboard.
     """
     import random
     from services.evaluators import sync_message_evaluator
@@ -326,7 +328,7 @@ async def simulate_experiment(
     total_score = 0.0
 
     for i in range(num_interventions):
-        # Select strategy - returns dict with strategy key
+        # Select strategy
         strategy_result = experiment_engine.select_strategy(user_id)
         strategy = InterventionStrategy(strategy_result["strategy"])
 
@@ -335,7 +337,6 @@ async def simulate_experiment(
         evaluation = None
 
         if use_llm:
-            # Generate with LLM and evaluate
             result = generate_intervention_message(
                 goal_title=goal_title,
                 goal_description=None,
@@ -352,10 +353,7 @@ async def simulate_experiment(
                 if grade in evaluation_summary["grade_distribution"]:
                     evaluation_summary["grade_distribution"][grade] += 1
         else:
-            # Fast fallback (no LLM)
             message = get_fallback_message(goal_title, strategy)
-
-            # Still run evaluator on fallback messages to show Opik integration
             evaluation = sync_message_evaluator.evaluate(
                 message=message,
                 strategy=strategy,
@@ -367,7 +365,7 @@ async def simulate_experiment(
             if grade in evaluation_summary["grade_distribution"]:
                 evaluation_summary["grade_distribution"][grade] += 1
 
-        # Simulate outcome with varying success rates per strategy
+        # Simulate outcome
         success_rates = {
             InterventionStrategy.ACCOUNTABILITY: 0.75,
             InterventionStrategy.STREAK_GAMIFICATION: 0.65,
@@ -400,7 +398,6 @@ async def simulate_experiment(
             "effectiveness": round(effectiveness, 3),
         }
 
-        # Include evaluation if available
         if evaluation:
             result_item["evaluation"] = {
                 "grade": evaluation.get("grade"),

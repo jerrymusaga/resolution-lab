@@ -265,10 +265,22 @@ def update_intervention_outcome(
     return result.data[0] if result.data else None
 
 
-def get_user_interventions(user_id: str, limit: int = 50) -> list:
+def get_user_interventions(user_id: str, limit: int = 50, goal_id: str = None) -> list:
     """Get recent interventions for a user."""
-    result = supabase.table("interventions").select("*").eq("user_id", user_id).order("created_at", desc=True).limit(limit).execute()
+    query = supabase.table("interventions").select("*").eq("user_id", user_id)
+    if goal_id:
+        query = query.eq("goal_id", goal_id)
+    result = query.order("created_at", desc=True).limit(limit).execute()
     return result.data or []
+
+
+def get_intervention_by_id(intervention_id: str) -> Optional[dict]:
+    """Get a specific intervention by ID."""
+    try:
+        result = supabase.table("interventions").select("*").eq("id", intervention_id).single().execute()
+        return result.data if result.data else None
+    except Exception:
+        return None
 
 
 def get_intervention_stats(user_id: str) -> dict:

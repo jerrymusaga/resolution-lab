@@ -34,6 +34,7 @@ function GoalsContent() {
   const [checkInGoalId, setCheckInGoalId] = useState<string | null>(null);
   const [currentIntervention, setCurrentIntervention] = useState<InterventionResponse | null>(null);
   const [checkInLoading, setCheckInLoading] = useState(false);
+  const [checkInError, setCheckInError] = useState<string | null>(null);
 
   useEffect(() => {
     if (userId) {
@@ -57,10 +58,12 @@ function GoalsContent() {
     try {
       setCheckInGoalId(goalId);
       setCheckInLoading(true);
+      setCheckInError(null);
       const intervention = await generateIntervention(userId, goalId);
       setCurrentIntervention(intervention);
     } catch (err) {
       console.error('Failed to generate intervention:', err);
+      setCheckInError('Failed to generate check-in. Please try again.');
       setCheckInGoalId(null);
     } finally {
       setCheckInLoading(false);
@@ -214,6 +217,30 @@ function GoalsContent() {
               onDelete={handleDeleteGoal}
             />
           ))}
+        </div>
+      )}
+
+      {/* Error message */}
+      {checkInError && (
+        <div className="fixed top-4 right-4 z-50 bg-red-100 border border-red-300 text-red-800 px-4 py-3 rounded-lg shadow-lg flex items-center gap-3">
+          <span>{checkInError}</span>
+          <button
+            onClick={() => setCheckInError(null)}
+            className="text-red-600 hover:text-red-800 font-bold"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* Loading overlay when generating intervention */}
+      {checkInGoalId && !currentIntervention && checkInLoading && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 text-center max-w-sm mx-4">
+            <div className="w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-gray-900 font-medium">Generating your check-in...</p>
+            <p className="text-gray-500 text-sm mt-1">Finding the best motivation for you</p>
+          </div>
         </div>
       )}
 

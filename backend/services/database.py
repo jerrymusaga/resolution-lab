@@ -158,20 +158,25 @@ def upsert_strategy_arm(user_id: str, strategy: str, total_pulls: int, total_rew
 
 def update_strategy_arm(user_id: str, strategy: str, reward: float, success: bool) -> Optional[dict]:
     """Update strategy arm after a pull (increment counts)."""
-    # First get current values
-    result = supabase.table("strategy_arms").select("*").eq("user_id", user_id).eq("strategy", strategy).single().execute()
+    try:
+        # First get current values - use limit(1) instead of single() to avoid exceptions
+        result = supabase.table("strategy_arms").select("*").eq("user_id", user_id).eq("strategy", strategy).limit(1).execute()
 
-    if result.data:
-        current = result.data
-        new_data = {
-            "total_pulls": current["total_pulls"] + 1,
-            "total_reward": current["total_reward"] + reward,
-            "successes": current["successes"] + (1 if success else 0)
-        }
-        update_result = supabase.table("strategy_arms").update(new_data).eq("id", current["id"]).execute()
-        return update_result.data[0] if update_result.data else None
-    else:
-        # Create new arm
+        if result.data and len(result.data) > 0:
+            current = result.data[0]
+            new_data = {
+                "total_pulls": current["total_pulls"] + 1,
+                "total_reward": current["total_reward"] + reward,
+                "successes": current["successes"] + (1 if success else 0)
+            }
+            update_result = supabase.table("strategy_arms").update(new_data).eq("id", current["id"]).execute()
+            return update_result.data[0] if update_result.data else None
+        else:
+            # Create new arm
+            return upsert_strategy_arm(user_id, strategy, 1, reward, 1 if success else 0)
+    except Exception as e:
+        print(f"Error updating strategy arm: {e}")
+        # Try to create new arm as fallback
         return upsert_strategy_arm(user_id, strategy, 1, reward, 1 if success else 0)
 
 
@@ -181,8 +186,11 @@ def update_strategy_arm(user_id: str, strategy: str, reward: float, success: boo
 
 def get_experiment_state(user_id: str) -> Optional[dict]:
     """Get user's experiment state."""
-    result = supabase.table("user_experiment_state").select("*").eq("user_id", user_id).single().execute()
-    return result.data if result.data else None
+    try:
+        result = supabase.table("user_experiment_state").select("*").eq("user_id", user_id).limit(1).execute()
+        return result.data[0] if result.data and len(result.data) > 0 else None
+    except Exception:
+        return None
 
 
 def upsert_experiment_state(user_id: str, data: dict) -> dict:

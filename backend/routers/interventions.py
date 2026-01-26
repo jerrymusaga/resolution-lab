@@ -97,12 +97,14 @@ async def generate_intervention(
 
     # Generate personalized message using LLM
     try:
-        message = generate_intervention_message(
+        result = generate_intervention_message(
             goal_title=goal.title,
             goal_description=goal.description,
             strategy=strategy,
             current_streak=goal.current_streak or 0,
         )
+        # Extract message string from dict result
+        message = result["message"] if isinstance(result, dict) else result
     except Exception as e:
         # Fallback if LLM fails
         message = get_fallback_message(goal.title, strategy)
@@ -337,14 +339,14 @@ async def simulate_experiment(
         evaluation = None
 
         if use_llm:
-            result = generate_intervention_message(
+            gen_result = generate_intervention_message(
                 goal_title=goal_title,
                 goal_description=None,
                 strategy=strategy,
                 include_evaluation=True,
             )
-            message = result["message"]
-            evaluation = result.get("evaluation")
+            message = gen_result["message"] if isinstance(gen_result, dict) else gen_result
+            evaluation = gen_result.get("evaluation") if isinstance(gen_result, dict) else None
 
             if evaluation:
                 evaluation_summary["total_evaluated"] += 1

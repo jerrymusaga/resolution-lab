@@ -28,24 +28,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Get initial session
-    client.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        setUser({
-          id: session.user.id,
-          email: session.user.email || '',
-          full_name: session.user.user_metadata?.full_name,
-          avatar_url: session.user.user_metadata?.avatar_url,
-        });
-      }
-      setLoading(false);
-    });
+    // Get initial session - using getUser() which validates with Supabase Auth server
+    const initializeAuth = async () => {
+      try {
+        // First get the session from cookies
+        const { data: { session: currentSession } } = await client.auth.getSession();
 
-    // Listen for auth changes
+        if (currentSession) {
+          setSession(currentSession);
+          setUser({
+            id: currentSession.user.id,
+            email: currentSession.user.email || '',
+            full_name: currentSession.user.user_metadata?.full_name,
+            avatar_url: currentSession.user.user_metadata?.avatar_url,
+          });
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
+
+    // Listen for auth changes - this handles sign in, sign out, token refresh
     const {
       data: { subscription },
-    } = client.auth.onAuthStateChange((_event, session) => {
+    } = client.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, session?.user?.email);
       setSession(session);
       if (session?.user) {
         setUser({

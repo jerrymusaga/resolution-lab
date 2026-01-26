@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Card, CardHeader, CardTitle, CardContent, Button } from '@/components/ui';
+import { Card, CardContent, Button } from '@/components/ui';
 import GoalCard from '@/components/GoalCard';
 import CheckInModal from '@/components/CheckInModal';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import {
-  listGoals,
+  listGoalsWithCheckInStatus,
   generateIntervention,
   recordCheckIn,
   getInsightsSummary,
@@ -16,7 +16,7 @@ import {
   completeGoal,
   deleteGoal
 } from '@/lib/api';
-import { Goal, InterventionResponse, InsightsSummary } from '@/types';
+import { GoalWithCheckInStatus, InterventionResponse, InsightsSummary } from '@/types';
 import { cn, formatPercent } from '@/lib/utils';
 import {
   Plus,
@@ -39,7 +39,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 function DashboardContent() {
   const { user } = useAuth();
-  const [goals, setGoals] = useState<Goal[]>([]);
+  const [goals, setGoals] = useState<GoalWithCheckInStatus[]>([]);
   const [summary, setSummary] = useState<InsightsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +65,7 @@ function DashboardContent() {
       setError(null);
 
       const [goalsData, summaryData] = await Promise.all([
-        listGoals(uid).catch(() => []),
+        listGoalsWithCheckInStatus(uid).catch(() => []),
         getInsightsSummary(uid).catch(() => null),
       ]);
 
@@ -457,11 +457,12 @@ function DashboardContent() {
               <GoalCard
                 key={goal.id}
                 goal={goal}
-                onCheckIn={handleCheckIn}
+                onCheckIn={goal.can_check_in ? handleCheckIn : undefined}
                 onPause={handlePauseGoal}
                 onResume={handleResumeGoal}
                 onComplete={handleCompleteGoal}
                 onDelete={handleDeleteGoal}
+                checkedInToday={goal.checked_in_today}
               />
             ))}
           </div>
@@ -525,8 +526,8 @@ function DashboardContent() {
         </Link>
       </div>
 
-      {/* Experiment CTA - Only for users with no data */}
-      {(summary?.data_points || 0) === 0 && activeGoals.length > 0 && (
+      {/* Experiment CTA - Only for users with no data and can check in */}
+      {(summary?.data_points || 0) === 0 && activeGoals.length > 0 && activeGoals.some(g => g.can_check_in) && (
         <Card variant="bordered" className="bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
           <CardContent className="py-8 text-center">
             <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-amber-100 mb-4">
@@ -538,7 +539,10 @@ function DashboardContent() {
             <p className="text-gray-600 mb-4 max-w-md mx-auto">
               Each check-in is an experiment. We'll try different motivation strategies and track what works best for you.
             </p>
-            <Button onClick={() => activeGoals[0] && handleCheckIn(activeGoals[0].id)}>
+            <Button onClick={() => {
+              const firstAvailable = activeGoals.find(g => g.can_check_in);
+              if (firstAvailable) handleCheckIn(firstAvailable.id);
+            }}>
               <CheckCircle2 className="w-4 h-4 mr-2" />
               Start First Check-in
             </Button>

@@ -2,65 +2,44 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getSupabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
 export default function AuthCallbackPage() {
   const router = useRouter();
+  const { user, loading } = useAuth();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const handleCallback = async () => {
-      const supabase = getSupabase();
-      if (!supabase) {
-        setError('Supabase not configured');
-        return;
-      }
+    // Check for OAuth error in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorParam = urlParams.get('error');
+    const errorDescription = urlParams.get('error_description');
 
-      // Get the code from URL
-      const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get('code');
-      const errorParam = urlParams.get('error');
-      const errorDescription = urlParams.get('error_description');
+    if (errorParam) {
+      console.error('OAuth error:', errorParam, errorDescription);
+      setError(errorDescription || errorParam);
+      return;
+    }
 
-      if (errorParam) {
-        console.error('OAuth error:', errorParam, errorDescription);
-        setError(errorDescription || errorParam);
-        return;
-      }
+    // If we have a user (session was established), redirect to dashboard
+    if (!loading && user) {
+      router.push('/dashboard');
+      return;
+    }
 
-      if (code) {
-        try {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
-          if (error) {
-            console.error('Error exchanging code:', error);
-            setError(error.message);
-            return;
-          }
-          // Success - redirect to dashboard
-          router.push('/dashboard');
-        } catch (err) {
-          console.error('Exception during code exchange:', err);
-          setError('Failed to complete sign in');
+    // If loading is done and no user, wait a bit then show error
+    // (Supabase client automatically exchanges the code)
+    if (!loading && !user) {
+      const timer = setTimeout(() => {
+        // Give it extra time for the auth state to propagate
+        if (!user) {
+          setError('Authentication failed. Please try again.');
         }
-      } else {
-        // No code - check if we have a session from hash fragment (implicit flow)
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) {
-          console.error('Session error:', sessionError);
-          setError(sessionError.message);
-          return;
-        }
-        if (session) {
-          router.push('/dashboard');
-        } else {
-          setError('No authentication code received');
-        }
-      }
-    };
-
-    handleCallback();
-  }, [router]);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [user, loading, router]);
 
   if (error) {
     return (

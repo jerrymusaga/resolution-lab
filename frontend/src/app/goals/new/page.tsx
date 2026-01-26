@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input } from '@/components/ui';
-import { getOrCreateUserId, createGoal } from '@/lib/api';
+import { createGoal } from '@/lib/api';
 import { GoalCreate, GoalFrequency } from '@/types';
 import { cn } from '@/lib/utils';
-import { 
-  Target, 
-  Calendar, 
+import { useAuth } from '@/contexts/AuthContext';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import {
+  Target,
+  Calendar,
   Repeat,
   ArrowLeft,
   Sparkles
@@ -31,11 +33,12 @@ const goalSuggestions = [
   'Practice a skill for 1 hour',
 ];
 
-export default function NewGoalPage() {
+function NewGoalContent() {
   const router = useRouter();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [formData, setFormData] = useState<GoalCreate>({
     title: '',
     description: '',
@@ -45,19 +48,23 @@ export default function NewGoalPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.title.trim()) {
       setError('Please enter a goal title');
       return;
     }
-    
+
+    if (!user?.id) {
+      setError('You must be signed in to create a goal');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
-      
-      const userId = getOrCreateUserId();
-      await createGoal(userId, formData);
-      
+
+      await createGoal(user.id, formData);
+
       router.push('/goals');
     } catch (err) {
       console.error('Failed to create goal:', err);
@@ -230,5 +237,13 @@ export default function NewGoalPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function NewGoalPage() {
+  return (
+    <ProtectedRoute>
+      <NewGoalContent />
+    </ProtectedRoute>
   );
 }

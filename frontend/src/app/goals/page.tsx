@@ -8,7 +8,7 @@ import CheckInModal from '@/components/CheckInModal';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import {
-  listGoals,
+  listGoalsWithCheckInStatus,
   generateIntervention,
   recordCheckIn,
   pauseGoal,
@@ -16,7 +16,7 @@ import {
   completeGoal,
   deleteGoal
 } from '@/lib/api';
-import { Goal, InterventionResponse } from '@/types';
+import { GoalWithCheckInStatus, InterventionResponse } from '@/types';
 import { Plus, Target, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -26,7 +26,7 @@ function GoalsContent() {
   const { user } = useAuth();
   const userId = user?.id || '';
 
-  const [goals, setGoals] = useState<Goal[]>([]);
+  const [goals, setGoals] = useState<GoalWithCheckInStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterStatus>('all');
 
@@ -45,7 +45,7 @@ function GoalsContent() {
   const loadGoals = async (uid: string) => {
     try {
       setLoading(true);
-      const data = await listGoals(uid);
+      const data = await listGoalsWithCheckInStatus(uid);
       setGoals(data);
     } catch (err) {
       console.error('Failed to load goals:', err);
@@ -210,11 +210,12 @@ function GoalsContent() {
             <GoalCard
               key={goal.id}
               goal={goal}
-              onCheckIn={goal.status === 'active' ? handleCheckIn : undefined}
+              onCheckIn={goal.can_check_in ? handleCheckIn : undefined}
               onPause={goal.status === 'active' ? handlePauseGoal : undefined}
               onResume={goal.status === 'paused' ? handleResumeGoal : undefined}
               onComplete={goal.status === 'active' ? handleCompleteGoal : undefined}
               onDelete={handleDeleteGoal}
+              checkedInToday={goal.checked_in_today}
             />
           ))}
         </div>

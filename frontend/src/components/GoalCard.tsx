@@ -24,15 +24,17 @@ interface GoalCardProps {
   onResume?: (goalId: string) => void;
   onComplete?: (goalId: string) => void;
   onDelete?: (goalId: string) => void;
+  checkedInToday?: boolean;
 }
 
-export default function GoalCard({ 
-  goal, 
+export default function GoalCard({
+  goal,
   onCheckIn,
   onPause,
   onResume,
   onComplete,
-  onDelete 
+  onDelete,
+  checkedInToday = false,
 }: GoalCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   
@@ -116,14 +118,21 @@ export default function GoalCard({
       {/* Actions */}
       <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
         {goal.status === 'active' && onCheckIn && (
-          <Button 
+          <Button
             onClick={() => onCheckIn(goal.id)}
             size="sm"
           >
             Check In Now
           </Button>
         )}
-        
+
+        {goal.status === 'active' && !onCheckIn && checkedInToday && (
+          <div className="flex items-center text-sm text-green-600">
+            <CheckCircle2 className="w-4 h-4 mr-1" />
+            <span>Checked in today</span>
+          </div>
+        )}
+
         {goal.status === 'paused' && onResume && (
           <Button 
             onClick={() => onResume(goal.id)}

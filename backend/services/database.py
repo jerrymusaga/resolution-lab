@@ -283,6 +283,40 @@ def get_intervention_by_id(intervention_id: str) -> Optional[dict]:
         return None
 
 
+def has_checked_in_today(user_id: str, goal_id: str) -> bool:
+    """Check if user has already checked in for a goal today."""
+    from datetime import date, datetime, timezone
+
+    today_start = datetime.combine(date.today(), datetime.min.time()).isoformat()
+
+    try:
+        result = supabase.table("interventions")\
+            .select("id")\
+            .eq("user_id", user_id)\
+            .eq("goal_id", goal_id)\
+            .gte("created_at", today_start)\
+            .limit(1)\
+            .execute()
+        return bool(result.data)
+    except Exception:
+        return False
+
+
+def get_last_checkin_for_goal(user_id: str, goal_id: str) -> Optional[dict]:
+    """Get the most recent check-in for a goal."""
+    try:
+        result = supabase.table("interventions")\
+            .select("*")\
+            .eq("user_id", user_id)\
+            .eq("goal_id", goal_id)\
+            .order("created_at", desc=True)\
+            .limit(1)\
+            .execute()
+        return result.data[0] if result.data else None
+    except Exception:
+        return None
+
+
 def get_intervention_stats(user_id: str) -> dict:
     """Get intervention statistics for a user."""
     interventions = get_user_interventions(user_id, limit=1000)

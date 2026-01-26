@@ -119,14 +119,20 @@ class Goal(GoalBase):
     end_date: Optional[date]
     status: GoalStatus
     created_at: datetime
-    
+
     # Computed fields for dashboard
     current_streak: Optional[int] = 0
     total_completions: Optional[int] = 0
     completion_rate: Optional[float] = 0.0
-    
+
     class Config:
         from_attributes = True
+
+
+class GoalWithCheckInStatus(Goal):
+    """Goal with check-in status for today."""
+    checked_in_today: bool = False
+    can_check_in: bool = True  # True if active and not checked in today
 
 
 # ===================

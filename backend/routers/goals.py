@@ -16,6 +16,7 @@ from models.schemas import (
     GoalUpdate,
     GoalStatus,
     GoalFrequency,
+    GoalWithCheckInStatus,
     APIResponse,
 )
 
@@ -29,9 +30,11 @@ try:
         update_goal as db_update_goal,
         delete_db_goal,
         update_goal_stats as db_update_goal_stats,
+        has_checked_in_today as db_has_checked_in_today,
     )
 except ImportError:
     DB_ENABLED = False
+    db_has_checked_in_today = None
 
 router = APIRouter(prefix="/goals", tags=["Goals"])
 
@@ -155,6 +158,56 @@ async def list_goals(
             user_goals = [g for g in user_goals if g.status == status]
         user_goals.sort(key=lambda g: g.created_at, reverse=True)
         return user_goals[offset:offset + limit]
+
+
+@router.get("/with-checkin-status", response_model=List[GoalWithCheckInStatus])
+async def list_goals_with_checkin_status(
+    user_id: str = Query(..., description="User ID"),
+    status: Optional[GoalStatus] = Query(None, description="Filter by status"),
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+):
+    """List all goals with their check-in status for today."""
+    if DB_ENABLED:
+        status_str = status.value if status else None
+        db_goals = db_get_user_goals(user_id, status=status_str)
+        goals_with_status = []
+
+        for row in db_goals:
+            goal = _db_row_to_goal(row)
+            goal_id_str = str(goal.id)
+
+            # Check if user already checked in today for this goal
+            checked_in_today = db_has_checked_in_today(user_id, goal_id_str) if db_has_checked_in_today else False
+
+            # User can check in if goal is active and hasn't checked in today
+            can_check_in = goal.status == GoalStatus.ACTIVE and not checked_in_today
+
+            goals_with_status.append(GoalWithCheckInStatus(
+                **goal.model_dump(),
+                checked_in_today=checked_in_today,
+                can_check_in=can_check_in,
+            ))
+
+        return goals_with_status[offset:offset + limit]
+    else:
+        # Fallback - no check-in tracking without database
+        user_goals = [
+            goal for goal in _goals_db.values()
+            if str(goal.user_id) == user_id
+        ]
+        if status:
+            user_goals = [g for g in user_goals if g.status == status]
+        user_goals.sort(key=lambda g: g.created_at, reverse=True)
+
+        return [
+            GoalWithCheckInStatus(
+                **goal.model_dump(),
+                checked_in_today=False,
+                can_check_in=goal.status == GoalStatus.ACTIVE,
+            )
+            for goal in user_goals[offset:offset + limit]
+        ]
 
 
 @router.get("/{goal_id}", response_model=Goal)

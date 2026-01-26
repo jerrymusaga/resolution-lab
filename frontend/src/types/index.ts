@@ -57,6 +57,11 @@ export interface Goal {
   completion_rate?: number;
 }
 
+export interface GoalWithCheckInStatus extends Goal {
+  checked_in_today: boolean;
+  can_check_in: boolean;
+}
+
 // ===================
 // Intervention Types
 // ===================

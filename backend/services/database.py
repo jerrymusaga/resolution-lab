@@ -15,11 +15,15 @@ load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 
-if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
-    raise ValueError("SUPABASE_URL and SUPABASE_SERVICE_KEY must be set")
+# Check if Supabase is configured
+DB_ENABLED = bool(SUPABASE_URL and SUPABASE_SERVICE_KEY)
 
-# Use service key for backend operations (bypasses RLS)
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+if DB_ENABLED:
+    # Use service key for backend operations (bypasses RLS)
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+else:
+    supabase = None
+    print("WARNING: Supabase not configured. Database operations will not work.")
 
 
 # =====================
@@ -42,36 +46,92 @@ def update_user_profile(user_id: str, data: dict) -> Optional[dict]:
 # Goals Operations
 # =====================
 
-def get_user_goals(user_id: str, active_only: bool = True) -> list:
-    """Get all goals for a user."""
+def get_user_goals(user_id: str, status: str = None) -> list:
+    """Get all goals for a user, optionally filtered by status."""
     query = supabase.table("goals").select("*").eq("user_id", user_id)
-    if active_only:
-        query = query.eq("is_active", True)
+    if status:
+        query = query.eq("status", status)
     result = query.order("created_at", desc=True).execute()
     return result.data or []
 
 
-def create_goal(user_id: str, title: str, description: str = None, category: str = "general") -> dict:
-    """Create a new goal."""
-    result = supabase.table("goals").insert({
+def get_goal_by_id(goal_id: str) -> Optional[dict]:
+    """Get a specific goal by ID."""
+    try:
+        result = supabase.table("goals").select("*").eq("id", goal_id).single().execute()
+        return result.data if result.data else None
+    except Exception:
+        return None
+
+
+def create_db_goal(
+    user_id: str,
+    title: str,
+    description: str = None,
+    frequency: str = "daily",
+    target_count: int = 1,
+    start_date: str = None,
+    end_date: str = None
+) -> Optional[dict]:
+    """Create a new goal with full schema support."""
+    from datetime import date
+    goal_data = {
         "user_id": user_id,
         "title": title,
         "description": description,
-        "category": category
-    }).execute()
-    return result.data[0] if result.data else None
+        "frequency": frequency,
+        "target_count": target_count,
+        "start_date": start_date or date.today().isoformat(),
+        "end_date": end_date,
+        "status": "active",
+        "current_streak": 0,
+        "total_completions": 0,
+        "completion_rate": 0.0
+    }
+    try:
+        result = supabase.table("goals").insert(goal_data).execute()
+        return result.data[0] if result.data else None
+    except Exception as e:
+        print(f"Error creating goal: {e}")
+        return None
 
 
 def update_goal(goal_id: str, data: dict) -> Optional[dict]:
     """Update a goal."""
-    result = supabase.table("goals").update(data).eq("id", goal_id).execute()
-    return result.data[0] if result.data else None
+    try:
+        result = supabase.table("goals").update(data).eq("id", goal_id).execute()
+        return result.data[0] if result.data else None
+    except Exception:
+        return None
 
 
-def delete_goal(goal_id: str) -> bool:
+def delete_db_goal(goal_id: str) -> bool:
     """Delete a goal."""
-    result = supabase.table("goals").delete().eq("id", goal_id).execute()
-    return bool(result.data)
+    try:
+        result = supabase.table("goals").delete().eq("id", goal_id).execute()
+        return bool(result.data)
+    except Exception:
+        return False
+
+
+def update_goal_stats(goal_id: str, completed: bool) -> Optional[dict]:
+    """Update goal statistics after a check-in."""
+    goal = get_goal_by_id(goal_id)
+    if not goal:
+        return None
+
+    new_completions = (goal.get("total_completions") or 0) + (1 if completed else 0)
+    new_streak = (goal.get("current_streak") or 0) + 1 if completed else 0
+
+    # Calculate completion rate
+    total_checks = (goal.get("total_completions") or 0) + 1
+    new_rate = new_completions / total_checks if total_checks > 0 else 0.0
+
+    return update_goal(goal_id, {
+        "total_completions": new_completions,
+        "current_streak": new_streak,
+        "completion_rate": new_rate
+    })
 
 
 # =====================

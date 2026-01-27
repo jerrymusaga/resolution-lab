@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input } from '@/components/ui';
 import Progress from '@/components/ui/Progress';
 import { getOrCreateUserId, simulateExperiment, getFormulaStatus, applyFormula, clearFormula, FormulaStatus } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { SimulationResult, STRATEGY_INFO, InterventionStrategy } from '@/types';
 import { getStrategyColor } from '@/lib/utils';
 import {
@@ -54,6 +55,7 @@ const STRATEGY_ICONS: Record<string, string> = {
 };
 
 export default function ExperimentPage() {
+  const { user } = useAuth();
   const [goalTitle, setGoalTitle] = useState('Exercise for 30 minutes');
   const [numInterventions, setNumInterventions] = useState(30);
   const [loading, setLoading] = useState(false);
@@ -67,11 +69,13 @@ export default function ExperimentPage() {
   const [applyingFormula, setApplyingFormula] = useState(false);
   const [formulaMessage, setFormulaMessage] = useState<string | null>(null);
 
+  // Use authenticated user ID if available, fall back to anonymous
+  const userId = user?.id || getOrCreateUserId();
+
   // Fetch formula status on mount and after simulation
   useEffect(() => {
     const fetchFormulaStatus = async () => {
       try {
-        const userId = getOrCreateUserId();
         const status = await getFormulaStatus(userId);
         setFormulaStatus(status);
       } catch (err) {
@@ -79,13 +83,12 @@ export default function ExperimentPage() {
       }
     };
     fetchFormulaStatus();
-  }, [result]); // Re-fetch when result changes
+  }, [result, userId]); // Re-fetch when result changes
 
   const handleApplyFormula = async () => {
     try {
       setApplyingFormula(true);
       setFormulaMessage(null);
-      const userId = getOrCreateUserId();
       const response = await applyFormula(userId);
       if (response.success) {
         setFormulaMessage(response.message || 'Formula applied successfully!');
@@ -106,7 +109,6 @@ export default function ExperimentPage() {
     try {
       setApplyingFormula(true);
       setFormulaMessage(null);
-      const userId = getOrCreateUserId();
       const response = await clearFormula(userId);
       if (response.success) {
         setFormulaMessage(response.message || 'Formula cleared. Back to experimenting!');
@@ -127,7 +129,6 @@ export default function ExperimentPage() {
       setError(null);
       setResult(null);
 
-      const userId = getOrCreateUserId();
       const data = await simulateExperiment(userId, goalTitle, numInterventions);
 
       setResult(data);

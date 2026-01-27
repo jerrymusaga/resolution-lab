@@ -14,6 +14,7 @@ import {
   clearFormula,
   FormulaStatus
 } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { UserInsights, InsightsComparison, STRATEGY_INFO, InterventionStrategy } from '@/types';
 import { formatPercent, getStrategyColor, cn } from '@/lib/utils';
 import {
@@ -76,6 +77,7 @@ interface InsightEvaluation {
 }
 
 export default function InsightsPage() {
+  const { user } = useAuth();
   const [userId, setUserId] = useState<string>('');
   const [insights, setInsights] = useState<UserInsights | null>(null);
   const [comparison, setComparison] = useState<InsightsComparison | null>(null);
@@ -93,10 +95,11 @@ export default function InsightsPage() {
   const [formulaMessage, setFormulaMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const id = getOrCreateUserId();
+    // Use authenticated user ID if available, fall back to anonymous
+    const id = user?.id || getOrCreateUserId();
     setUserId(id);
     loadInsights(id);
-  }, []);
+  }, [user]);
 
   // Animate the reveal when data loads
   useEffect(() => {

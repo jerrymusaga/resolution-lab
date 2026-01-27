@@ -46,8 +46,8 @@ async def get_opik_stats():
         )
 
     base_url = f"https://www.comet.com/opik/{OPIK_WORKSPACE}"
-    dashboard_url = f"{base_url}/redirect/projects?name={OPIK_PROJECT_NAME}"
-    traces_url = f"{base_url}/traces?project={OPIK_PROJECT_NAME}"
+    dashboard_url = f"{base_url}/{OPIK_PROJECT_NAME}"
+    traces_url = f"{base_url}/{OPIK_PROJECT_NAME}/traces"
 
     return OpikStats(
         workspace=OPIK_WORKSPACE,
@@ -65,8 +65,8 @@ async def get_opik_project_info():
         raise HTTPException(status_code=503, detail="Opik not configured")
 
     base_url = f"https://www.comet.com/opik/{OPIK_WORKSPACE}"
-    dashboard_url = f"{base_url}/redirect/projects?name={OPIK_PROJECT_NAME}"
-    traces_url = f"{base_url}/traces?project={OPIK_PROJECT_NAME}"
+    dashboard_url = f"{base_url}/{OPIK_PROJECT_NAME}"
+    traces_url = f"{base_url}/{OPIK_PROJECT_NAME}/traces"
 
     # List of custom evaluators we've implemented
     evaluators = [

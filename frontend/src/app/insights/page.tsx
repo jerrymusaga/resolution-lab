@@ -50,7 +50,6 @@ import {
   PolarAngleAxis,
   Radar
 } from 'recharts';
-import OpikDashboard from '@/components/OpikDashboard';
 
 // Strategy icons mapping
 const STRATEGY_ICONS: Record<InterventionStrategy, React.ReactNode> = {
@@ -888,10 +887,6 @@ function InsightsContent() {
         </div>
       )}
 
-      {/* Opik Observability Dashboard */}
-      <div className="mt-8">
-        <OpikDashboard />
-      </div>
 
       {/* No data yet */}
       {(!insights || insights.strategy_stats.length === 0) && !error && !loading && (

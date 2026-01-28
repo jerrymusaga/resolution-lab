@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input } from '@/components/ui';
 import { cn } from '@/lib/utils';
-import { getFormulaStatus, FormulaStatus, listGoals, recordCheckIn } from '@/lib/api';
+import { getFormulaStatus, FormulaStatus, listGoals, recordCheckIn, trackVoicePlay } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { STRATEGY_INFO, Goal } from '@/types';
 import {
@@ -25,8 +25,13 @@ import {
   ThumbsDown,
   LogIn,
   Clock,
-  Rocket
+  Rocket,
+  Volume2,
+  VolumeX,
+  Settings2,
+  Square
 } from 'lucide-react';
+import { useTextToSpeech, getAutoPlayPreference, setAutoPlayPreference } from '@/hooks/useTextToSpeech';
 import Link from 'next/link';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -73,11 +78,39 @@ export default function AgentPage() {
   const [checkInSuccess, setCheckInSuccess] = useState<boolean | null>(null);
   const [showMicroCommitment, setShowMicroCommitment] = useState(false);
 
+  // Voice state
+  const [autoPlayVoice, setAutoPlayVoice] = useState(false);
+  const [showVoiceSettings, setShowVoiceSettings] = useState(false);
+  const { speak, stop, isSpeaking, isSupported: voiceSupported, voices, selectedVoice, setSelectedVoice } = useTextToSpeech({
+    rate: 0.95,
+    pitch: 1,
+  });
+
   // Formula status
   const [formulaStatus, setFormulaStatus] = useState<FormulaStatus | null>(null);
 
   // Use authenticated user ID - require login for this feature
   const userId = user?.id;
+
+  // Load voice auto-play preference on mount
+  useEffect(() => {
+    setAutoPlayVoice(getAutoPlayPreference());
+  }, []);
+
+  // Auto-play voice when new motivation message arrives
+  useEffect(() => {
+    if (autoPlayVoice && agentResponse?.action?.message && currentStep === 7 && voiceSupported && userId) {
+      // Small delay to let the UI render first
+      const timer = setTimeout(() => {
+        speak(agentResponse.action.message);
+        // Track auto-play for analytics
+        if (agentResponse.intervention_id) {
+          trackVoicePlay(userId, agentResponse.intervention_id, true).catch(console.error);
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [agentResponse?.action?.message, agentResponse?.intervention_id, currentStep, autoPlayVoice, voiceSupported, speak, userId]);
 
   // Load user's goals on mount (only when authenticated)
   useEffect(() => {
@@ -691,11 +724,123 @@ export default function AgentPage() {
                 "{agentResponse.action.message}"
               </p>
 
-              <div className="flex justify-center gap-3 mt-4">
+              <div className="flex justify-center items-center gap-3 mt-4">
                 <span className="px-3 py-1 bg-gray-100 rounded-full text-sm">
                   {STRATEGY_ICONS[agentResponse.action.strategy_used]} {agentResponse.plan?.chosen_strategy}
                 </span>
+
+                {/* Voice Play Button */}
+                {voiceSupported && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        if (isSpeaking) {
+                          stop();
+                        } else {
+                          speak(agentResponse.action.message);
+                          // Track manual play for analytics
+                          if (userId && agentResponse.intervention_id) {
+                            trackVoicePlay(userId, agentResponse.intervention_id, false).catch(console.error);
+                          }
+                        }
+                      }}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium transition-all",
+                        isSpeaking
+                          ? "bg-red-100 text-red-700 hover:bg-red-200"
+                          : "bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
+                      )}
+                      title={isSpeaking ? "Stop" : "Play voice"}
+                    >
+                      {isSpeaking ? (
+                        <>
+                          <Square className="w-3.5 h-3.5 fill-current" />
+                          Stop
+                        </>
+                      ) : (
+                        <>
+                          <Volume2 className="w-3.5 h-3.5" />
+                          Listen
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setShowVoiceSettings(!showVoiceSettings)}
+                      className={cn(
+                        "p-1.5 rounded-full transition-colors",
+                        showVoiceSettings ? "bg-gray-200 text-gray-700" : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                      )}
+                      title="Voice settings"
+                    >
+                      <Settings2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
+
+              {/* Voice Settings Panel */}
+              {showVoiceSettings && voiceSupported && (
+                <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-medium text-gray-700">Voice Settings</span>
+                    <button
+                      onClick={() => setShowVoiceSettings(false)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <ChevronUp className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Auto-play toggle */}
+                  <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-200">
+                    <div className="flex items-center gap-2">
+                      {autoPlayVoice ? (
+                        <Volume2 className="w-4 h-4 text-indigo-600" />
+                      ) : (
+                        <VolumeX className="w-4 h-4 text-gray-400" />
+                      )}
+                      <span className="text-sm text-gray-600">Auto-play voice</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const newValue = !autoPlayVoice;
+                        setAutoPlayVoice(newValue);
+                        setAutoPlayPreference(newValue);
+                      }}
+                      className={cn(
+                        "relative w-11 h-6 rounded-full transition-colors",
+                        autoPlayVoice ? "bg-indigo-600" : "bg-gray-300"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform shadow-sm",
+                          autoPlayVoice && "translate-x-5"
+                        )}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Voice selection */}
+                  <div>
+                    <label className="text-sm text-gray-600 mb-2 block">Voice</label>
+                    <select
+                      value={selectedVoice?.name || ''}
+                      onChange={(e) => {
+                        const voice = voices.find(v => v.name === e.target.value);
+                        if (voice) setSelectedVoice(voice);
+                      }}
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    >
+                      {voices.filter(v => v.lang.startsWith('en')).map((voice) => (
+                        <option key={voice.name} value={voice.name}>
+                          {voice.name} ({voice.lang})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Check-in Response */}

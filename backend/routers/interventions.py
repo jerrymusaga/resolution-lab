@@ -304,6 +304,41 @@ async def get_intervention(
         raise HTTPException(status_code=500, detail="Database not configured")
 
 
+@router.post("/{intervention_id}/voice-play", response_model=APIResponse)
+@opik.track(name="api_voice_play")
+async def track_voice_play(
+    intervention_id: UUID,
+    user_id: str = Query(..., description="User ID"),
+    auto_played: bool = Query(False, description="Whether voice was auto-played"),
+):
+    """
+    Track when a user plays the voice for an intervention message.
+    This helps analyze engagement with voice features.
+    """
+    if DB_ENABLED:
+        db_intervention = db_get_intervention_by_id(str(intervention_id))
+        if not db_intervention:
+            raise HTTPException(status_code=404, detail="Intervention not found")
+        if db_intervention["user_id"] != user_id:
+            raise HTTPException(status_code=403, detail="Not authorized")
+
+    # Log to Opik for analytics
+    opik.track_current().log_metric("voice_played", 1)
+    opik.track_current().log_metric("voice_auto_played", 1 if auto_played else 0)
+    opik.track_current().set_metadata({
+        "intervention_id": str(intervention_id),
+        "user_id": user_id,
+        "auto_played": auto_played,
+        "strategy": db_intervention.get("strategy") if DB_ENABLED else None,
+    })
+
+    return APIResponse(
+        success=True,
+        message="Voice play tracked",
+        data={"intervention_id": str(intervention_id), "auto_played": auto_played}
+    )
+
+
 # ===================
 # Demo/Testing Endpoints
 # ===================

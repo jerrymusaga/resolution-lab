@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input } from '@/components/ui';
 import Progress from '@/components/ui/Progress';
-import { getOrCreateUserId, simulateExperiment, getFormulaStatus, applyFormula, clearFormula, FormulaStatus } from '@/lib/api';
+import { simulateExperiment, getFormulaStatus, applyFormula, clearFormula, FormulaStatus } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import { SimulationResult, STRATEGY_INFO, InterventionStrategy } from '@/types';
 import { getStrategyColor } from '@/lib/utils';
 import {
@@ -54,7 +55,7 @@ const STRATEGY_ICONS: Record<string, string> = {
   micro_commitment: '🎯',
 };
 
-export default function ExperimentPage() {
+function ExperimentContent() {
   const { user } = useAuth();
   const [goalTitle, setGoalTitle] = useState('Exercise for 30 minutes');
   const [numInterventions, setNumInterventions] = useState(30);
@@ -69,8 +70,8 @@ export default function ExperimentPage() {
   const [applyingFormula, setApplyingFormula] = useState(false);
   const [formulaMessage, setFormulaMessage] = useState<string | null>(null);
 
-  // Use authenticated user ID if available, fall back to anonymous
-  const userId = user?.id || getOrCreateUserId();
+  // Use authenticated user ID
+  const userId = user?.id || '';
 
   // Fetch formula status on mount and after simulation
   useEffect(() => {
@@ -959,5 +960,13 @@ export default function ExperimentPage() {
         </Card>
       )}
     </div>
+  );
+}
+
+export default function ExperimentPage() {
+  return (
+    <ProtectedRoute>
+      <ExperimentContent />
+    </ProtectedRoute>
   );
 }

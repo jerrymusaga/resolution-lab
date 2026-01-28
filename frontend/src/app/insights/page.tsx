@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardContent, Button } from '@/components/ui';
 import Progress from '@/components/ui/Progress';
 import {
-  getOrCreateUserId,
   getUserInsights,
   getStrategyComparison,
   getRecommendation,
@@ -15,6 +14,7 @@ import {
   FormulaStatus
 } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import ProtectedRoute from '@/components/ProtectedRoute';
 import { UserInsights, InsightsComparison, STRATEGY_INFO, InterventionStrategy } from '@/types';
 import { formatPercent, getStrategyColor, cn } from '@/lib/utils';
 import {
@@ -76,7 +76,7 @@ interface InsightEvaluation {
   };
 }
 
-export default function InsightsPage() {
+function InsightsContent() {
   const { user } = useAuth();
   const [userId, setUserId] = useState<string>('');
   const [insights, setInsights] = useState<UserInsights | null>(null);
@@ -95,10 +95,12 @@ export default function InsightsPage() {
   const [formulaMessage, setFormulaMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    // Use authenticated user ID if available, fall back to anonymous
-    const id = user?.id || getOrCreateUserId();
+    // Use authenticated user ID
+    const id = user?.id || '';
     setUserId(id);
-    loadInsights(id);
+    if (id) {
+      loadInsights(id);
+    }
   }, [user]);
 
   // Animate the reveal when data loads
@@ -918,5 +920,13 @@ export default function InsightsPage() {
         </Card>
       )}
     </div>
+  );
+}
+
+export default function InsightsPage() {
+  return (
+    <ProtectedRoute>
+      <InsightsContent />
+    </ProtectedRoute>
   );
 }

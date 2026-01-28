@@ -323,14 +323,29 @@ async def track_voice_play(
             raise HTTPException(status_code=403, detail="Not authorized")
 
     # Log to Opik for analytics
-    opik.track_current().log_metric("voice_played", 1)
-    opik.track_current().log_metric("voice_auto_played", 1 if auto_played else 0)
-    opik.track_current().set_metadata({
-        "intervention_id": str(intervention_id),
-        "user_id": user_id,
-        "auto_played": auto_played,
-        "strategy": db_intervention.get("strategy") if DB_ENABLED else None,
-    })
+    try:
+        current = opik.track_current()
+        if current:
+            # Log metrics
+            current.log_metric("voice_played", 1)
+            current.log_metric("voice_auto_played", 1 if auto_played else 0)
+
+            # Log feedback score for voice engagement
+            current.log_feedback_score(
+                name="voice_engagement",
+                value=1.0,
+                reason=f"User {'auto-' if auto_played else 'manually '}played voice for motivation message"
+            )
+
+            current.set_metadata({
+                "intervention_id": str(intervention_id),
+                "user_id": user_id,
+                "auto_played": auto_played,
+                "strategy": db_intervention.get("strategy") if DB_ENABLED else None,
+            })
+    except Exception as e:
+        # Silently continue if Opik logging fails
+        pass
 
     return APIResponse(
         success=True,

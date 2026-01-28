@@ -9,6 +9,7 @@ KEY DIFFERENTIATOR: Shows production-ready evaluation patterns
 that go beyond basic tracing.
 """
 
+import opik
 from opik import track
 from opik.evaluation.metrics import base_metric, score_result
 import litellm
@@ -18,6 +19,16 @@ import re
 from enum import Enum
 
 from models.schemas import InterventionStrategy, STRATEGY_DESCRIPTIONS
+
+
+def log_feedback_score_safe(name: str, value: float, reason: str = ""):
+    """Safely log feedback score to current trace if available."""
+    try:
+        current = opik.track_current()
+        if current:
+            current.log_feedback_score(name=name, value=value, reason=reason)
+    except Exception:
+        pass  # Silently fail if not in a traced context
 
 
 # ===========================================
@@ -121,6 +132,13 @@ class StrategyAlignmentEvaluator:
             "negative_matches": negative_matches,
             "explanation": self._generate_explanation(score, keyword_matches, tone_matches, negative_matches, strategy)
         }
+
+        # Log feedback score to Opik
+        log_feedback_score_safe(
+            name="strategy_alignment",
+            value=round(score, 3),
+            reason=result["explanation"]
+        )
 
         return result
 
@@ -234,6 +252,13 @@ class MotivationEffectivenessEvaluator:
             "suggestions": suggestions[:3],
             "explanation": self._generate_explanation(final_score, scores)
         }
+
+        # Log feedback score to Opik
+        log_feedback_score_safe(
+            name="motivation_effectiveness",
+            value=round(final_score, 3),
+            reason=result["explanation"]
+        )
 
         return result
 
@@ -374,6 +399,13 @@ class PersonalizationEvaluator:
             "explanation": self._generate_explanation(final_score, goal_referenced, generic_count)
         }
 
+        # Log feedback score to Opik
+        log_feedback_score_safe(
+            name="personalization",
+            value=round(final_score, 3),
+            reason=result["explanation"]
+        )
+
         return result
 
     def _generate_explanation(self, score: float, goal_ref: bool, generic: int) -> str:
@@ -480,6 +512,13 @@ class ToneConsistencyEvaluator:
             "explanation": f"Message {'matches' if final_score >= 0.6 else 'could better match'} expected {expected_tone} tone for {strategy.value}"
         }
 
+        # Log feedback score to Opik
+        log_feedback_score_safe(
+            name="tone_consistency",
+            value=round(final_score, 3),
+            reason=result["explanation"]
+        )
+
         return result
 
 
@@ -584,6 +623,13 @@ class ComprehensiveMessageEvaluator:
             "top_suggestions": all_suggestions[:5],
             "message_evaluated": message[:100] + "..." if len(message) > 100 else message
         }
+
+        # Log overall feedback score to Opik
+        log_feedback_score_safe(
+            name="overall_message_quality",
+            value=round(overall_score, 3),
+            reason=f"Grade: {grade} - {verdict}"
+        )
 
         return result
 
@@ -736,6 +782,13 @@ class InsightQualityEvaluator:
             "explanation": self._generate_explanation(final_score, scores)
         }
 
+        # Log feedback score to Opik
+        log_feedback_score_safe(
+            name="insight_quality",
+            value=round(final_score, 3),
+            reason=f"Grade: {grade}"
+        )
+
         return result
 
     def _generate_explanation(self, score: float, breakdown: dict) -> str:
@@ -834,6 +887,13 @@ class SyncMessageEvaluator:
             },
             "top_suggestions": all_suggestions[:3]
         }
+
+        # Log overall feedback score to Opik
+        log_feedback_score_safe(
+            name="overall_message_quality",
+            value=round(overall_score, 3),
+            reason=f"Grade: {grade}"
+        )
 
         return result
 

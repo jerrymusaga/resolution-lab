@@ -72,10 +72,40 @@ export default function GoalCard({
         </div>
       </div>
       
+      {/* Streak highlight for 3+ day streaks */}
+      {(goal.current_streak || 0) >= 3 && (
+        <div className={cn(
+          "mt-4 px-4 py-3 rounded-lg flex items-center justify-between",
+          (goal.current_streak || 0) >= 7
+            ? "bg-gradient-to-r from-orange-100 to-amber-100 border border-orange-200"
+            : "bg-orange-50 border border-orange-100"
+        )}>
+          <div className="flex items-center gap-2">
+            <div className={cn(
+              "w-10 h-10 rounded-full flex items-center justify-center",
+              (goal.current_streak || 0) >= 7 ? "bg-orange-500" : "bg-orange-400"
+            )}>
+              <Flame className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="font-bold text-orange-700">{goal.current_streak}-day streak!</p>
+              <p className="text-xs text-orange-600">
+                {(goal.current_streak || 0) >= 7
+                  ? "You're on fire! Keep it up!"
+                  : "Great momentum - don't break the chain!"}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Stats */}
       <div className="mt-4 grid grid-cols-3 gap-4">
         <div className="text-center">
-          <div className="flex items-center justify-center space-x-1 text-orange-500">
+          <div className={cn(
+            "flex items-center justify-center space-x-1",
+            (goal.current_streak || 0) >= 3 ? "text-orange-600" : "text-orange-400"
+          )}>
             <Flame className="w-4 h-4" />
             <span className="text-xl font-bold">{goal.current_streak || 0}</span>
           </div>

@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     
     # LLM - Google Gemini
     google_api_key: str = ""
-    llm_model: str = "gemini/gemini-1.5-flash"
+    llm_model: str = "gemini/gemini-2.0-flash"
     
     # Server
     host: str = "0.0.0.0"

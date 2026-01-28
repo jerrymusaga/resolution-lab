@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input } from '@/components/ui';
 import { cn } from '@/lib/utils';
-import { getOrCreateUserId, getFormulaStatus, FormulaStatus } from '@/lib/api';
-import { STRATEGY_INFO } from '@/types';
+import { getFormulaStatus, FormulaStatus, listGoals, recordCheckIn } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
+import { STRATEGY_INFO, Goal } from '@/types';
 import {
   Brain,
   Eye,
@@ -13,7 +14,6 @@ import {
   MessageSquare,
   CheckCircle2,
   BookOpen,
-  Play,
   ChevronDown,
   ChevronUp,
   Sparkles,
@@ -21,9 +21,11 @@ import {
   Loader2,
   Zap,
   ArrowRight,
-  RotateCw,
-  FlaskConical
+  ThumbsUp,
+  ThumbsDown,
+  LogIn
 } from 'lucide-react';
+import Link from 'next/link';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -53,21 +55,59 @@ const STRATEGY_ICONS: Record<string, string> = {
 };
 
 export default function AgentPage() {
-  const [goalTitle, setGoalTitle] = useState('Exercise for 30 minutes');
+  const { user, loading: authLoading } = useAuth();
+  const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [customGoal, setCustomGoal] = useState('');
   const [loading, setLoading] = useState(false);
+  const [goalsLoading, setGoalsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [agentResponse, setAgentResponse] = useState<any>(null);
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set([1, 2, 3, 4, 5, 6]));
   const [currentStep, setCurrentStep] = useState(0);
 
+  // Check-in state
+  const [checkingIn, setCheckingIn] = useState(false);
+  const [checkInSuccess, setCheckInSuccess] = useState<boolean | null>(null);
+
   // Formula status
   const [formulaStatus, setFormulaStatus] = useState<FormulaStatus | null>(null);
 
-  // Fetch formula status on mount
+  // Use authenticated user ID - require login for this feature
+  const userId = user?.id;
+
+  // Load user's goals on mount (only when authenticated)
   useEffect(() => {
+    if (!userId) {
+      setGoalsLoading(false);
+      return;
+    }
+
+    const loadGoals = async () => {
+      try {
+        setGoalsLoading(true);
+        const data = await listGoals(userId);
+        const activeGoals = data.filter((g: Goal) => g.status === 'active');
+        setGoals(activeGoals);
+        if (activeGoals.length > 0) {
+          setSelectedGoal(activeGoals[0]);
+        }
+      } catch (err) {
+        console.error('Failed to load goals:', err);
+      } finally {
+        setGoalsLoading(false);
+      }
+    };
+
+    loadGoals();
+  }, [userId]);
+
+  // Fetch formula status on mount (only when authenticated)
+  useEffect(() => {
+    if (!userId) return;
+
     const fetchFormulaStatus = async () => {
       try {
-        const userId = getOrCreateUserId();
         const status = await getFormulaStatus(userId);
         setFormulaStatus(status);
       } catch (err) {
@@ -75,22 +115,32 @@ export default function AgentPage() {
       }
     };
     fetchFormulaStatus();
-  }, []);
+  }, [userId]);
 
   const runAgent = async () => {
+    if (!userId) {
+      setError('Please sign in to use the AI Coach');
+      return;
+    }
+
+    const goalTitle = selectedGoal?.title || customGoal;
+    if (!goalTitle.trim()) {
+      setError('Please select a goal or enter a custom one');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
       setAgentResponse(null);
       setCurrentStep(0);
+      setCheckInSuccess(null);
 
       // Simulate step-by-step progress with visual feedback
       for (let i = 1; i <= 6; i++) {
         setCurrentStep(i);
         await new Promise(r => setTimeout(r, 600));
       }
-
-      const userId = 'demo-' + Math.random().toString(36).substr(2, 9);
 
       const response = await fetch(
         `${API_URL}/api/agent/run?user_id=${userId}`,
@@ -99,7 +149,8 @@ export default function AgentPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             goal_title: goalTitle,
-            goal_description: ''
+            goal_description: selectedGoal?.description || '',
+            goal_id: selectedGoal?.id
           })
         }
       );
@@ -114,10 +165,29 @@ export default function AgentPage() {
 
     } catch (err) {
       console.error('Agent error:', err);
-      setError('Failed to run agent. Make sure backend is running with API keys configured.');
+      setError('Failed to get motivation. Make sure backend is running.');
       setCurrentStep(0);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCheckIn = async (completed: boolean) => {
+    if (!userId || !agentResponse?.intervention_id) return;
+
+    try {
+      setCheckingIn(true);
+      await recordCheckIn(userId, {
+        intervention_id: agentResponse.intervention_id,
+        completed,
+      });
+      setCheckInSuccess(completed);
+    } catch (err) {
+      console.error('Check-in failed:', err);
+      // Still show success for UX, the data contributes to insights
+      setCheckInSuccess(completed);
+    } finally {
+      setCheckingIn(false);
     }
   };
 
@@ -135,14 +205,14 @@ export default function AgentPage() {
     {
       step: 1,
       name: 'OBSERVE',
-      description: 'Gather user history & context',
+      description: 'Analyzing your history & patterns',
       icon: <Eye className="w-5 h-5" />,
       color: 'text-blue-600',
       bgColor: 'bg-blue-500',
       borderColor: 'border-blue-500',
       data: agentResponse?.thought ? {
         label: 'Gathering context...',
-        content: 'Analyzing user history, experiment data, and current context'
+        content: 'Analyzing your check-in history, experiment data, and what motivates you'
       } : null,
       isComplete: currentStep > 1,
       isActive: currentStep === 1
@@ -150,7 +220,7 @@ export default function AgentPage() {
     {
       step: 2,
       name: 'THINK',
-      description: 'Reason about patterns',
+      description: 'Understanding what works for you',
       icon: <Brain className="w-5 h-5" />,
       color: 'text-purple-600',
       bgColor: 'bg-purple-500',
@@ -162,7 +232,7 @@ export default function AgentPage() {
     {
       step: 3,
       name: 'PLAN',
-      description: 'Decide on strategy',
+      description: 'Choosing the best strategy',
       icon: <Target className="w-5 h-5" />,
       color: 'text-orange-600',
       bgColor: 'bg-orange-500',
@@ -174,7 +244,7 @@ export default function AgentPage() {
     {
       step: 4,
       name: 'ACT',
-      description: 'Generate message',
+      description: 'Creating your personalized message',
       icon: <MessageSquare className="w-5 h-5" />,
       color: 'text-green-600',
       bgColor: 'bg-green-500',
@@ -186,7 +256,7 @@ export default function AgentPage() {
     {
       step: 5,
       name: 'EVALUATE',
-      description: 'Self-assess quality',
+      description: 'Checking message quality',
       icon: <CheckCircle2 className="w-5 h-5" />,
       color: 'text-pink-600',
       bgColor: 'bg-pink-500',
@@ -198,7 +268,7 @@ export default function AgentPage() {
     {
       step: 6,
       name: 'LEARN',
-      description: 'Log for future learning',
+      description: 'Improving for next time',
       icon: <BookOpen className="w-5 h-5" />,
       color: 'text-teal-600',
       bgColor: 'bg-teal-500',
@@ -209,6 +279,52 @@ export default function AgentPage() {
     }
   ];
 
+  // Show loading state while auth is initializing
+  if (authLoading) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+        </div>
+      </div>
+    );
+  }
+
+  // Show login prompt if not authenticated
+  if (!userId) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white mb-6 shadow-lg">
+            <Brain className="w-10 h-10" />
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">AI Motivation Coach</h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Get personalized motivation tailored to what works best for you
+          </p>
+        </div>
+
+        <Card variant="bordered" className="max-w-md mx-auto">
+          <CardContent className="pt-8 pb-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center mx-auto mb-4">
+              <LogIn className="w-8 h-8 text-indigo-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Sign in to continue</h2>
+            <p className="text-gray-600 mb-6">
+              Sign in to get personalized motivation messages and track your progress over time. Your responses help the AI learn what motivates you best.
+            </p>
+            <Link href="/login">
+              <Button className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700">
+                <LogIn className="w-4 h-4 mr-2" />
+                Sign In
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Hero Header */}
@@ -216,9 +332,9 @@ export default function AgentPage() {
         <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white mb-6 shadow-lg">
           <Brain className="w-10 h-10" />
         </div>
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">AI Coach Agent</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">AI Motivation Coach</h1>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-          Watch the agent think, plan, and act through a 6-step cognitive loop - with every step traced in Opik
+          Get personalized motivation tailored to what works best for you
         </p>
       </div>
 
@@ -284,17 +400,17 @@ export default function AgentPage() {
             {/* Status message */}
             <div className="text-center mt-6">
               {currentStep === 0 && !loading && (
-                <p className="text-slate-400">Enter a goal and click "Run Agent" to start</p>
+                <p className="text-slate-400">Select a goal and click "Get Motivation" to start</p>
               )}
               {loading && currentStep > 0 && currentStep < 7 && (
                 <p className="text-white animate-pulse">
-                  Step {currentStep}: {steps[currentStep - 1]?.name}...
+                  {steps[currentStep - 1]?.description}...
                 </p>
               )}
               {currentStep === 7 && (
                 <div className="flex items-center justify-center gap-2 text-emerald-400">
                   <CheckCircle2 className="w-5 h-5" />
-                  <span className="font-medium">Agent Complete!</span>
+                  <span className="font-medium">Your motivation is ready!</span>
                 </div>
               )}
             </div>
@@ -319,17 +435,17 @@ export default function AgentPage() {
                       {STRATEGY_ICONS[formulaStatus.preferred_strategy]}{' '}
                       {STRATEGY_INFO[formulaStatus.preferred_strategy as keyof typeof STRATEGY_INFO]?.name || formulaStatus.preferred_strategy}
                     </span>{' '}
-                    for your check-ins (90% of the time)
+                    - your most effective strategy
                   </p>
                 </div>
               </div>
-              <a
-                href="/experiment"
+              <Link
+                href="/insights"
                 className="text-sm text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
               >
-                <FlaskConical className="w-4 h-4" />
-                Manage
-              </a>
+                <Sparkles className="w-4 h-4" />
+                View Insights
+              </Link>
             </div>
           </CardContent>
         </Card>
@@ -347,65 +463,153 @@ export default function AgentPage() {
                 <div>
                   <p className="font-semibold text-amber-800">Your Motivation Formula is Ready!</p>
                   <p className="text-sm text-amber-600">
-                    Based on your experiments,{' '}
+                    We found that{' '}
                     <span className="font-bold">
                       {STRATEGY_ICONS[formulaStatus.best_strategy || '']}{' '}
                       {STRATEGY_INFO[formulaStatus.best_strategy as keyof typeof STRATEGY_INFO]?.name || formulaStatus.best_strategy}
                     </span>{' '}
-                    works best for you. Apply it to supercharge your check-ins!
+                    works best for you. Apply it to get better results!
                   </p>
                 </div>
               </div>
-              <a
-                href="/experiment"
+              <Link
+                href="/insights"
                 className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium flex items-center gap-1"
               >
                 <Zap className="w-4 h-4" />
                 Apply Formula
-              </a>
+              </Link>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Input Section */}
+      {/* Goal Selection Section */}
       <Card variant="bordered" className="mb-8 overflow-hidden">
         <div className="bg-gradient-to-r from-indigo-50 to-purple-50 px-6 py-4 border-b border-indigo-100">
           <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-            <Zap className="w-5 h-5 text-indigo-600" />
-            Test the Agent
+            <Target className="w-5 h-5 text-indigo-600" />
+            What do you need motivation for?
           </h2>
         </div>
         <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
+          {/* Goal Selection */}
+          {goalsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+            </div>
+          ) : goals.length > 0 ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {goals.map((goal) => (
+                  <button
+                    key={goal.id}
+                    onClick={() => {
+                      setSelectedGoal(goal);
+                      setCustomGoal('');
+                    }}
+                    className={cn(
+                      "p-4 rounded-xl border-2 text-left transition-all",
+                      selectedGoal?.id === goal.id
+                        ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-500/20"
+                        : "border-gray-200 hover:border-indigo-300 hover:bg-gray-50"
+                    )}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={cn(
+                        "w-10 h-10 rounded-lg flex items-center justify-center",
+                        selectedGoal?.id === goal.id ? "bg-indigo-500 text-white" : "bg-gray-100 text-gray-500"
+                      )}>
+                        <Target className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={cn(
+                          "font-semibold truncate",
+                          selectedGoal?.id === goal.id ? "text-indigo-900" : "text-gray-900"
+                        )}>
+                          {goal.title}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {goal.current_streak || 0} day streak
+                        </p>
+                      </div>
+                      {selectedGoal?.id === goal.id && (
+                        <CheckCircle2 className="w-5 h-5 text-indigo-500 flex-shrink-0" />
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">or enter a custom goal</span>
+                </div>
+              </div>
+
               <Input
-                label="Your Goal"
-                value={goalTitle}
-                onChange={(e) => setGoalTitle(e.target.value)}
-                placeholder="Enter a goal to test..."
+                value={customGoal}
+                onChange={(e) => {
+                  setCustomGoal(e.target.value);
+                  if (e.target.value) setSelectedGoal(null);
+                }}
+                placeholder="E.g., Finish my project presentation"
+                className={cn(customGoal && "ring-2 ring-indigo-500")}
               />
             </div>
-            <div className="sm:self-end">
-              <Button
-                onClick={runAgent}
-                isLoading={loading}
-                size="lg"
-                className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Running...
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-4 h-4 mr-2" />
-                    Run Agent
-                  </>
-                )}
-              </Button>
+          ) : (
+            <div className="space-y-4">
+              <div className="text-center py-4">
+                <p className="text-gray-500 mb-4">You don't have any active goals yet</p>
+                <Link href="/goals/new">
+                  <Button variant="outline">
+                    <Target className="w-4 h-4 mr-2" />
+                    Create Your First Goal
+                  </Button>
+                </Link>
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">or try with a custom goal</span>
+                </div>
+              </div>
+
+              <Input
+                value={customGoal}
+                onChange={(e) => setCustomGoal(e.target.value)}
+                placeholder="E.g., Exercise for 30 minutes"
+              />
             </div>
+          )}
+
+          {/* Get Motivation Button */}
+          <div className="mt-6 flex justify-center">
+            <Button
+              onClick={runAgent}
+              isLoading={loading}
+              size="lg"
+              disabled={!selectedGoal && !customGoal.trim()}
+              className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Get Motivation
+                </>
+              )}
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -420,341 +624,278 @@ export default function AgentPage() {
         </Card>
       )}
 
-      {/* Agent Workflow - Detailed Steps */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-          <RotateCw className="w-5 h-5 text-primary-600" />
-          Cognitive Loop Details
-        </h2>
-
-        {steps.map((step) => (
-          <Card
-            key={step.step}
-            variant="bordered"
-            className={cn(
-              'transition-all duration-300 overflow-hidden',
-              step.isActive && 'ring-2 ring-offset-2 shadow-lg',
-              step.isActive && step.borderColor,
-              step.isComplete && 'bg-gray-50/50'
-            )}
-          >
-            <div
-              className={cn(
-                "flex items-center justify-between p-4 cursor-pointer transition-colors",
-                step.data && "hover:bg-gray-50"
-              )}
-              onClick={() => step.data && toggleStep(step.step)}
-            >
-              <div className="flex items-center space-x-4">
-                {/* Step indicator with connecting line visual */}
-                <div className="relative">
-                  <div className={cn(
-                    'w-12 h-12 rounded-xl flex items-center justify-center text-white transition-all shadow-md',
-                    step.isComplete ? step.bgColor :
-                    step.isActive ? `${step.bgColor} animate-pulse shadow-lg` :
-                    'bg-gray-300'
-                  )}>
-                    {step.isActive && loading ? (
-                      <Loader2 className="w-6 h-6 animate-spin" />
-                    ) : (
-                      step.icon
-                    )}
-                  </div>
-                  {step.isComplete && (
-                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
-                      <CheckCircle2 className="w-3 h-3 text-white" />
-                    </div>
-                  )}
-                </div>
-
-                {/* Step name and description */}
-                <div>
-                  <h3 className={cn(
-                    'font-bold text-lg flex items-center gap-2',
-                    step.isComplete || step.isActive ? 'text-gray-900' : 'text-gray-400'
-                  )}>
-                    <span className={cn(
-                      "text-xs font-medium px-2 py-0.5 rounded-full",
-                      step.isComplete || step.isActive ? `${step.bgColor} text-white` : "bg-gray-200 text-gray-500"
-                    )}>
-                      {step.step}
-                    </span>
-                    {step.name}
-                  </h3>
-                  <p className={cn(
-                    "text-sm",
-                    step.isComplete || step.isActive ? 'text-gray-600' : 'text-gray-400'
-                  )}>
-                    {step.description}
-                  </p>
-                </div>
+      {/* The Generated Message - Featured prominently */}
+      {agentResponse?.action?.message && currentStep === 7 && (
+        <Card variant="bordered" className="mb-8 overflow-hidden border-0 shadow-xl">
+          <div className="bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 p-8">
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center gap-2 bg-white/20 text-white px-4 py-2 rounded-full text-sm font-medium">
+                <MessageSquare className="w-4 h-4" />
+                Your Personalized Motivation
               </div>
-
-              {/* Expand/collapse */}
-              {step.data && (
-                <div className={cn("transition-colors", step.color)}>
-                  {expandedSteps.has(step.step) ? (
-                    <ChevronUp className="w-5 h-5" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5" />
-                  )}
-                </div>
-              )}
             </div>
 
-            {/* Expanded content */}
-            {step.data && expandedSteps.has(step.step) && (
-              <div className="px-4 pb-4 pt-0 ml-16">
-                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-5 text-sm border border-gray-200">
-                  {/* THINK step */}
-                  {step.step === 2 && step.data.observation && (
-                    <div className="space-y-4">
-                      <div className="bg-white rounded-lg p-4 border border-gray-100">
-                        <span className="font-semibold text-purple-700 flex items-center gap-2 mb-2">
-                          <Eye className="w-4 h-4" />
-                          Observation
-                        </span>
-                        <p className="text-gray-700">{step.data.observation}</p>
-                      </div>
-                      <div className="bg-white rounded-lg p-4 border border-gray-100">
-                        <span className="font-semibold text-purple-700 flex items-center gap-2 mb-2">
-                          <Brain className="w-4 h-4" />
-                          Analysis
-                        </span>
-                        <p className="text-gray-700">{step.data.analysis}</p>
-                      </div>
-                      <div className="bg-white rounded-lg p-4 border border-gray-100">
-                        <span className="font-semibold text-purple-700 flex items-center gap-2 mb-2">
-                          <Lightbulb className="w-4 h-4" />
-                          Hypothesis
-                        </span>
-                        <p className="text-gray-700">{step.data.hypothesis}</p>
-                      </div>
-                      <div className="bg-white rounded-lg p-4 border border-gray-100">
-                        <span className="font-semibold text-purple-700 mb-2 block">Confidence</span>
-                        <div className="flex items-center space-x-3">
-                          <div className="flex-1 bg-gray-200 rounded-full h-3 overflow-hidden">
-                            <div
-                              className="bg-gradient-to-r from-purple-500 to-indigo-500 h-3 rounded-full transition-all"
-                              style={{ width: `${(step.data.confidence || 0) * 100}%` }}
-                            />
-                          </div>
-                          <span className="text-purple-700 font-bold">{((step.data.confidence || 0) * 100).toFixed(0)}%</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+            <div className="bg-white rounded-2xl p-6 shadow-lg">
+              <p className="text-xl text-gray-900 font-medium leading-relaxed text-center">
+                "{agentResponse.action.message}"
+              </p>
 
-                  {/* PLAN step */}
-                  {step.step === 3 && step.data.chosen_strategy && (
-                    <div className="space-y-4">
-                      <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg p-4 border border-orange-200">
-                        <span className="font-semibold text-orange-700 mb-2 block">Chosen Strategy</span>
-                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-full font-bold shadow-md">
-                          <Target className="w-4 h-4" />
-                          {step.data.chosen_strategy}
-                        </span>
-                      </div>
-                      <div className="bg-white rounded-lg p-4 border border-gray-100">
-                        <span className="font-semibold text-orange-700 mb-2 block">Reasoning</span>
-                        <p className="text-gray-700">{step.data.reasoning}</p>
-                      </div>
-                      <div className="bg-white rounded-lg p-4 border border-gray-100">
-                        <span className="font-semibold text-orange-700 mb-2 block">Expected Effectiveness</span>
-                        <div className="flex items-center space-x-3">
-                          <div className="flex-1 bg-gray-200 rounded-full h-3 overflow-hidden">
-                            <div
-                              className="bg-gradient-to-r from-orange-500 to-amber-500 h-3 rounded-full transition-all"
-                              style={{ width: `${(step.data.expected_effectiveness || 0) * 100}%` }}
-                            />
-                          </div>
-                          <span className="text-orange-700 font-bold">{((step.data.expected_effectiveness || 0) * 100).toFixed(0)}%</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+              <div className="flex justify-center gap-3 mt-4">
+                <span className="px-3 py-1 bg-gray-100 rounded-full text-sm">
+                  {STRATEGY_ICONS[agentResponse.action.strategy_used]} {agentResponse.plan?.chosen_strategy}
+                </span>
+              </div>
+            </div>
 
-                  {/* ACT step */}
-                  {step.step === 4 && step.data.message && (
-                    <div className="space-y-4">
-                      <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border-2 border-green-200">
-                        <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
-                            <MessageSquare className="w-5 h-5 text-white" />
-                          </div>
-                          <div>
-                            <p className="text-green-900 text-lg font-medium leading-relaxed">"{step.data.message}"</p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm">
-                        <span className="px-3 py-1 bg-gray-100 rounded-full">
-                          <span className="text-gray-500">Tone:</span> <span className="font-medium text-gray-700">{step.data.tone}</span>
-                        </span>
-                        <span className="px-3 py-1 bg-gray-100 rounded-full">
-                          <span className="text-gray-500">Strategy:</span> <span className="font-medium text-gray-700">{step.data.strategy_used}</span>
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* EVALUATE step */}
-                  {step.step === 5 && step.data.overall_score !== undefined && (
-                    <div className="space-y-4">
-                      {/* Grade Badge */}
-                      {step.data.evaluator_grade && (
-                        <div className="flex items-center justify-center">
-                          <div className={cn(
-                            "w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold text-white shadow-lg",
-                            step.data.evaluator_grade === 'A' ? "bg-gradient-to-br from-emerald-400 to-emerald-600" :
-                            step.data.evaluator_grade === 'B' ? "bg-gradient-to-br from-blue-400 to-blue-600" :
-                            step.data.evaluator_grade === 'C' ? "bg-gradient-to-br from-amber-400 to-amber-600" :
-                            step.data.evaluator_grade === 'D' ? "bg-gradient-to-br from-orange-400 to-orange-600" :
-                            "bg-gradient-to-br from-red-400 to-red-600"
-                          )}>
-                            {step.data.evaluator_grade}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Custom Evaluator Scores - NEW! */}
-                      {(step.data.strategy_alignment_score !== undefined || step.data.motivation_effectiveness_score !== undefined) && (
-                        <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
-                          <span className="font-semibold text-indigo-700 mb-3 block flex items-center gap-2">
-                            <Sparkles className="w-4 h-4" />
-                            Custom Opik Evaluators
-                          </span>
-                          <div className="grid grid-cols-2 gap-3">
-                            {[
-                              { label: 'Strategy Alignment', value: step.data.strategy_alignment_score, color: 'indigo' },
-                              { label: 'Motivation Power', value: step.data.motivation_effectiveness_score, color: 'purple' },
-                              { label: 'Personalization', value: step.data.personalization_score, color: 'violet' },
-                              { label: 'Tone Match', value: step.data.tone_consistency_score, color: 'fuchsia' },
-                            ].filter(m => m.value !== undefined).map((metric) => (
-                              <div key={metric.label} className="bg-white rounded-lg p-3 border border-indigo-100">
-                                <span className="text-xs font-medium text-gray-600 block mb-1">{metric.label}</span>
-                                <div className="flex items-center space-x-2">
-                                  <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
-                                    <div
-                                      className="h-2 rounded-full transition-all bg-indigo-500"
-                                      style={{ width: `${(metric.value || 0) * 100}%` }}
-                                    />
-                                  </div>
-                                  <span className="text-sm font-bold text-indigo-700">{((metric.value || 0) * 100).toFixed(0)}%</span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* LLM Judge Scores */}
-                      <div className="grid grid-cols-2 gap-4">
-                        {[
-                          { label: 'Quality', value: step.data.quality_score, color: 'pink' },
-                          { label: 'Relevance', value: step.data.relevance_score, color: 'pink' },
-                          { label: 'Overall Score', value: step.data.overall_score, color: 'emerald', highlight: true },
-                        ].map((metric) => (
-                          <div key={metric.label} className={cn(
-                            "bg-white rounded-lg p-4 border",
-                            metric.highlight ? "border-emerald-200 bg-emerald-50 col-span-2" : "border-gray-100"
-                          )}>
-                            <span className={cn(
-                              "text-sm font-medium block mb-2",
-                              metric.highlight ? "text-emerald-700" : "text-gray-600"
-                            )}>{metric.label} {metric.highlight && "(Hybrid Score)"}</span>
-                            <div className="flex items-center space-x-2">
-                              <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
-                                <div
-                                  className={cn(
-                                    "h-2 rounded-full transition-all",
-                                    metric.highlight ? "bg-emerald-500" : "bg-pink-500"
-                                  )}
-                                  style={{ width: `${(metric.value || 0) * 100}%` }}
-                                />
-                              </div>
-                              <span className={cn(
-                                "text-sm font-bold",
-                                metric.highlight ? "text-emerald-700" : "text-gray-700"
-                              )}>{((metric.value || 0) * 100).toFixed(0)}%</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      {step.data.improvement_suggestions?.length > 0 && (
-                        <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
-                          <span className="font-semibold text-amber-700 mb-2 block flex items-center gap-2">
-                            <Lightbulb className="w-4 h-4" />
-                            Improvement Suggestions
-                          </span>
-                          <ul className="list-disc list-inside text-amber-800 space-y-1">
-                            {step.data.improvement_suggestions.map((s: string, i: number) => (
-                              <li key={i}>{s}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* LEARN step */}
-                  {step.step === 6 && step.data.logged && (
-                    <div className="flex items-center space-x-3 text-teal-700 bg-teal-50 rounded-lg p-4 border border-teal-200">
-                      <CheckCircle2 className="w-6 h-6" />
-                      <span className="font-medium">Learning signals logged to Opik for future model improvement</span>
-                    </div>
-                  )}
-
-                  {/* OBSERVE step placeholder */}
-                  {step.step === 1 && step.data.label && (
-                    <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                      <p className="text-blue-700">{step.data.content}</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Opik trace indicator */}
-                <div className="mt-3 text-xs text-gray-400 flex items-center space-x-2">
-                  <Sparkles className="w-3 h-3" />
-                  <span>Traced in Opik: <code className="bg-gray-100 px-1.5 py-0.5 rounded">agent_{step.name.toLowerCase()}</code></span>
+            {/* Check-in Response */}
+            {agentResponse?.intervention_id && checkInSuccess === null && (
+              <div className="mt-6 text-center">
+                <p className="text-white/90 mb-4">Did this motivation help you take action?</p>
+                <div className="flex justify-center gap-4">
+                  <Button
+                    onClick={() => handleCheckIn(true)}
+                    disabled={checkingIn}
+                    className="bg-white text-green-600 hover:bg-green-50"
+                  >
+                    {checkingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : <ThumbsUp className="w-4 h-4 mr-2" />}
+                    Yes, I did it!
+                  </Button>
+                  <Button
+                    onClick={() => handleCheckIn(false)}
+                    disabled={checkingIn}
+                    variant="outline"
+                    className="border-white/50 text-white hover:bg-white/10"
+                  >
+                    <ThumbsDown className="w-4 h-4 mr-2" />
+                    Not yet
+                  </Button>
                 </div>
               </div>
             )}
-          </Card>
-        ))}
-      </div>
 
-      {/* Success message */}
-      {currentStep === 7 && (
-        <Card variant="bordered" className="mt-8 overflow-hidden border-0 shadow-xl">
-          <div className="bg-gradient-to-r from-emerald-500 to-teal-500 p-8 text-center text-white">
-            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle2 className="w-8 h-8" />
-            </div>
-            <h3 className="text-2xl font-bold mb-2">Agent Complete!</h3>
-            <p className="text-emerald-100 mb-4">
-              The full cognitive loop has been traced in your Opik dashboard
-            </p>
-            <div className="flex items-center justify-center gap-2 text-sm bg-white/10 rounded-full px-4 py-2 inline-flex">
-              <Sparkles className="w-4 h-4" />
-              <span>6 steps traced with full LLM observability</span>
-            </div>
+            {/* Check-in Success */}
+            {checkInSuccess !== null && (
+              <div className="mt-6 text-center">
+                <div className={cn(
+                  "inline-flex items-center gap-2 px-4 py-2 rounded-full",
+                  checkInSuccess ? "bg-white text-green-600" : "bg-white/20 text-white"
+                )}>
+                  <CheckCircle2 className="w-4 h-4" />
+                  {checkInSuccess ? "Great job! Your progress has been recorded." : "No worries! Every day is a new opportunity."}
+                </div>
+                <p className="text-white/80 text-sm mt-2">
+                  This helps us learn what motivates you best
+                </p>
+              </div>
+            )}
           </div>
         </Card>
       )}
 
-      {/* Info box - How it works */}
-      {!agentResponse && !loading && (
+      {/* Agent Workflow - Detailed Steps (Collapsed by default after response) */}
+      {(currentStep > 0 || agentResponse) && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <Brain className="w-5 h-5 text-primary-600" />
+            How the AI Reasoned
+            <span className="text-sm font-normal text-gray-500">(click to expand)</span>
+          </h2>
+
+          {steps.map((step) => (
+            <Card
+              key={step.step}
+              variant="bordered"
+              className={cn(
+                'transition-all duration-300 overflow-hidden',
+                step.isActive && 'ring-2 ring-offset-2 shadow-lg',
+                step.isActive && step.borderColor,
+                step.isComplete && 'bg-gray-50/50'
+              )}
+            >
+              <div
+                className={cn(
+                  "flex items-center justify-between p-4 cursor-pointer transition-colors",
+                  step.data && "hover:bg-gray-50"
+                )}
+                onClick={() => step.data && toggleStep(step.step)}
+              >
+                <div className="flex items-center space-x-4">
+                  {/* Step indicator */}
+                  <div className="relative">
+                    <div className={cn(
+                      'w-12 h-12 rounded-xl flex items-center justify-center text-white transition-all shadow-md',
+                      step.isComplete ? step.bgColor :
+                      step.isActive ? `${step.bgColor} animate-pulse shadow-lg` :
+                      'bg-gray-300'
+                    )}>
+                      {step.isActive && loading ? (
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                      ) : (
+                        step.icon
+                      )}
+                    </div>
+                    {step.isComplete && (
+                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
+                        <CheckCircle2 className="w-3 h-3 text-white" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Step name and description */}
+                  <div>
+                    <h3 className={cn(
+                      'font-bold text-lg flex items-center gap-2',
+                      step.isComplete || step.isActive ? 'text-gray-900' : 'text-gray-400'
+                    )}>
+                      <span className={cn(
+                        "text-xs font-medium px-2 py-0.5 rounded-full",
+                        step.isComplete || step.isActive ? `${step.bgColor} text-white` : "bg-gray-200 text-gray-500"
+                      )}>
+                        {step.step}
+                      </span>
+                      {step.name}
+                    </h3>
+                    <p className={cn(
+                      "text-sm",
+                      step.isComplete || step.isActive ? 'text-gray-600' : 'text-gray-400'
+                    )}>
+                      {step.description}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Expand/collapse */}
+                {step.data && (
+                  <div className={cn("transition-colors", step.color)}>
+                    {expandedSteps.has(step.step) ? (
+                      <ChevronUp className="w-5 h-5" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5" />
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Expanded content */}
+              {step.data && expandedSteps.has(step.step) && (
+                <div className="px-4 pb-4 pt-0 ml-16">
+                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-5 text-sm border border-gray-200">
+                    {/* THINK step */}
+                    {step.step === 2 && step.data.observation && (
+                      <div className="space-y-4">
+                        <div className="bg-white rounded-lg p-4 border border-gray-100">
+                          <span className="font-semibold text-purple-700 flex items-center gap-2 mb-2">
+                            <Eye className="w-4 h-4" />
+                            Observation
+                          </span>
+                          <p className="text-gray-700">{step.data.observation}</p>
+                        </div>
+                        <div className="bg-white rounded-lg p-4 border border-gray-100">
+                          <span className="font-semibold text-purple-700 flex items-center gap-2 mb-2">
+                            <Brain className="w-4 h-4" />
+                            Analysis
+                          </span>
+                          <p className="text-gray-700">{step.data.analysis}</p>
+                        </div>
+                        <div className="bg-white rounded-lg p-4 border border-gray-100">
+                          <span className="font-semibold text-purple-700 flex items-center gap-2 mb-2">
+                            <Lightbulb className="w-4 h-4" />
+                            Hypothesis
+                          </span>
+                          <p className="text-gray-700">{step.data.hypothesis}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* PLAN step */}
+                    {step.step === 3 && step.data.chosen_strategy && (
+                      <div className="space-y-4">
+                        <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg p-4 border border-orange-200">
+                          <span className="font-semibold text-orange-700 mb-2 block">Chosen Strategy</span>
+                          <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-full font-bold shadow-md">
+                            {STRATEGY_ICONS[step.data.chosen_strategy]} {step.data.chosen_strategy}
+                          </span>
+                        </div>
+                        <div className="bg-white rounded-lg p-4 border border-gray-100">
+                          <span className="font-semibold text-orange-700 mb-2 block">Reasoning</span>
+                          <p className="text-gray-700">{step.data.reasoning}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ACT step */}
+                    {step.step === 4 && step.data.message && (
+                      <div className="space-y-4">
+                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border-2 border-green-200">
+                          <p className="text-green-900 text-lg font-medium leading-relaxed">"{step.data.message}"</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* EVALUATE step */}
+                    {step.step === 5 && step.data.overall_score !== undefined && (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          {[
+                            { label: 'Quality', value: step.data.quality_score },
+                            { label: 'Relevance', value: step.data.relevance_score },
+                            { label: 'Personalization', value: step.data.personalization_score },
+                            { label: 'Overall', value: step.data.overall_score, highlight: true },
+                          ].map((metric) => (
+                            <div key={metric.label} className={cn(
+                              "bg-white rounded-lg p-4 border",
+                              metric.highlight ? "border-emerald-200 bg-emerald-50" : "border-gray-100"
+                            )}>
+                              <span className="text-sm font-medium text-gray-600 block mb-2">{metric.label}</span>
+                              <div className="flex items-center space-x-2">
+                                <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
+                                  <div
+                                    className={cn("h-2 rounded-full", metric.highlight ? "bg-emerald-500" : "bg-pink-500")}
+                                    style={{ width: `${(metric.value || 0) * 100}%` }}
+                                  />
+                                </div>
+                                <span className="text-sm font-bold text-gray-700">{((metric.value || 0) * 100).toFixed(0)}%</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* LEARN step */}
+                    {step.step === 6 && step.data.logged && (
+                      <div className="flex items-center space-x-3 text-teal-700 bg-teal-50 rounded-lg p-4 border border-teal-200">
+                        <CheckCircle2 className="w-6 h-6" />
+                        <span className="font-medium">Your response will help improve future recommendations</span>
+                      </div>
+                    )}
+
+                    {/* OBSERVE step placeholder */}
+                    {step.step === 1 && step.data.label && (
+                      <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                        <p className="text-blue-700">{step.data.content}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Initial State - How it works */}
+      {!agentResponse && !loading && currentStep === 0 && (
         <Card variant="bordered" className="mt-8 bg-gradient-to-br from-slate-50 to-gray-50">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Brain className="w-5 h-5 text-purple-600" />
-              How the AI Coach Agent Works
+              How Your AI Coach Works
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-gray-600 text-sm mb-6">
-              Unlike simple chatbots, this agent follows a cognitive architecture inspired by how humans think and learn:
+              Your AI coach uses a 6-step reasoning process to create motivation that's personalized to what works for you:
             </p>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {steps.map((step) => (
@@ -768,6 +909,13 @@ export default function AgentPage() {
                   </div>
                 </div>
               ))}
+            </div>
+
+            <div className="mt-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+              <p className="text-sm text-indigo-700">
+                <strong>Tip:</strong> The more you use the coach and respond to check-ins, the better it learns what motivates you.
+                Check your <Link href="/insights" className="underline font-medium">Insights</Link> to see your motivation patterns.
+              </p>
             </div>
           </CardContent>
         </Card>

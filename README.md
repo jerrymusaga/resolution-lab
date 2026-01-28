@@ -100,6 +100,52 @@ Algorithm: **ε-greedy** (20% exploration, 80% exploitation)
 
 ---
 
+## ✨ Engagement Features
+
+### 🔊 Voice Motivation (Text-to-Speech)
+Listen to your motivation messages! Uses the Browser Web Speech API for free, instant voice playback.
+
+- **Listen Button**: Click to hear any motivation message spoken aloud
+- **Auto-play**: Enable to automatically hear messages when they arrive
+- **Voice Selection**: Choose from available English voices
+- **Analytics**: Voice usage tracked in Opik for engagement analysis
+
+### 📅 Streak Calendar
+Visual calendar showing your check-in history over the past 35 days.
+
+- **Color-coded days**: Green (completed), Red (missed), Gray (no activity)
+- **Streak tracking**: Current and longest streak calculations
+- **Dashboard integration**: See your consistency at a glance
+
+### 🎯 Micro-Commitment Fallback
+When you click "Not yet", the system offers a gentler option:
+
+```
+"How about just 2 minutes?"
+Sometimes starting is the hardest part. Can you commit to just 2 minutes?
+That's all it takes to build momentum.
+
+[I'll try 2 minutes!] [Not today]
+```
+
+### ⏰ Time-Based Greetings
+Personalized greetings based on time of day:
+
+| Time | Greeting | Message |
+|------|----------|---------|
+| 🌅 Morning | "Good morning, [Name]!" | "Start your day with purpose" |
+| ☀️ Afternoon | "Good afternoon, [Name]!" | "Keep the momentum going" |
+| 🌆 Evening | "Good evening, [Name]!" | "Finish strong today" |
+| 🌙 Night | "Working late, [Name]!" | "Every step counts" |
+
+### 🔥 Per-Goal Streak Highlights
+Goals with 3+ day streaks get prominent visual highlights:
+
+- **3-6 day streaks**: Orange highlight with flame icon
+- **7+ day streaks**: Gradient highlight with "On fire!" badge
+
+---
+
 ## 🔍 Opik Integration (Deep)
 
 ```
@@ -134,6 +180,12 @@ LLM-AS-JUDGE
 ├── analyze_user_sentiment
 ├── judge_goal_completion
 └── agent_evaluate (hybrid: custom evaluators + LLM judge)
+
+ENGAGEMENT ANALYTICS
+├── api_voice_play ─────────── Track voice playback events
+│   ├── voice_played (metric)
+│   └── voice_auto_played (metric)
+└── api_record_checkin ─────── Track micro-commitment usage
 ```
 
 ### Custom Opik Evaluators - App-Wide Quality Assessment
@@ -198,11 +250,13 @@ See `USER_STORIES.md` for complete scenarios.
 | Criteria | Implementation |
 |----------|----------------|
 | ✅ True Agent | 6-step cognitive loop, not just LLM wrapper |
-| ✅ Deep Opik | Nested traces, experiments, custom metrics |
+| ✅ Deep Opik | Nested traces, experiments, custom metrics, voice analytics |
 | ✅ Custom Evaluators | 6 evaluators assess ALL AI outputs with grades (A-F) |
 | ✅ Hybrid Evaluation | Custom evaluators (40%) + LLM-as-Judge (60%) |
 | ✅ Novel Use Case | Expose experiment data TO users |
 | ✅ Production Ready | Full-stack, polished UI with evaluator visualizations |
+| ✅ Engagement Features | Voice TTS, streak calendar, micro-commitments, personalized greetings |
+| ✅ Authentication | Supabase Auth with Google OAuth, protected routes |
 
 ---
 
@@ -210,13 +264,19 @@ See `USER_STORIES.md` for complete scenarios.
 
 ```
 backend/services/coach_agent.py        # 🤖 AI Agent (6-step loop)
-backend/services/evaluators.py         # 🎯 Custom Opik Evaluators (NEW!)
+backend/services/evaluators.py         # 🎯 Custom Opik Evaluators
 backend/services/experiment_engine.py  # Multi-armed bandit
 backend/services/intervention_generator.py  # Message generation + evaluation
 backend/services/analysis_engine.py    # Insight generation + evaluation
-frontend/src/app/agent/page.tsx        # Agent visualization with evaluator scores
+backend/routers/interventions.py       # API endpoints including voice tracking
+
+frontend/src/app/agent/page.tsx        # Agent visualization with voice + micro-commitment
 frontend/src/app/experiment/page.tsx   # Experiment page with grade distribution
 frontend/src/app/insights/page.tsx     # User insights with insight quality grades
+frontend/src/app/dashboard/page.tsx    # Dashboard with streak calendar
+frontend/src/components/StreakCalendar.tsx  # 📅 Visual check-in calendar
+frontend/src/components/GoalCard.tsx   # 🔥 Goal cards with streak highlights
+frontend/src/hooks/useTextToSpeech.ts  # 🔊 Text-to-speech hook
 ```
 
 ---

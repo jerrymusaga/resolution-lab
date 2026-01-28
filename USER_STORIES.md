@@ -16,6 +16,10 @@ A comprehensive guide to how Resolution Lab works from the user's perspective.
 8. [Long-term Usage Patterns](#8-long-term-usage-patterns)
 9. [Edge Cases & Error Handling](#9-edge-cases--error-handling)
 10. [Custom Opik Evaluators - Technical Deep Dive](#custom-opik-evaluators---technical-deep-dive)
+11. [Voice Motivation Feature](#11-voice-motivation-feature)
+12. [Micro-Commitment Fallback](#12-micro-commitment-fallback)
+13. [Streak Calendar & Highlights](#13-streak-calendar--highlights)
+14. [Personalized Greetings](#14-personalized-greetings)
 
 ---
 
@@ -200,10 +204,33 @@ BEHIND THE SCENES
 **User:** Day 3, Sarah clicks "Not yet"
 
 **What happens:**
-- Strategy used gets a "failure" recorded
-- Completion rate decreases
-- System still learns (failure is data too!)
-- No guilt-tripping messaging
+```
+MICRO-COMMITMENT RESCUE (NEW!)
+─────────────────────────────────────────────────
+Instead of immediately recording failure,
+the system offers a gentler option:
+
+┌─────────────────────────────────────────────┐
+│              ⏰                              │
+│   How about just 2 minutes?                 │
+│                                             │
+│   Sometimes starting is the hardest part.   │
+│   Can you commit to just 2 minutes?         │
+│                                             │
+│   [🚀 I'll try 2 minutes!]  [Not today]     │
+└─────────────────────────────────────────────┘
+
+If Sarah clicks "I'll try 2 minutes!":
+→ Check-in recorded as COMPLETED
+→ Streak continues
+→ Algorithm learns micro-commitment rescue works
+
+If Sarah clicks "Not today":
+→ Strategy used gets a "failure" recorded
+→ Completion rate decreases
+→ System still learns (failure is data too!)
+→ No guilt-tripping: "Every day is a new opportunity"
+```
 
 ### Scenario 3.4: Providing Optional Feedback
 
@@ -643,9 +670,12 @@ LONG-TERM VALUE
 1. **Transparency**: Users SEE why each message was chosen
 2. **Science-based**: Real multi-armed bandit, not random
 3. **Personal insights**: Data about YOUR psychology
-4. **No guilt**: Failures are data, not judgment
+4. **No guilt**: Failures are data, not judgment (with micro-commitment rescue!)
 5. **Adaptive**: System improves over time for each user
 6. **Quality Assurance**: Every AI output graded A-F by custom Opik evaluators
+7. **Multi-sensory**: Listen to motivation with text-to-speech voice feature
+8. **Visual Progress**: Streak calendar and goal highlights keep you motivated
+9. **Personalized Experience**: Time-based greetings and context-aware messaging
 
 ---
 
@@ -676,6 +706,330 @@ The AI Agent uses a **hybrid evaluation approach**:
 - **Result**: Overall score + Letter grade (A-F)
 
 This demonstrates production-ready evaluation patterns that go beyond basic tracing.
+
+---
+
+## 11. Voice Motivation Feature
+
+### Scenario 11.1: Listening to Motivation Message
+
+**User:** Sarah gets her motivation message and wants to hear it spoken aloud.
+
+```
+MOTIVATION MESSAGE WITH VOICE
+─────────────────────────────────────────────────
+          ✨ Your Personalized Motivation
+
+┌─────────────────────────────────────────────┐
+│                                             │
+│ "You're becoming someone who prioritizes    │
+│  their health. That's not just a goal -     │
+│  that's who you are now. Today's workout    │
+│  is just you being you. 💪"                 │
+│                                             │
+│ 💪 identity_reinforcement  [🔊 Listen] [⚙️] │
+└─────────────────────────────────────────────┘
+
+Sarah clicks "Listen" button
+         │
+         ▼
+Browser speaks the message using Web Speech API
+Button changes to [⏹ Stop] while speaking
+```
+
+### Scenario 11.2: Enabling Auto-Play Voice
+
+**User:** Sarah wants to hear every message automatically.
+
+```
+VOICE SETTINGS PANEL
+─────────────────────────────────────────────────
+Sarah clicks the ⚙️ settings icon:
+
+┌─────────────────────────────────────────────┐
+│ Voice Settings                          [✕] │
+│                                             │
+│ 🔊 Auto-play voice              [====○    ] │
+│                                    ON       │
+│ ─────────────────────────────────────────── │
+│ Voice                                       │
+│ ┌─────────────────────────────────────────┐ │
+│ │ Samantha (en-US)                      ▼ │ │
+│ └─────────────────────────────────────────┘ │
+└─────────────────────────────────────────────┘
+
+When enabled:
+• New motivation messages auto-play on arrival
+• Preference saved to localStorage
+• Voice usage tracked in Opik for analytics
+```
+
+**What happens behind the scenes:**
+```
+OPIK ANALYTICS (api_voice_play trace)
+─────────────────────────────────────────────────
+Metrics logged:
+• voice_played: 1
+• voice_auto_played: 1 (if auto-play) or 0 (if manual)
+
+Metadata:
+• intervention_id: abc123
+• user_id: user-xyz
+• strategy: identity_reinforcement
+• auto_played: true
+
+This allows analysis of:
+→ Do users who enable voice have higher check-in rates?
+→ Which strategies are listened to most?
+→ Auto-play vs manual engagement patterns
+```
+
+---
+
+## 12. Micro-Commitment Fallback
+
+### Scenario 12.1: User Says "Not Yet"
+
+**User:** Sarah receives motivation but clicks "Not yet" - she's feeling overwhelmed.
+
+```
+CHECK-IN RESPONSE
+─────────────────────────────────────────────────
+"Did this motivation help you take action?"
+
+Sarah clicks "Not yet"
+         │
+         ▼
+MICRO-COMMITMENT PROMPT APPEARS
+─────────────────────────────────────────────────
+┌─────────────────────────────────────────────┐
+│              ⏰                              │
+│                                             │
+│   How about just 2 minutes?                 │
+│                                             │
+│   Sometimes starting is the hardest part.   │
+│   Can you commit to just 2 minutes?         │
+│   That's all it takes to build momentum.    │
+│                                             │
+│   [🚀 I'll try 2 minutes!]  [Not today]     │
+└─────────────────────────────────────────────┘
+```
+
+### Scenario 12.2: Sarah Accepts Micro-Commitment
+
+```
+Sarah clicks "I'll try 2 minutes!"
+         │
+         ▼
+BEHIND THE SCENES
+─────────────────────────────────────────────────
+1. Check-in recorded with:
+   - completed: true
+   - user_feedback: "micro_commitment"
+
+2. Streak continues (not broken!)
+
+3. Algorithm learns:
+   "When user initially says no, micro-commitment
+    rescue works → increases micro_commitment
+    strategy effectiveness"
+
+4. Success message shown:
+   ✓ "Great job! Your progress has been recorded."
+```
+
+### Scenario 12.3: Sarah Declines Micro-Commitment
+
+```
+Sarah clicks "Not today"
+         │
+         ▼
+BEHIND THE SCENES
+─────────────────────────────────────────────────
+1. Check-in recorded with:
+   - completed: false
+   - user_feedback: "micro_commitment" (declined)
+
+2. No guilt messaging shown:
+   "No worries! Every day is a new opportunity."
+
+3. Algorithm still learns from this data point
+```
+
+**Why this matters:**
+- Reduces "all or nothing" thinking
+- Gives users a graceful way to maintain progress
+- Data shows if micro-commitment rescues improve outcomes
+
+---
+
+## 13. Streak Calendar & Highlights
+
+### Scenario 13.1: Viewing Streak Calendar on Dashboard
+
+**User:** Sarah opens the dashboard and sees her check-in history.
+
+```
+DASHBOARD WITH STREAK CALENDAR
+─────────────────────────────────────────────────
+☀️ Good afternoon, Sarah!
+Keep the momentum going.
+
+🔥 3-day streak! Keep it going!
+
+┌─────────────────────────────────────────────┐
+│ 📅 Check-in Calendar                        │
+│                                             │
+│ 🔥 Current Streak: 3 days                   │
+│ 🏆 Longest Streak: 7 days                   │
+│                                             │
+│     S   M   T   W   T   F   S               │
+│    ┌───┬───┬───┬───┬───┬───┬───┐           │
+│    │ ⬜ │ 🟩 │ 🟩 │ 🟥 │ 🟩 │ 🟩 │ ⬜ │           │
+│    ├───┼───┼───┼───┼───┼───┼───┤           │
+│    │ ⬜ │ 🟩 │ 🟩 │ 🟩 │ 🟩 │ 🟩 │ 🟩 │           │
+│    ├───┼───┼───┼───┼───┼───┼───┤           │
+│    │ 🟩 │ 🟥 │ 🟩 │ 🟩 │ 🟩 │ ⬜ │ ⬜ │           │
+│    └───┴───┴───┴───┴───┴───┴───┘           │
+│                                             │
+│ Legend: 🟩 Completed  🟥 Missed  ⬜ No data  │
+└─────────────────────────────────────────────┘
+```
+
+### Scenario 13.2: Goal Card with Streak Highlight
+
+**User:** Sarah sees her goal cards with prominent streak highlights.
+
+```
+GOAL CARDS WITH STREAK HIGHLIGHTS
+─────────────────────────────────────────────────
+┌─────────────────────────────────────────────┐
+│ 🎯 Exercise for 30 minutes                  │
+│                                             │
+│ 🔥 Streak: 7 days | ✅ 85% completion       │
+│                                             │
+│ ┌─────────────────────────────────────────┐ │
+│ │ 🔥🔥🔥 7 days on fire!                   │ │
+│ │ You're unstoppable! Keep going!         │ │
+│ └─────────────────────────────────────────┘ │
+│                                             │
+│ [Check In] [View Details]                   │
+└─────────────────────────────────────────────┘
+
+Streak highlight styles:
+• 3-6 days: Orange highlight "🔥 Keep it going!"
+• 7+ days: Gradient highlight "🔥🔥🔥 On fire!"
+```
+
+---
+
+## 14. Personalized Greetings
+
+### Scenario 14.1: Time-Based Greetings
+
+**User:** Sarah opens the AI Coach at different times of day.
+
+```
+MORNING (Before 12pm)
+─────────────────────────────────────────────────
+🌅 Good morning, Sarah!
+Start your day with purpose.
+
+🔥 3-day streak! Keep it going!
+
+AFTERNOON (12pm - 5pm)
+─────────────────────────────────────────────────
+☀️ Good afternoon, Sarah!
+Keep the momentum going.
+
+EVENING (5pm - 9pm)
+─────────────────────────────────────────────────
+🌆 Good evening, Sarah!
+Finish strong today.
+
+LATE NIGHT (After 9pm)
+─────────────────────────────────────────────────
+🌙 Working late, Sarah!
+Every step counts.
+```
+
+### Scenario 14.2: Goal-Specific Streak Messages
+
+**User:** Sarah has different streak levels for different goals.
+
+```
+AI COACH PAGE - GOAL SELECTION
+─────────────────────────────────────────────────
+🌅 Good morning, Sarah!
+Start your day with purpose.
+
+What do you need motivation for?
+
+┌─────────────────────────────────────────────┐
+│ [✓] 🎯 Exercise for 30 minutes              │
+│     🔥 7 day streak                         │
+├─────────────────────────────────────────────┤
+│     🎯 Read for 20 minutes                  │
+│     🔥 3 day streak                         │
+├─────────────────────────────────────────────┤
+│     🎯 Meditate                             │
+│     🔥 0 day streak                         │
+└─────────────────────────────────────────────┘
+
+When Sarah selects a goal, the streak message updates:
+
+Selected: Exercise (7-day streak)
+→ "🔥 7-day streak! You're unstoppable!"
+
+Selected: Read (3-day streak)
+→ "🔥 3-day streak! Keep it going!"
+
+Selected: Meditate (0-day streak)
+→ No streak message shown
+```
+
+---
+
+## Summary: Complete Feature Set
+
+```
+CORE FEATURES
+├── 🤖 AI Coach Agent (6-step cognitive loop)
+├── 🧪 Multi-armed bandit experiment
+├── 📊 Personal insights & analytics
+└── 🎯 Goal management
+
+ENGAGEMENT FEATURES (NEW!)
+├── 🔊 Voice Motivation
+│   ├── Listen button on every message
+│   ├── Auto-play preference
+│   ├── Voice selection
+│   └── Opik analytics tracking
+│
+├── 🎯 Micro-Commitment Fallback
+│   ├── "Just 2 minutes" rescue prompt
+│   ├── Preserves streaks on acceptance
+│   └── Tracks effectiveness in algorithm
+│
+├── 📅 Streak Calendar
+│   ├── 35-day visual history
+│   ├── Color-coded days
+│   └── Current & longest streak display
+│
+├── 🔥 Per-Goal Streak Highlights
+│   ├── Prominent banners for 3+ days
+│   └── Extra celebration for 7+ days
+│
+└── ⏰ Personalized Greetings
+    ├── Time-based messaging
+    ├── User name personalization
+    └── Goal-specific streak context
+
+QUALITY ASSURANCE
+├── 🔒 Protected routes (authentication required)
+├── 📈 Custom Opik evaluators (A-F grades)
+└── 🔍 Full observability in Opik
+```
 
 ---
 

@@ -6,6 +6,7 @@ import { Card, CardContent, Button } from '@/components/ui';
 import GoalCard from '@/components/GoalCard';
 import CheckInModal from '@/components/CheckInModal';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import StreakCalendar from '@/components/StreakCalendar';
 import {
   listGoalsWithCheckInStatus,
   generateIntervention,
@@ -379,6 +380,13 @@ function DashboardContent() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Streak Calendar */}
+      {userId && (
+        <div className="mb-8">
+          <StreakCalendar userId={userId} days={35} />
+        </div>
+      )}
 
       {/* Progress to Discovery - Only show when not yet discovered */}
       {!hasDiscovery && (summary?.data_points || 0) > 0 && (

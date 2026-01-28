@@ -368,6 +368,44 @@ def get_intervention_stats(user_id: str) -> dict:
     }
 
 
+def get_checkin_calendar(user_id: str, days: int = 30) -> list:
+    """Get check-in history by date for calendar display."""
+    from datetime import date, timedelta
+
+    start_date = (date.today() - timedelta(days=days)).isoformat()
+
+    try:
+        result = supabase.table("interventions")\
+            .select("created_at, outcome, goal_id")\
+            .eq("user_id", user_id)\
+            .gte("created_at", start_date)\
+            .not_.is_("outcome", "null")\
+            .order("created_at", desc=False)\
+            .execute()
+
+        # Group by date
+        calendar_data = {}
+        for row in result.data or []:
+            created_at = row.get("created_at", "")
+            if created_at:
+                check_date = created_at.split("T")[0]  # Get just the date part
+                if check_date not in calendar_data:
+                    calendar_data[check_date] = {"completed": 0, "missed": 0}
+                if row.get("outcome") == "completed":
+                    calendar_data[check_date]["completed"] += 1
+                else:
+                    calendar_data[check_date]["missed"] += 1
+
+        # Convert to list format
+        return [
+            {"date": date, "completed": data["completed"], "missed": data["missed"]}
+            for date, data in sorted(calendar_data.items())
+        ]
+    except Exception as e:
+        print(f"Error getting calendar data: {e}")
+        return []
+
+
 # =====================
 # Chat History Operations
 # =====================

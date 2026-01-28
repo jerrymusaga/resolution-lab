@@ -310,6 +310,28 @@ async def get_recommendation(
     return response
 
 
+@router.get("/calendar", response_model=list)
+async def get_checkin_calendar(
+    user_id: str = Query(..., description="User ID"),
+    days: int = Query(30, ge=7, le=90, description="Number of days to include"),
+):
+    """
+    Get check-in history by date for calendar visualization.
+
+    Returns a list of dates with completed/missed counts for streak calendar display.
+    """
+    try:
+        from services.database import get_checkin_calendar as db_get_checkin_calendar, DB_ENABLED
+
+        if DB_ENABLED:
+            calendar_data = db_get_checkin_calendar(user_id, days)
+            return calendar_data
+        else:
+            return []
+    except ImportError:
+        return []
+
+
 # ===================
 # Helper Functions
 # ===================

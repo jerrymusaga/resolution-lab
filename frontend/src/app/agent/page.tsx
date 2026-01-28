@@ -23,7 +23,9 @@ import {
   ArrowRight,
   ThumbsUp,
   ThumbsDown,
-  LogIn
+  LogIn,
+  Clock,
+  Rocket
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -69,6 +71,7 @@ export default function AgentPage() {
   // Check-in state
   const [checkingIn, setCheckingIn] = useState(false);
   const [checkInSuccess, setCheckInSuccess] = useState<boolean | null>(null);
+  const [showMicroCommitment, setShowMicroCommitment] = useState(false);
 
   // Formula status
   const [formulaStatus, setFormulaStatus] = useState<FormulaStatus | null>(null);
@@ -172,23 +175,42 @@ export default function AgentPage() {
     }
   };
 
-  const handleCheckIn = async (completed: boolean) => {
+  const handleCheckIn = async (completed: boolean, isMicroCommitment: boolean = false) => {
     if (!userId || !agentResponse?.intervention_id) return;
+
+    // If user said "Not yet" and we haven't shown micro-commitment yet, show it
+    if (!completed && !isMicroCommitment && !showMicroCommitment) {
+      setShowMicroCommitment(true);
+      return;
+    }
 
     try {
       setCheckingIn(true);
       await recordCheckIn(userId, {
         intervention_id: agentResponse.intervention_id,
         completed,
+        user_feedback: isMicroCommitment ? 'micro_commitment' : undefined,
       });
       setCheckInSuccess(completed);
+      setShowMicroCommitment(false);
     } catch (err) {
       console.error('Check-in failed:', err);
       // Still show success for UX, the data contributes to insights
       setCheckInSuccess(completed);
+      setShowMicroCommitment(false);
     } finally {
       setCheckingIn(false);
     }
+  };
+
+  const handleMicroCommitmentAccept = () => {
+    // Record as completed since they agreed to try the micro version
+    handleCheckIn(true, true);
+  };
+
+  const handleMicroCommitmentDecline = () => {
+    // Record as not completed
+    handleCheckIn(false, true);
   };
 
   const toggleStep = (step: number) => {
@@ -200,6 +222,26 @@ export default function AgentPage() {
     }
     setExpandedSteps(newExpanded);
   };
+
+  // Get time-based greeting and context
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return { greeting: 'Good morning', emoji: '🌅', message: 'Start your day with purpose' };
+    if (hour < 17) return { greeting: 'Good afternoon', emoji: '☀️', message: 'Keep the momentum going' };
+    if (hour < 21) return { greeting: 'Good evening', emoji: '🌆', message: 'Finish strong today' };
+    return { greeting: 'Working late', emoji: '🌙', message: 'Every step counts' };
+  };
+
+  const getStreakMessage = () => {
+    const streak = selectedGoal?.current_streak || 0;
+    if (streak === 0) return null;
+    if (streak >= 7) return { text: `🔥 ${streak}-day streak! You're unstoppable!`, color: 'text-orange-500' };
+    if (streak >= 3) return { text: `🔥 ${streak}-day streak! Keep it going!`, color: 'text-amber-500' };
+    return { text: `🔥 ${streak}-day streak`, color: 'text-yellow-500' };
+  };
+
+  const { greeting, emoji, message: greetingMessage } = getGreeting();
+  const streakMessage = getStreakMessage();
 
   const steps: AgentStep[] = [
     {
@@ -327,15 +369,24 @@ export default function AgentPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Hero Header */}
+      {/* Hero Header with Time-based Greeting */}
       <div className="text-center mb-10">
         <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white mb-6 shadow-lg">
           <Brain className="w-10 h-10" />
         </div>
+        <div className="mb-3">
+          <span className="text-2xl mr-2">{emoji}</span>
+          <span className="text-xl text-gray-500">{greeting}, {user?.full_name?.split(' ')[0] || 'there'}!</span>
+        </div>
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">AI Motivation Coach</h1>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-          Get personalized motivation tailored to what works best for you
+          {greetingMessage}. Get personalized motivation tailored to what works best for you.
         </p>
+        {streakMessage && (
+          <p className={cn("text-lg font-semibold mt-2", streakMessage.color)}>
+            {streakMessage.text}
+          </p>
+        )}
       </div>
 
       {/* Cognitive Loop Visualization - Dark Theme */}
@@ -648,7 +699,7 @@ export default function AgentPage() {
             </div>
 
             {/* Check-in Response */}
-            {agentResponse?.intervention_id && checkInSuccess === null && (
+            {agentResponse?.intervention_id && checkInSuccess === null && !showMicroCommitment && (
               <div className="mt-6 text-center">
                 <p className="text-white/90 mb-4">Did this motivation help you take action?</p>
                 <div className="flex justify-center gap-4">
@@ -669,6 +720,42 @@ export default function AgentPage() {
                     <ThumbsDown className="w-4 h-4 mr-2" />
                     Not yet
                   </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Micro-commitment Prompt */}
+            {showMicroCommitment && checkInSuccess === null && (
+              <div className="mt-6">
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
+                  <div className="inline-flex items-center justify-center w-12 h-12 bg-amber-400 rounded-full mb-4">
+                    <Clock className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-white mb-2">
+                    How about just 2 minutes?
+                  </h3>
+                  <p className="text-white/80 mb-6 max-w-md mx-auto">
+                    Sometimes starting is the hardest part. Can you commit to just 2 minutes?
+                    That's all it takes to build momentum.
+                  </p>
+                  <div className="flex flex-col sm:flex-row justify-center gap-3">
+                    <Button
+                      onClick={handleMicroCommitmentAccept}
+                      disabled={checkingIn}
+                      className="bg-amber-400 text-amber-900 hover:bg-amber-300"
+                    >
+                      {checkingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : <Rocket className="w-4 h-4 mr-2" />}
+                      I'll try 2 minutes!
+                    </Button>
+                    <Button
+                      onClick={handleMicroCommitmentDecline}
+                      disabled={checkingIn}
+                      variant="outline"
+                      className="border-white/50 text-white hover:bg-white/10"
+                    >
+                      Not today
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}

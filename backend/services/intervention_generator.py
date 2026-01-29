@@ -176,7 +176,7 @@ Generate the intervention message now:"""
                 user_context=user_context
             )
 
-        # Log to Opik span
+        # Log to Opik span (metadata + feedback scores)
         try:
             span = opik.get_current_span()
             if span:
@@ -188,6 +188,25 @@ Generate the intervention message now:"""
                     "evaluation_grade": evaluation["grade"] if evaluation else None,
                     "evaluation_score": evaluation["overall_score"] if evaluation else None,
                 })
+
+            # Log evaluation scores as feedback scores (at trace level)
+            if evaluation:
+                current = opik.track_current()
+                if current:
+                    # Log overall quality score
+                    current.log_feedback_score(
+                        name="overall_message_quality",
+                        value=round(evaluation["overall_score"], 3),
+                        reason=f"Grade: {evaluation['grade']}"
+                    )
+
+                    # Log individual evaluator scores
+                    for eval_name, score in evaluation["individual_scores"].items():
+                        current.log_feedback_score(
+                            name=eval_name,
+                            value=round(score, 3),
+                            reason=f"Component score for {eval_name}"
+                        )
         except:
             pass
 

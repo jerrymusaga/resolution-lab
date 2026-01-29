@@ -11,8 +11,10 @@ This is the KEY DIFFERENTIATOR for the hackathon - it shows:
 4. LLM-as-judge evaluation
 """
 
+import opik
 from opik import track
 from opik.evaluation import metrics
+from opik.opik_context import get_current_trace_data, update_current_trace
 import litellm
 from typing import Optional
 from datetime import datetime, timedelta
@@ -124,7 +126,30 @@ class AICoachAgent:
         
         # Step 6: LEARN - Update internal models (logged for Opik)
         await self._learn(user_id, plan.chosen_strategy, evaluation)
-        
+
+        # Log feedback scores to Opik
+        try:
+            trace_data = get_current_trace_data()
+            if trace_data and trace_data.id:
+                client = opik.Opik()
+                scores = [
+                    {"id": trace_data.id, "name": "agent_confidence", "value": plan.confidence, "reason": f"Strategy: {plan.chosen_strategy.value}"},
+                    {"id": trace_data.id, "name": "agent_self_score", "value": evaluation.score, "reason": evaluation.reasoning[:100] if evaluation.reasoning else "Self-evaluation"},
+                ]
+                # Add improvement areas as a combined score
+                if evaluation.improvements:
+                    improvement_score = max(0.3, 1.0 - (len(evaluation.improvements) * 0.15))
+                    scores.append({
+                        "id": trace_data.id,
+                        "name": "improvement_potential",
+                        "value": improvement_score,
+                        "reason": f"{len(evaluation.improvements)} improvements identified"
+                    })
+                client.log_traces_feedback_scores(scores=scores)
+                print(f"✅ Logged agent feedback scores to trace {trace_data.id}")
+        except Exception as e:
+            print(f"❌ Failed to log agent feedback scores: {e}")
+
         return CoachAgentResponse(
             thought=thought,
             plan=plan,

@@ -11,6 +11,7 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, HTTPException, Query
 import opik
 from opik import opik_context
+from opik.opik_context import get_current_trace_data
 
 from models.schemas import (
     Intervention,
@@ -216,6 +217,39 @@ async def record_check_in(
         recorded_at=now,
     )
 
+    # Log feedback scores to Opik
+    try:
+        trace_data = get_current_trace_data()
+        if trace_data and trace_data.id:
+            # Calculate engagement score (1.0 if completed, 0.5 if dismissed but responded)
+            engagement_score = 1.0 if outcome.completed else 0.5
+
+            # Calculate response time score (1.0 for < 1min, decreasing for longer)
+            if response_time_seconds < 60:
+                response_score = 1.0
+            elif response_time_seconds < 300:  # 5 min
+                response_score = 0.8
+            elif response_time_seconds < 3600:  # 1 hour
+                response_score = 0.5
+            else:
+                response_score = 0.3
+
+            # Sentiment score
+            sentiment_map = {"positive": 1.0, "neutral": 0.6, "negative": 0.2}
+            sentiment_score = sentiment_map.get(sentiment, 0.6)
+
+            client = opik.Opik()
+            scores = [
+                {"id": trace_data.id, "name": "user_engagement", "value": engagement_score, "reason": f"User {'completed' if outcome.completed else 'dismissed'} the goal"},
+                {"id": trace_data.id, "name": "response_time_quality", "value": response_score, "reason": f"Response time: {response_time_seconds}s"},
+                {"id": trace_data.id, "name": "user_sentiment", "value": sentiment_score, "reason": f"Sentiment: {sentiment}"},
+                {"id": trace_data.id, "name": "strategy_effectiveness", "value": effectiveness, "reason": f"Strategy: {intervention_strategy.value}"},
+            ]
+            client.log_traces_feedback_scores(scores=scores)
+            print(f"✅ Logged check-in feedback scores to trace {trace_data.id}")
+    except Exception as e:
+        print(f"❌ Failed to log check-in feedback scores: {e}")
+
     return outcome_record
 
 
@@ -325,15 +359,8 @@ async def track_voice_play(
 
     # Log to Opik for analytics
     try:
-        # Log feedback score for voice engagement using correct method
+        # Update trace metadata
         opik_context.update_current_trace(
-            feedback_scores=[
-                {
-                    "name": "voice_engagement",
-                    "value": 1.0,
-                    "reason": f"User {'auto-' if auto_played else 'manually '}played voice for motivation message"
-                }
-            ],
             metadata={
                 "intervention_id": str(intervention_id),
                 "user_id": user_id,
@@ -343,9 +370,23 @@ async def track_voice_play(
                 "voice_auto_played": 1 if auto_played else 0,
             }
         )
+
+        # Log feedback score for voice engagement
+        trace_data = get_current_trace_data()
+        if trace_data and trace_data.id:
+            client = opik.Opik()
+            scores = [
+                {
+                    "id": trace_data.id,
+                    "name": "voice_engagement",
+                    "value": 1.0,
+                    "reason": f"User {'auto-' if auto_played else 'manually '}played voice for motivation message"
+                }
+            ]
+            client.log_traces_feedback_scores(scores=scores)
+            print(f"✅ Logged voice engagement feedback to trace {trace_data.id}")
     except Exception as e:
-        # Silently continue if Opik logging fails
-        pass
+        print(f"❌ Failed to log voice feedback: {e}")
 
     return APIResponse(
         success=True,

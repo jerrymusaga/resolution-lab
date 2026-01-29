@@ -105,6 +105,18 @@ async function logToOpik(params: {
 
 export async function POST(req: NextRequest) {
   try {
+    // Check if API key is configured
+    if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+      console.error('GOOGLE_GENERATIVE_AI_API_KEY is not configured');
+      return new Response(JSON.stringify({
+        error: 'AI service not configured',
+        details: 'GOOGLE_GENERATIVE_AI_API_KEY environment variable is missing',
+      }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     const body = await req.json();
     const {
       goalTitle,
@@ -151,7 +163,7 @@ Generate the intervention message now:`;
     if (stream) {
       // Use Vercel AI SDK for streaming
       const result = streamText({
-        model: google('gemini-2.0-flash-exp'),
+        model: google('gemini-1.5-flash'),
         system: SYSTEM_PROMPT,
         prompt: userPrompt,
         temperature: 0.7,
@@ -174,7 +186,7 @@ Generate the intervention message now:`;
     } else {
       // Non-streaming mode
       const result = await generateText({
-        model: google('gemini-2.0-flash-exp'),
+        model: google('gemini-1.5-flash'),
         system: SYSTEM_PROMPT,
         prompt: userPrompt,
         temperature: 0.7,

@@ -760,20 +760,20 @@ export default function AgentPage() {
           {/* Strategy Selection (only for streaming mode) */}
           {useStreamingMode && (
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Strategy</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select Strategy</label>
               <select
                 value={streamingStrategy}
                 onChange={(e) => setStreamingStrategy(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
               >
-                <option value="gentle_reminder">🌟 Gentle Reminder</option>
-                <option value="accountability">✅ Accountability</option>
-                <option value="streak_gamification">🔥 Streak Gamification</option>
-                <option value="social_comparison">👥 Social Comparison</option>
-                <option value="loss_aversion">⚠️ Loss Aversion</option>
-                <option value="reward_preview">🎁 Reward Preview</option>
-                <option value="identity_reinforcement">💪 Identity Reinforcement</option>
-                <option value="micro_commitment">🎯 Micro Commitment</option>
+                <option value="gentle_reminder">Gentle Reminder</option>
+                <option value="accountability">Accountability</option>
+                <option value="streak_gamification">Streak Gamification</option>
+                <option value="social_comparison">Social Comparison</option>
+                <option value="loss_aversion">Loss Aversion</option>
+                <option value="reward_preview">Reward Preview</option>
+                <option value="identity_reinforcement">Identity Reinforcement</option>
+                <option value="micro_commitment">Micro Commitment</option>
               </select>
             </div>
           )}

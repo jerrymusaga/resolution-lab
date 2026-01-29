@@ -208,8 +208,9 @@ Generate the intervention message now:"""
                     })
 
                 opik_context.update_current_trace(feedback_scores=feedback_scores)
-        except:
-            pass
+                print(f"✅ Logged {len(feedback_scores)} feedback scores to Opik")
+        except Exception as e:
+            print(f"❌ Failed to log feedback scores: {e}")
 
         return {
             "message": message,
@@ -269,8 +270,9 @@ Generate the intervention message now:"""
                     })
 
                 opik_context.update_current_trace(feedback_scores=feedback_scores)
-        except:
-            pass
+                print(f"✅ Logged {len(feedback_scores)} feedback scores to Opik (fallback)")
+        except Exception as e:
+            print(f"❌ Failed to log feedback scores (fallback): {e}")
 
         return {
             "message": fallback_message,

@@ -223,22 +223,58 @@ Generate the intervention message now:"""
 
     except Exception as e:
         # Log error and return fallback message
+        fallback_message = get_fallback_message(goal_title, strategy)
+
+        # Run evaluators on fallback message (they're rule-based, don't need LLM)
+        evaluation = None
+        if include_evaluation:
+            try:
+                user_context = {"streak": current_streak} if current_streak > 0 else None
+                evaluation = sync_message_evaluator.evaluate(
+                    message=fallback_message,
+                    strategy=strategy,
+                    goal_title=goal_title,
+                    user_context=user_context
+                )
+            except:
+                pass  # If evaluation fails, continue without it
+
         try:
             span = opik.get_current_span()
             if span:
                 span.log_metadata({
                     "error": str(e),
                     "strategy": strategy.value,
+                    "is_fallback": True,
+                    "evaluation_grade": evaluation["grade"] if evaluation else None,
+                    "evaluation_score": evaluation["overall_score"] if evaluation else None,
                 })
+
+            # Log evaluation scores as feedback scores even for fallback messages
+            if evaluation:
+                current = opik.track_current()
+                if current:
+                    # Log overall quality score
+                    current.log_feedback_score(
+                        name="overall_message_quality",
+                        value=round(evaluation["overall_score"], 3),
+                        reason=f"Grade: {evaluation['grade']} (fallback message)"
+                    )
+
+                    # Log individual evaluator scores
+                    for eval_name, score in evaluation["individual_scores"].items():
+                        current.log_feedback_score(
+                            name=eval_name,
+                            value=round(score, 3),
+                            reason=f"Component score for {eval_name} (fallback)"
+                        )
         except:
             pass
 
-        # Return strategy-specific fallback
-        fallback_message = get_fallback_message(goal_title, strategy)
         return {
             "message": fallback_message,
             "strategy": strategy.value,
-            "evaluation": None,
+            "evaluation": evaluation,
             "metadata": {
                 "goal_title": goal_title,
                 "current_streak": current_streak,

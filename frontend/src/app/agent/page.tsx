@@ -107,15 +107,6 @@ export default function AgentPage() {
     setCompletion: setStreamingMessage,
   } = useCompletion({
     api: '/api/chat',
-    body: {
-      goalTitle: selectedGoal?.title || customGoal,
-      goalDescription: selectedGoal?.description || '',
-      strategy: streamingStrategy,
-      currentStreak: selectedGoal?.current_streak || 0,
-      userId: userId,
-      goalId: selectedGoal?.id,
-      userName: user?.full_name?.split(' ')[0],
-    },
   });
 
   // Load voice auto-play preference on mount
@@ -253,8 +244,18 @@ export default function AgentPage() {
     setCheckInSuccess(null);
     setCurrentStep(7); // Skip to message display
 
-    // Trigger the streaming completion
-    await triggerStreaming(goalTitle);
+    // Trigger the streaming completion with body parameters
+    await triggerStreaming(goalTitle, {
+      body: {
+        goalTitle: goalTitle,
+        goalDescription: selectedGoal?.description || '',
+        strategy: streamingStrategy,
+        currentStreak: selectedGoal?.current_streak || 0,
+        userId: userId,
+        goalId: selectedGoal?.id,
+        userName: user?.full_name?.split(' ')[0],
+      },
+    });
   };
 
   const handleCheckIn = async (completed: boolean, isMicroCommitment: boolean = false) => {

@@ -133,20 +133,23 @@ class AICoachAgent:
             if trace_data and trace_data.id:
                 client = opik.Opik()
                 scores = [
-                    {"id": trace_data.id, "name": "agent_confidence", "value": plan.confidence, "reason": f"Strategy: {plan.chosen_strategy.value}"},
-                    {"id": trace_data.id, "name": "agent_self_score", "value": evaluation.score, "reason": evaluation.reasoning[:100] if evaluation.reasoning else "Self-evaluation"},
+                    {"id": trace_data.id, "name": "agent_expected_effectiveness", "value": plan.expected_effectiveness, "reason": f"Strategy: {plan.chosen_strategy.value}"},
+                    {"id": trace_data.id, "name": "agent_overall_score", "value": evaluation.overall_score, "reason": "Agent self-evaluation"},
+                    {"id": trace_data.id, "name": "agent_quality_score", "value": evaluation.quality_score, "reason": "Quality assessment"},
+                    {"id": trace_data.id, "name": "agent_relevance_score", "value": evaluation.relevance_score, "reason": "Relevance assessment"},
+                    {"id": trace_data.id, "name": "agent_personalization_score", "value": evaluation.personalization_score, "reason": "Personalization assessment"},
                 ]
                 # Add improvement areas as a combined score
-                if evaluation.improvements:
-                    improvement_score = max(0.3, 1.0 - (len(evaluation.improvements) * 0.15))
+                if evaluation.improvement_suggestions:
+                    improvement_score = max(0.3, 1.0 - (len(evaluation.improvement_suggestions) * 0.15))
                     scores.append({
                         "id": trace_data.id,
                         "name": "improvement_potential",
                         "value": improvement_score,
-                        "reason": f"{len(evaluation.improvements)} improvements identified"
+                        "reason": f"{len(evaluation.improvement_suggestions)} improvements identified"
                     })
                 client.log_traces_feedback_scores(scores=scores)
-                print(f"✅ Logged agent feedback scores to trace {trace_data.id}")
+                print(f"✅ Logged {len(scores)} agent feedback scores to trace {trace_data.id}")
         except Exception as e:
             print(f"❌ Failed to log agent feedback scores: {e}")
 

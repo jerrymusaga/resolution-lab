@@ -7,6 +7,7 @@ Now includes custom Opik evaluators for comprehensive message quality assessment
 
 import opik
 from opik import opik_context
+from opik.opik_context import get_current_trace_data
 import litellm
 from typing import Optional
 from datetime import datetime
@@ -179,25 +180,7 @@ Generate the intervention message now:"""
 
         # Log to Opik trace (metadata + feedback scores)
         try:
-            # Build feedback scores list
-            feedback_scores = []
-            if evaluation:
-                feedback_scores = [
-                    {
-                        "name": "overall_message_quality",
-                        "value": round(evaluation["overall_score"], 3),
-                        "reason": f"Grade: {evaluation['grade']}"
-                    }
-                ]
-                # Add individual evaluator scores
-                for eval_name, score in evaluation["individual_scores"].items():
-                    feedback_scores.append({
-                        "name": eval_name,
-                        "value": round(score, 3),
-                        "reason": f"Component score for {eval_name}"
-                    })
-
-            # Update trace with metadata and feedback scores
+            # Update trace metadata
             opik_context.update_current_trace(
                 metadata={
                     "strategy": strategy.value,
@@ -206,11 +189,28 @@ Generate the intervention message now:"""
                     "message_length": len(message),
                     "evaluation_grade": evaluation["grade"] if evaluation else None,
                     "evaluation_score": evaluation["overall_score"] if evaluation else None,
-                },
-                feedback_scores=feedback_scores if feedback_scores else None
+                }
             )
-            if feedback_scores:
-                print(f"✅ Logged {len(feedback_scores)} feedback scores to Opik")
+
+            # Log feedback scores using trace data
+            if evaluation:
+                trace_data = get_current_trace_data()
+                if trace_data and trace_data.id:
+                    client = opik.Opik()
+                    scores = [
+                        {"id": trace_data.id, "name": "overall_message_quality", "value": round(evaluation["overall_score"], 3), "reason": f"Grade: {evaluation['grade']}"}
+                    ]
+                    for eval_name, score in evaluation["individual_scores"].items():
+                        scores.append({
+                            "id": trace_data.id,
+                            "name": eval_name,
+                            "value": round(score, 3),
+                            "reason": f"Component score for {eval_name}"
+                        })
+                    client.log_traces_feedback_scores(scores=scores)
+                    print(f"✅ Logged {len(scores)} feedback scores to trace {trace_data.id}")
+                else:
+                    print("⚠️ No trace data available for feedback scores")
         except Exception as e:
             print(f"❌ Failed to log to Opik: {e}")
 
@@ -244,25 +244,7 @@ Generate the intervention message now:"""
                 pass  # If evaluation fails, continue without it
 
         try:
-            # Build feedback scores list for fallback
-            feedback_scores = []
-            if evaluation:
-                feedback_scores = [
-                    {
-                        "name": "overall_message_quality",
-                        "value": round(evaluation["overall_score"], 3),
-                        "reason": f"Grade: {evaluation['grade']} (fallback message)"
-                    }
-                ]
-                # Add individual evaluator scores
-                for eval_name, score in evaluation["individual_scores"].items():
-                    feedback_scores.append({
-                        "name": eval_name,
-                        "value": round(score, 3),
-                        "reason": f"Component score for {eval_name} (fallback)"
-                    })
-
-            # Update trace with metadata and feedback scores
+            # Update trace metadata
             opik_context.update_current_trace(
                 metadata={
                     "error": str(e),
@@ -270,11 +252,28 @@ Generate the intervention message now:"""
                     "is_fallback": True,
                     "evaluation_grade": evaluation["grade"] if evaluation else None,
                     "evaluation_score": evaluation["overall_score"] if evaluation else None,
-                },
-                feedback_scores=feedback_scores if feedback_scores else None
+                }
             )
-            if feedback_scores:
-                print(f"✅ Logged {len(feedback_scores)} feedback scores to Opik (fallback)")
+
+            # Log feedback scores using trace data
+            if evaluation:
+                trace_data = get_current_trace_data()
+                if trace_data and trace_data.id:
+                    client = opik.Opik()
+                    scores = [
+                        {"id": trace_data.id, "name": "overall_message_quality", "value": round(evaluation["overall_score"], 3), "reason": f"Grade: {evaluation['grade']} (fallback)"}
+                    ]
+                    for eval_name, score in evaluation["individual_scores"].items():
+                        scores.append({
+                            "id": trace_data.id,
+                            "name": eval_name,
+                            "value": round(score, 3),
+                            "reason": f"Component score for {eval_name} (fallback)"
+                        })
+                    client.log_traces_feedback_scores(scores=scores)
+                    print(f"✅ Logged {len(scores)} feedback scores to trace {trace_data.id} (fallback)")
+                else:
+                    print("⚠️ No trace data available for feedback scores (fallback)")
         except Exception as ex:
             print(f"❌ Failed to log to Opik (fallback): {ex}")
 

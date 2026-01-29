@@ -10,6 +10,7 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, HTTPException, Query
 import opik
+from opik import opik_context
 
 from models.schemas import (
     Intervention,
@@ -324,25 +325,24 @@ async def track_voice_play(
 
     # Log to Opik for analytics
     try:
-        current = opik.track_current()
-        if current:
-            # Log metrics
-            current.log_metric("voice_played", 1)
-            current.log_metric("voice_auto_played", 1 if auto_played else 0)
-
-            # Log feedback score for voice engagement
-            current.log_feedback_score(
-                name="voice_engagement",
-                value=1.0,
-                reason=f"User {'auto-' if auto_played else 'manually '}played voice for motivation message"
-            )
-
-            current.set_metadata({
+        # Log feedback score for voice engagement using correct method
+        opik_context.update_current_trace(
+            feedback_scores=[
+                {
+                    "name": "voice_engagement",
+                    "value": 1.0,
+                    "reason": f"User {'auto-' if auto_played else 'manually '}played voice for motivation message"
+                }
+            ],
+            metadata={
                 "intervention_id": str(intervention_id),
                 "user_id": user_id,
                 "auto_played": auto_played,
                 "strategy": db_intervention.get("strategy") if DB_ENABLED else None,
-            })
+                "voice_played": 1,
+                "voice_auto_played": 1 if auto_played else 0,
+            }
+        )
     except Exception as e:
         # Silently continue if Opik logging fails
         pass

@@ -6,6 +6,7 @@ Now includes custom Opik evaluators for comprehensive message quality assessment
 """
 
 import opik
+from opik import opik_context
 import litellm
 from typing import Optional
 from datetime import datetime
@@ -191,22 +192,22 @@ Generate the intervention message now:"""
 
             # Log evaluation scores as feedback scores (at trace level)
             if evaluation:
-                current = opik.track_current()
-                if current:
-                    # Log overall quality score
-                    current.log_feedback_score(
-                        name="overall_message_quality",
-                        value=round(evaluation["overall_score"], 3),
-                        reason=f"Grade: {evaluation['grade']}"
-                    )
+                feedback_scores = [
+                    {
+                        "name": "overall_message_quality",
+                        "value": round(evaluation["overall_score"], 3),
+                        "reason": f"Grade: {evaluation['grade']}"
+                    }
+                ]
+                # Add individual evaluator scores
+                for eval_name, score in evaluation["individual_scores"].items():
+                    feedback_scores.append({
+                        "name": eval_name,
+                        "value": round(score, 3),
+                        "reason": f"Component score for {eval_name}"
+                    })
 
-                    # Log individual evaluator scores
-                    for eval_name, score in evaluation["individual_scores"].items():
-                        current.log_feedback_score(
-                            name=eval_name,
-                            value=round(score, 3),
-                            reason=f"Component score for {eval_name}"
-                        )
+                opik_context.update_current_trace(feedback_scores=feedback_scores)
         except:
             pass
 
@@ -252,22 +253,22 @@ Generate the intervention message now:"""
 
             # Log evaluation scores as feedback scores even for fallback messages
             if evaluation:
-                current = opik.track_current()
-                if current:
-                    # Log overall quality score
-                    current.log_feedback_score(
-                        name="overall_message_quality",
-                        value=round(evaluation["overall_score"], 3),
-                        reason=f"Grade: {evaluation['grade']} (fallback message)"
-                    )
+                feedback_scores = [
+                    {
+                        "name": "overall_message_quality",
+                        "value": round(evaluation["overall_score"], 3),
+                        "reason": f"Grade: {evaluation['grade']} (fallback message)"
+                    }
+                ]
+                # Add individual evaluator scores
+                for eval_name, score in evaluation["individual_scores"].items():
+                    feedback_scores.append({
+                        "name": eval_name,
+                        "value": round(score, 3),
+                        "reason": f"Component score for {eval_name} (fallback)"
+                    })
 
-                    # Log individual evaluator scores
-                    for eval_name, score in evaluation["individual_scores"].items():
-                        current.log_feedback_score(
-                            name=eval_name,
-                            value=round(score, 3),
-                            reason=f"Component score for {eval_name} (fallback)"
-                        )
+                opik_context.update_current_trace(feedback_scores=feedback_scores)
         except:
             pass
 

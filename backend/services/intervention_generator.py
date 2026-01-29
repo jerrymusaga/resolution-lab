@@ -177,20 +177,10 @@ Generate the intervention message now:"""
                 user_context=user_context
             )
 
-        # Log to Opik span (metadata + feedback scores)
+        # Log to Opik trace (metadata + feedback scores)
         try:
-            span = opik.get_current_span()
-            if span:
-                span.log_metadata({
-                    "strategy": strategy.value,
-                    "goal_title": goal_title,
-                    "current_streak": current_streak,
-                    "message_length": len(message),
-                    "evaluation_grade": evaluation["grade"] if evaluation else None,
-                    "evaluation_score": evaluation["overall_score"] if evaluation else None,
-                })
-
-            # Log evaluation scores as feedback scores (at trace level)
+            # Build feedback scores list
+            feedback_scores = []
             if evaluation:
                 feedback_scores = [
                     {
@@ -207,10 +197,22 @@ Generate the intervention message now:"""
                         "reason": f"Component score for {eval_name}"
                     })
 
-                opik_context.update_current_trace(feedback_scores=feedback_scores)
+            # Update trace with metadata and feedback scores
+            opik_context.update_current_trace(
+                metadata={
+                    "strategy": strategy.value,
+                    "goal_title": goal_title,
+                    "current_streak": current_streak,
+                    "message_length": len(message),
+                    "evaluation_grade": evaluation["grade"] if evaluation else None,
+                    "evaluation_score": evaluation["overall_score"] if evaluation else None,
+                },
+                feedback_scores=feedback_scores if feedback_scores else None
+            )
+            if feedback_scores:
                 print(f"✅ Logged {len(feedback_scores)} feedback scores to Opik")
         except Exception as e:
-            print(f"❌ Failed to log feedback scores: {e}")
+            print(f"❌ Failed to log to Opik: {e}")
 
         return {
             "message": message,
@@ -242,17 +244,8 @@ Generate the intervention message now:"""
                 pass  # If evaluation fails, continue without it
 
         try:
-            span = opik.get_current_span()
-            if span:
-                span.log_metadata({
-                    "error": str(e),
-                    "strategy": strategy.value,
-                    "is_fallback": True,
-                    "evaluation_grade": evaluation["grade"] if evaluation else None,
-                    "evaluation_score": evaluation["overall_score"] if evaluation else None,
-                })
-
-            # Log evaluation scores as feedback scores even for fallback messages
+            # Build feedback scores list for fallback
+            feedback_scores = []
             if evaluation:
                 feedback_scores = [
                     {
@@ -269,10 +262,21 @@ Generate the intervention message now:"""
                         "reason": f"Component score for {eval_name} (fallback)"
                     })
 
-                opik_context.update_current_trace(feedback_scores=feedback_scores)
+            # Update trace with metadata and feedback scores
+            opik_context.update_current_trace(
+                metadata={
+                    "error": str(e),
+                    "strategy": strategy.value,
+                    "is_fallback": True,
+                    "evaluation_grade": evaluation["grade"] if evaluation else None,
+                    "evaluation_score": evaluation["overall_score"] if evaluation else None,
+                },
+                feedback_scores=feedback_scores if feedback_scores else None
+            )
+            if feedback_scores:
                 print(f"✅ Logged {len(feedback_scores)} feedback scores to Opik (fallback)")
-        except Exception as e:
-            print(f"❌ Failed to log feedback scores (fallback): {e}")
+        except Exception as ex:
+            print(f"❌ Failed to log to Opik (fallback): {ex}")
 
         return {
             "message": fallback_message,
@@ -340,13 +344,13 @@ def batch_generate_interventions(
         grades = [r["evaluation"]["grade"] for r in results.values() if r.get("evaluation")]
 
         try:
-            span = opik.get_current_span()
-            if span:
-                span.log_metadata({
+            opik_context.update_current_trace(
+                metadata={
                     "batch_size": len(strategies),
                     "avg_evaluation_score": round(avg_score, 3),
                     "grades_distribution": {g: grades.count(g) for g in set(grades)},
-                })
+                }
+            )
         except:
             pass
 

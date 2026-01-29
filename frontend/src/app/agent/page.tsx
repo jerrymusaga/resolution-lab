@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useCompletion } from '@ai-sdk/react';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import { getFormulaStatus, FormulaStatus, listGoals, recordCheckIn, trackVoicePlay } from '@/lib/api';
@@ -29,7 +30,8 @@ import {
   Volume2,
   VolumeX,
   Settings2,
-  Square
+  Square,
+  Bolt
 } from 'lucide-react';
 import { useTextToSpeech, getAutoPlayPreference, setAutoPlayPreference } from '@/hooks/useTextToSpeech';
 import Link from 'next/link';
@@ -89,8 +91,32 @@ export default function AgentPage() {
   // Formula status
   const [formulaStatus, setFormulaStatus] = useState<FormulaStatus | null>(null);
 
+  // Streaming mode (Vercel AI SDK)
+  const [useStreamingMode, setUseStreamingMode] = useState(false);
+  const [streamingStrategy, setStreamingStrategy] = useState('gentle_reminder');
+
   // Use authenticated user ID - require login for this feature
   const userId = user?.id;
+
+  // Vercel AI SDK streaming hook
+  const {
+    completion: streamingMessage,
+    isLoading: isStreaming,
+    complete: triggerStreaming,
+    error: streamingError,
+    setCompletion: setStreamingMessage,
+  } = useCompletion({
+    api: '/api/chat',
+    body: {
+      goalTitle: selectedGoal?.title || customGoal,
+      goalDescription: selectedGoal?.description || '',
+      strategy: streamingStrategy,
+      currentStreak: selectedGoal?.current_streak || 0,
+      userId: userId,
+      goalId: selectedGoal?.id,
+      userName: user?.full_name?.split(' ')[0],
+    },
+  });
 
   // Load voice auto-play preference on mount
   useEffect(() => {
@@ -206,6 +232,29 @@ export default function AgentPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Streaming mode - uses Vercel AI SDK for instant response
+  const runStreamingMode = async () => {
+    if (!userId) {
+      setError('Please sign in to use the AI Coach');
+      return;
+    }
+
+    const goalTitle = selectedGoal?.title || customGoal;
+    if (!goalTitle.trim()) {
+      setError('Please select a goal or enter a custom one');
+      return;
+    }
+
+    setError(null);
+    setAgentResponse(null);
+    setStreamingMessage('');
+    setCheckInSuccess(null);
+    setCurrentStep(7); // Skip to message display
+
+    // Trigger the streaming completion
+    await triggerStreaming(goalTitle);
   };
 
   const handleCheckIn = async (completed: boolean, isMicroCommitment: boolean = false) => {
@@ -673,24 +722,85 @@ export default function AgentPage() {
             </div>
           )}
 
+          {/* Mode Toggle */}
+          <div className="mt-6 mb-4">
+            <div className="flex items-center justify-center gap-2 p-1 bg-gray-100 rounded-lg max-w-md mx-auto">
+              <button
+                onClick={() => setUseStreamingMode(false)}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all",
+                  !useStreamingMode
+                    ? "bg-white shadow text-indigo-700"
+                    : "text-gray-600 hover:text-gray-900"
+                )}
+              >
+                <Brain className="w-4 h-4" />
+                Full Agent
+              </button>
+              <button
+                onClick={() => setUseStreamingMode(true)}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all",
+                  useStreamingMode
+                    ? "bg-white shadow text-amber-700"
+                    : "text-gray-600 hover:text-gray-900"
+                )}
+              >
+                <Bolt className="w-4 h-4" />
+                Quick Stream
+              </button>
+            </div>
+            <p className="text-center text-xs text-gray-500 mt-2">
+              {useStreamingMode
+                ? "Instant streaming response powered by Vercel AI SDK"
+                : "Full 6-step agent reasoning with detailed insights"}
+            </p>
+          </div>
+
+          {/* Strategy Selection (only for streaming mode) */}
+          {useStreamingMode && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Strategy</label>
+              <select
+                value={streamingStrategy}
+                onChange={(e) => setStreamingStrategy(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+              >
+                <option value="gentle_reminder">🌟 Gentle Reminder</option>
+                <option value="accountability">✅ Accountability</option>
+                <option value="streak_gamification">🔥 Streak Gamification</option>
+                <option value="social_comparison">👥 Social Comparison</option>
+                <option value="loss_aversion">⚠️ Loss Aversion</option>
+                <option value="reward_preview">🎁 Reward Preview</option>
+                <option value="identity_reinforcement">💪 Identity Reinforcement</option>
+                <option value="micro_commitment">🎯 Micro Commitment</option>
+              </select>
+            </div>
+          )}
+
           {/* Get Motivation Button */}
-          <div className="mt-6 flex justify-center">
+          <div className="flex justify-center">
             <Button
-              onClick={runAgent}
-              isLoading={loading}
+              onClick={useStreamingMode ? runStreamingMode : runAgent}
+              isLoading={loading || isStreaming}
               size="lg"
               disabled={!selectedGoal && !customGoal.trim()}
-              className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+              className={cn(
+                "w-full sm:w-auto",
+                useStreamingMode
+                  ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                  : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+              )}
             >
-              {loading ? (
+              {loading || isStreaming ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Generating...
+                  {useStreamingMode ? 'Streaming...' : 'Generating...'}
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Get Motivation
+                  {useStreamingMode ? <Bolt className="w-4 h-4 mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
+                  {useStreamingMode ? 'Get Instant Motivation' : 'Get Motivation'}
                 </>
               )}
             </Button>
@@ -699,17 +809,88 @@ export default function AgentPage() {
       </Card>
 
       {/* Error */}
-      {error && (
+      {(error || streamingError) && (
         <Card variant="bordered" className="mb-6 border-red-200 bg-red-50">
           <CardContent className="flex items-center space-x-3 pt-6">
             <AlertCircle className="w-5 h-5 text-red-500" />
-            <p className="text-red-700">{error}</p>
+            <p className="text-red-700">{error || streamingError?.message}</p>
           </CardContent>
         </Card>
       )}
 
-      {/* The Generated Message - Featured prominently */}
-      {agentResponse?.action?.message && currentStep === 7 && (
+      {/* Streaming Message Display (Vercel AI SDK) */}
+      {useStreamingMode && (streamingMessage || isStreaming) && (
+        <Card variant="bordered" className="mb-8 overflow-hidden border-0 shadow-xl">
+          <div className="bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 p-8">
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center gap-2 bg-white/20 text-white px-4 py-2 rounded-full text-sm font-medium">
+                <Bolt className="w-4 h-4" />
+                {isStreaming ? 'Streaming...' : 'Instant Motivation'}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 shadow-lg">
+              <p className="text-xl text-gray-900 font-medium leading-relaxed text-center min-h-[60px]">
+                {streamingMessage ? `"${streamingMessage}"` : (
+                  <span className="flex items-center justify-center gap-2 text-gray-400">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Generating your motivation...
+                  </span>
+                )}
+              </p>
+
+              {streamingMessage && !isStreaming && (
+                <div className="flex justify-center items-center gap-3 mt-4">
+                  <span className="px-3 py-1 bg-gray-100 rounded-full text-sm">
+                    {STRATEGY_ICONS[streamingStrategy]} {streamingStrategy.replace('_', ' ')}
+                  </span>
+
+                  {/* Voice Play Button */}
+                  {voiceSupported && (
+                    <button
+                      onClick={() => {
+                        if (isSpeaking) {
+                          stop();
+                        } else {
+                          speak(streamingMessage);
+                        }
+                      }}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium transition-all",
+                        isSpeaking
+                          ? "bg-red-100 text-red-700 hover:bg-red-200"
+                          : "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                      )}
+                    >
+                      {isSpeaking ? (
+                        <>
+                          <Square className="w-3.5 h-3.5 fill-current" />
+                          Stop
+                        </>
+                      ) : (
+                        <>
+                          <Volume2 className="w-3.5 h-3.5" />
+                          Listen
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Powered by badge */}
+            <div className="text-center mt-4">
+              <span className="text-xs text-white/70">
+                Powered by Vercel AI SDK + Opik Observability
+              </span>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* The Generated Message - Featured prominently (Full Agent Mode) */}
+      {!useStreamingMode && agentResponse?.action?.message && currentStep === 7 && (
         <Card variant="bordered" className="mb-8 overflow-hidden border-0 shadow-xl">
           <div className="bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 p-8">
             <div className="text-center mb-6">

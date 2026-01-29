@@ -2,8 +2,6 @@
 Resolution Lab - Custom Opik Evaluators
 
 Advanced evaluation metrics for assessing motivation message quality.
-These evaluators demonstrate deep Opik integration and provide
-quantifiable metrics for hackathon judges.
 
 KEY DIFFERENTIATOR: Shows production-ready evaluation patterns
 that go beyond basic tracing.

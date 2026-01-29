@@ -97,15 +97,20 @@ class AICoachAgent:
         user_id: str,
         goal_title: str,
         goal_description: str = "",
-        user_history: Optional[dict] = None
+        user_history: Optional[dict] = None,
+        goal_id: Optional[str] = None
     ) -> CoachAgentResponse:
         """
         Run the complete agent loop.
-        
+
         This is the main entry point - it orchestrates all agent steps
         and creates a parent trace in Opik that contains all child traces.
         """
-        
+
+        # Set thread_id to group all traces for this goal together
+        if goal_id:
+            update_current_trace(thread_id=f"goal_{goal_id}")
+
         # Get user's experiment data
         insights = experiment_engine.get_user_insights(user_id)
         

@@ -19,6 +19,7 @@ router = APIRouter(prefix="/api/agent", tags=["agent"])
 class AgentRequest(BaseModel):
     goal_title: str
     goal_description: Optional[str] = ""
+    goal_id: Optional[str] = None  # Optional: links agent run to a specific goal thread
 
 
 class AgentRunResponse(BaseModel):
@@ -47,7 +48,8 @@ async def run_agent(
         response = await coach_agent.run(
             user_id=user_id,
             goal_title=request.goal_title,
-            goal_description=request.goal_description or ""
+            goal_description=request.goal_description or "",
+            goal_id=request.goal_id
         )
         
         return AgentRunResponse(

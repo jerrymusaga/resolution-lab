@@ -90,6 +90,9 @@ async def generate_intervention(
     if str(goal.user_id) != user_id:
         raise HTTPException(status_code=403, detail="Not authorized")
 
+    # Set thread_id to group all traces for this goal together
+    opik_context.update_current_trace(thread_id=f"goal_{goal_id}")
+
     # Select strategy using experiment engine (or use forced strategy)
     if force_strategy:
         strategy = force_strategy
@@ -166,6 +169,10 @@ async def record_check_in(
             intervention_sent_at = datetime.now(timezone.utc)
     else:
         raise HTTPException(status_code=500, detail="Database not configured")
+
+    # Set thread_id to group all traces for this goal together
+    if intervention_goal_id:
+        opik_context.update_current_trace(thread_id=f"goal_{intervention_goal_id}")
 
     # Calculate response time
     now = datetime.now(timezone.utc)
@@ -356,6 +363,11 @@ async def track_voice_play(
             raise HTTPException(status_code=404, detail="Intervention not found")
         if db_intervention["user_id"] != user_id:
             raise HTTPException(status_code=403, detail="Not authorized")
+
+        # Set thread_id to group all traces for this goal together
+        goal_id = db_intervention.get("goal_id")
+        if goal_id:
+            opik_context.update_current_trace(thread_id=f"goal_{goal_id}")
 
     # Log to Opik for analytics
     try:

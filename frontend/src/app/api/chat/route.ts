@@ -162,14 +162,18 @@ Generate the intervention message now:`;
 
     if (stream) {
       // Use Vercel AI SDK for streaming
+      console.log('Starting streaming with Gemini...');
       const result = streamText({
-        model: google('gemini-1.5-flash'),
-        system: SYSTEM_PROMPT,
-        prompt: userPrompt,
+        model: google('gemini-1.5-flash-latest'),
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userPrompt },
+        ],
         temperature: 0.7,
         onFinish: async ({ text }) => {
+          console.log('Streaming finished, text:', text);
           // Log to Opik after streaming completes
-          if (userId) {
+          if (userId && text) {
             await logToOpik({
               userId,
               goalId,
@@ -186,9 +190,11 @@ Generate the intervention message now:`;
     } else {
       // Non-streaming mode
       const result = await generateText({
-        model: google('gemini-1.5-flash'),
-        system: SYSTEM_PROMPT,
-        prompt: userPrompt,
+        model: google('gemini-1.5-flash-latest'),
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userPrompt },
+        ],
         temperature: 0.7,
       });
 

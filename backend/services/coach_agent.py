@@ -478,7 +478,7 @@ Respond in JSON:
         """
 
         # ========================================
-        # Stage 1: Custom Opik Evaluators (NEW!)
+        # Stage 1: Custom Opik Evaluators
         # ========================================
         # Run comprehensive evaluation using our custom evaluators
         custom_eval_result = await comprehensive_evaluator.evaluate(

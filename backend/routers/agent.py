@@ -220,6 +220,12 @@ from typing import List
 from models.schemas import InterventionStrategy
 
 # Try to import optimizer (optional dependency)
+OPTIMIZER_AVAILABLE = False
+get_prompt_optimizer = None
+get_optimized_prompt = None
+save_optimized_prompt = None
+STRATEGY_BASE_PROMPTS = {}
+
 try:
     from services.prompt_optimizer import (
         get_prompt_optimizer,
@@ -228,7 +234,8 @@ try:
         STRATEGY_BASE_PROMPTS,
         OPTIMIZER_AVAILABLE,
     )
-except ImportError:
+except (ImportError, Exception) as e:
+    print(f"⚠️ Opik Optimizer not available: {e}")
     OPTIMIZER_AVAILABLE = False
 
 

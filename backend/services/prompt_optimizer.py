@@ -17,7 +17,14 @@ from dataclasses import dataclass
 import opik
 from opik import track
 
-# Check if opik-optimizer is installed
+# Check if opik-optimizer is installed and working
+OPTIMIZER_AVAILABLE = False
+MetaPromptOptimizer = None
+FewShotBayesianOptimizer = None
+EvolutionaryOptimizer = None
+ChatPrompt = None
+LevenshteinRatio = None
+
 try:
     from opik_optimizer import (
         MetaPromptOptimizer,
@@ -27,9 +34,8 @@ try:
     )
     from opik.evaluation.metrics import LevenshteinRatio
     OPTIMIZER_AVAILABLE = True
-except ImportError:
-    OPTIMIZER_AVAILABLE = False
-    print("⚠️ opik-optimizer not installed. Run: pip install opik-optimizer")
+except (ImportError, Exception) as e:
+    print(f"⚠️ opik-optimizer not available: {e}")
 
 from models.schemas import InterventionStrategy
 
@@ -100,11 +106,11 @@ class MotivationPromptOptimizer:
         Args:
             reasoning_model: The model to use for optimization reasoning
         """
+        if not OPTIMIZER_AVAILABLE:
+            raise ImportError("opik-optimizer is required but not available. Check installation.")
+
         self.reasoning_model = reasoning_model
         self.opik_client = opik.Opik()
-
-        if not OPTIMIZER_AVAILABLE:
-            raise ImportError("opik-optimizer is required. Run: pip install opik-optimizer")
 
     def _create_dataset_from_history(
         self,
@@ -196,7 +202,7 @@ class MotivationPromptOptimizer:
 
         # Create ChatPrompt for optimization
         prompt = ChatPrompt(
-            project_name=f"resolution-lab-{strategy.value}-optimization",
+            name=f"resolution-lab-{strategy.value}-optimization",
             messages=[
                 {"role": "system", "content": base_prompt_text},
                 {"role": "user", "content": "Goal: {goal_title}\nStreak: {user_streak} days\n\nGenerate a motivation message:"},
@@ -219,16 +225,16 @@ class MotivationPromptOptimizer:
             n_samples=n_samples,
         )
 
-        # Extract results
-        optimized_prompt = result.best_prompt.messages[0]["content"]
+        # Extract results - API v3.0 uses 'prompt' and 'score' instead of 'best_prompt' and 'best_score'
+        optimized_prompt = result.prompt.messages[0]["content"] if hasattr(result.prompt, 'messages') else str(result.prompt)
 
         return OptimizationResult(
             strategy=strategy.value,
             original_prompt=base_prompt_text,
             optimized_prompt=optimized_prompt,
             original_score=result.initial_score or 0.0,
-            optimized_score=result.best_score or 0.0,
-            improvement_percentage=((result.best_score - result.initial_score) / result.initial_score * 100) if result.initial_score else 0,
+            optimized_score=result.score or 0.0,
+            improvement_percentage=((result.score - result.initial_score) / result.initial_score * 100) if result.initial_score else 0,
             num_trials=max_trials,
         )
 
@@ -263,7 +269,7 @@ class MotivationPromptOptimizer:
         )
 
         prompt = ChatPrompt(
-            project_name=f"resolution-lab-{strategy.value}-fewshot",
+            name=f"resolution-lab-{strategy.value}-fewshot",
             messages=[
                 {"role": "system", "content": base_prompt_text},
                 {"role": "user", "content": "Goal: {goal_title}\n\nGenerate a motivation message:"},
@@ -286,18 +292,21 @@ class MotivationPromptOptimizer:
             n_samples=30,
         )
 
-        # Extract best examples
+        # Extract best examples from result details
         best_examples = []
-        if hasattr(result, 'best_examples'):
-            best_examples = result.best_examples
+        if hasattr(result, 'details') and result.details:
+            best_examples = result.details.get('best_examples', [])
+
+        # API v3.0 uses 'prompt' and 'score'
+        optimized_prompt = str(result.prompt.messages) if hasattr(result.prompt, 'messages') else str(result.prompt)
 
         return OptimizationResult(
             strategy=strategy.value,
             original_prompt=base_prompt_text,
-            optimized_prompt=str(result.best_prompt.messages),
+            optimized_prompt=optimized_prompt,
             original_score=result.initial_score or 0.0,
-            optimized_score=result.best_score or 0.0,
-            improvement_percentage=((result.best_score - result.initial_score) / result.initial_score * 100) if result.initial_score else 0,
+            optimized_score=result.score or 0.0,
+            improvement_percentage=((result.score - result.initial_score) / result.initial_score * 100) if result.initial_score else 0,
             num_trials=max_examples - min_examples + 1,
             best_examples=best_examples,
         )
@@ -333,7 +342,7 @@ class MotivationPromptOptimizer:
         )
 
         prompt = ChatPrompt(
-            project_name=f"resolution-lab-{strategy.value}-evolution",
+            name=f"resolution-lab-{strategy.value}-evolution",
             messages=[
                 {"role": "system", "content": base_prompt_text},
                 {"role": "user", "content": "Goal: {goal_title}\n\nGenerate a motivation message:"},
@@ -355,13 +364,16 @@ class MotivationPromptOptimizer:
             n_samples=20,
         )
 
+        # API v3.0 uses 'prompt' and 'score'
+        optimized_prompt = result.prompt.messages[0]["content"] if hasattr(result.prompt, 'messages') else str(result.prompt)
+
         return OptimizationResult(
             strategy=strategy.value,
             original_prompt=base_prompt_text,
-            optimized_prompt=result.best_prompt.messages[0]["content"],
+            optimized_prompt=optimized_prompt,
             original_score=result.initial_score or 0.0,
-            optimized_score=result.best_score or 0.0,
-            improvement_percentage=((result.best_score - result.initial_score) / result.initial_score * 100) if result.initial_score else 0,
+            optimized_score=result.score or 0.0,
+            improvement_percentage=((result.score - result.initial_score) / result.initial_score * 100) if result.initial_score else 0,
             num_trials=population_size * generations,
         )
 

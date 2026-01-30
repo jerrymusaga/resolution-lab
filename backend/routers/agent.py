@@ -37,13 +37,14 @@ async def run_agent(
 ):
     """
     Run the full AI Coach Agent loop.
-    
+
     This triggers the complete agent workflow:
     OBSERVE → THINK → PLAN → ACT → EVALUATE → LEARN
-    
+
     Every step is traced in Opik for full observability.
     """
-    
+    from services.database import DB_ENABLED, create_intervention, get_experiment_state
+
     try:
         response = await coach_agent.run(
             user_id=user_id,
@@ -51,11 +52,29 @@ async def run_agent(
             goal_description=request.goal_description or "",
             goal_id=request.goal_id
         )
-        
+
+        # Create intervention record so user can check in
+        intervention_id = None
+        if DB_ENABLED:
+            # Check if user has formula applied
+            exp_state = get_experiment_state(user_id)
+            formula_active = exp_state.get("formula_applied", False) if exp_state else False
+
+            intervention = create_intervention(
+                user_id=user_id,
+                strategy=response.plan.chosen_strategy.value,
+                message=response.action.message,
+                goal_id=request.goal_id,
+                formula_active=formula_active
+            )
+            if intervention:
+                intervention_id = intervention.get("id")
+
         return AgentRunResponse(
             success=True,
             message="Agent completed successfully",
             agent_response={
+                "intervention_id": intervention_id,
                 "thought": {
                     "observation": response.thought.observation,
                     "analysis": response.thought.analysis,
@@ -83,7 +102,7 @@ async def run_agent(
                 }
             }
         )
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Agent error: {str(e)}")
 

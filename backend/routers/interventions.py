@@ -681,3 +681,96 @@ async def simulate_experiment(
         "insights": insights,
         "evaluation_summary": evaluation_summary,
     }
+
+
+# ===================
+# Reminder Endpoints (Opik Traced)
+# ===================
+
+from services.reminder_service import get_reminder_service
+
+
+class ReminderInteractionRequest(PydanticBaseModel):
+    """Request to track reminder interaction."""
+    goal_id: str
+    interaction_type: str  # "viewed", "clicked", "dismissed"
+    time_to_action_seconds: Optional[int] = None
+
+
+@router.post("/reminders/track", response_model=APIResponse)
+@opik.track(name="api_track_reminder")
+async def track_reminder(
+    request: ReminderInteractionRequest,
+    user_id: str = Query(..., description="User ID"),
+):
+    """
+    Track user interaction with a reminder notification.
+
+    This is traced in Opik to measure reminder effectiveness:
+    - Click-through rates
+    - Time to action
+    - Dismissal patterns
+
+    Use this when:
+    - User views a reminder banner
+    - User clicks to check in from a reminder
+    - User dismisses a reminder
+    """
+    service = get_reminder_service()
+
+    result = service.track_reminder_interaction(
+        user_id=user_id,
+        goal_id=request.goal_id,
+        interaction_type=request.interaction_type,
+        time_to_action_seconds=request.time_to_action_seconds
+    )
+
+    return APIResponse(
+        success=True,
+        message=f"Reminder {request.interaction_type} tracked",
+        data=result
+    )
+
+
+@router.get("/reminders/status", response_model=APIResponse)
+@opik.track(name="api_get_reminder_status")
+async def get_reminder_status(
+    user_id: str = Query(..., description="User ID"),
+):
+    """
+    Get reminder status for a user's goals.
+
+    Returns which goals need check-in and generates appropriate reminder data.
+    All calls are traced in Opik for analytics.
+    """
+    from routers.goals import list_goals_with_checkin_status
+
+    # Get goals with check-in status
+    goals = await list_goals_with_checkin_status(user_id=user_id)
+
+    # Convert to dict format for reminder service
+    goals_data = [
+        {
+            "id": g.id,
+            "title": g.title,
+            "status": g.status,
+            "checked_in_today": g.checked_in_today,
+            "can_check_in": g.can_check_in,
+            "current_streak": g.current_streak,
+        }
+        for g in goals
+    ]
+
+    service = get_reminder_service()
+    result = service.generate_reminder(user_id=user_id, goals=goals_data)
+
+    return APIResponse(
+        success=True,
+        message=f"{result.reminder_count} goals need check-in",
+        data={
+            "goals_needing_checkin": result.goals_needing_checkin,
+            "reminder_count": result.reminder_count,
+            "reminder_message": result.reminder_message,
+            "urgency_level": result.urgency_level,
+        }
+    )

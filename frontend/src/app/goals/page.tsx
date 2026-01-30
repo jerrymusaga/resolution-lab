@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui';
 import GoalCard from '@/components/GoalCard';
 import CheckInModal from '@/components/CheckInModal';
+import ReminderBanner from '@/components/ReminderBanner';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -147,6 +148,11 @@ function GoalsContent() {
     completed: goals.filter(g => g.status === 'completed').length,
   };
 
+  // Goals that need check-in (active, not checked in today, can check in)
+  const goalsNeedingCheckIn = goals
+    .filter(g => g.status === 'active' && !g.checked_in_today && g.can_check_in)
+    .map(g => ({ id: g.id, title: g.title }));
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
@@ -162,6 +168,15 @@ function GoalsContent() {
           </Button>
         </Link>
       </div>
+
+      {/* Reminder Banner */}
+      {!loading && goalsNeedingCheckIn.length > 0 && userId && (
+        <ReminderBanner
+          goalsNeedingCheckIn={goalsNeedingCheckIn}
+          onCheckIn={handleCheckIn}
+          userId={userId}
+        />
+      )}
 
       {/* Filters */}
       <div className="flex items-center space-x-2 mb-6 overflow-x-auto pb-2">

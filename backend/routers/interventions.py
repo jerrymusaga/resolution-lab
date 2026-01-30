@@ -270,6 +270,32 @@ async def record_check_in(
         except Exception as e:
             print(f"❌ Failed to close thread: {e}")
 
+    # Auto-evaluate thread after 5 check-ins for this goal
+    CHECKIN_THRESHOLD_FOR_EVAL = 5
+    if intervention_goal_id and DB_ENABLED:
+        try:
+            # Count check-ins for this goal (interventions with outcomes)
+            goal_interventions = db_get_user_interventions(user_id, limit=100, goal_id=intervention_goal_id)
+            checkins_with_outcome = [i for i in goal_interventions if i.get("outcome") is not None]
+            checkin_count = len(checkins_with_outcome)
+
+            if checkin_count >= CHECKIN_THRESHOLD_FOR_EVAL and checkin_count % CHECKIN_THRESHOLD_FOR_EVAL == 0:
+                # Evaluate every 5 check-ins (5, 10, 15, etc.)
+                print(f"📊 Reached {checkin_count} check-ins - triggering thread evaluation")
+                from services.thread_evaluator import get_thread_evaluator, THREAD_EVAL_AVAILABLE
+                if THREAD_EVAL_AVAILABLE:
+                    evaluator = get_thread_evaluator()
+                    eval_result = evaluator.evaluate_goal_thread(
+                        goal_id=intervention_goal_id,
+                        close_first=True  # Close thread before evaluation
+                    )
+                    if eval_result.status == "success":
+                        print(f"✅ Thread evaluation complete: coherence={eval_result.coherence_score}, frustration={eval_result.frustration_score}")
+                    else:
+                        print(f"⚠️ Thread evaluation: {eval_result.status} - {eval_result.error_message}")
+        except Exception as e:
+            print(f"⚠️ Auto-evaluation check failed: {e}")
+
     return outcome_record
 
 

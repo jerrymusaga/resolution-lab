@@ -6,7 +6,7 @@ Manages Opik thread lifecycle and evaluation:
 - Evaluating inactive threads with feedback scores
 - Built-in metrics: Conversation Coherence, User Frustration
 
-This demonstrates advanced Opik thread features for the hackathon.
+This demonstrates advanced Opik thread features.
 """
 
 import os
@@ -216,14 +216,46 @@ class ThreadEvaluator:
             coherence_metric = ConversationalCoherenceMetric()
             frustration_metric = UserFrustrationMetric()
 
-            # Run thread evaluation
+            # Transform functions to extract meaningful text from trace data
+            # Coach agent traces have structured input/output - we need to extract text
+            def extract_input(trace_input):
+                """Extract user's goal/request from trace input."""
+                if isinstance(trace_input, dict):
+                    # Try common patterns from our traces
+                    if "goal_title" in trace_input:
+                        return f"Goal: {trace_input.get('goal_title', '')}. {trace_input.get('goal_description', '')}"
+                    if "content" in trace_input:
+                        return trace_input["content"]
+                    if "input" in trace_input:
+                        return str(trace_input["input"])
+                    # Fallback: stringify the dict
+                    return str(trace_input)
+                return str(trace_input) if trace_input else ""
+
+            def extract_output(trace_output):
+                """Extract agent's response from trace output."""
+                if isinstance(trace_output, dict):
+                    # Try common patterns from our traces
+                    if "action" in trace_output and isinstance(trace_output["action"], dict):
+                        return trace_output["action"].get("message", str(trace_output))
+                    if "message" in trace_output:
+                        return trace_output["message"]
+                    if "output" in trace_output:
+                        return str(trace_output["output"])
+                    if "content" in trace_output:
+                        return trace_output["content"]
+                    # Fallback: stringify the dict
+                    return str(trace_output)
+                return str(trace_output) if trace_output else ""
+
+            # Run thread evaluation - filter for inactive threads with matching thread_id
             results = evaluate_threads(
                 project_name=project,
-                filter_string=f'thread_id = "{thread_id}"',
+                filter_string=f'thread_id = "{thread_id}" AND status = "inactive"',
                 eval_project_name=f"{project}_thread_evaluation",
                 metrics=[coherence_metric, frustration_metric],
-                trace_input_transform=lambda x: x.get("input", ""),
-                trace_output_transform=lambda x: x.get("output", ""),
+                trace_input_transform=extract_input,
+                trace_output_transform=extract_output,
             )
 
             # Extract scores from results

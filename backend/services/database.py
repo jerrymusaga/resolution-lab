@@ -297,17 +297,23 @@ def get_intervention_by_id(intervention_id: str) -> Optional[dict]:
 
 
 def has_checked_in_today(user_id: str, goal_id: str) -> bool:
-    """Check if user has already checked in for a goal today."""
+    """Check if user has already checked in for a goal today.
+
+    Only returns True if there's an intervention with an outcome recorded,
+    not just if an intervention exists (interventions are created when
+    agent generates a message, before user actually checks in).
+    """
     from datetime import date, datetime, timezone
 
     today_start = datetime.combine(date.today(), datetime.min.time()).isoformat()
 
     try:
         result = supabase.table("interventions")\
-            .select("id")\
+            .select("id, outcome")\
             .eq("user_id", user_id)\
             .eq("goal_id", goal_id)\
             .gte("created_at", today_start)\
+            .not_.is_("outcome", "null")\
             .limit(1)\
             .execute()
         return bool(result.data)

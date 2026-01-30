@@ -181,6 +181,11 @@ class OutcomeCreate(BaseModel):
     intervention_id: UUID
     completed: bool
     user_feedback: Optional[str] = Field(None, max_length=500)
+    close_thread: bool = Field(
+        default=False,
+        description="Close the goal's Opik thread after check-in. "
+                    "Required if you want to see feedback scores in the Thread view."
+    )
 
 
 class Outcome(BaseModel):

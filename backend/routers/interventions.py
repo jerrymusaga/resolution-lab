@@ -257,6 +257,19 @@ async def record_check_in(
     except Exception as e:
         print(f"❌ Failed to log check-in feedback scores: {e}")
 
+    # Close thread if requested (required for thread-level feedback scores)
+    if outcome.close_thread and intervention_goal_id:
+        try:
+            from services.thread_evaluator import get_thread_evaluator
+            evaluator = get_thread_evaluator()
+            close_result = evaluator.close_thread(f"goal_{intervention_goal_id}")
+            if close_result.get("success"):
+                print(f"✅ Closed thread goal_{intervention_goal_id} - ready for evaluation")
+            else:
+                print(f"⚠️ Could not close thread: {close_result.get('message')}")
+        except Exception as e:
+            print(f"❌ Failed to close thread: {e}")
+
     return outcome_record
 
 

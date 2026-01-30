@@ -412,3 +412,136 @@ async def get_current_prompts():
         }
 
     return {"prompts": prompts}
+
+
+# ============================================
+# Opik Thread Evaluation Endpoints
+# ============================================
+
+from services.thread_evaluator import get_thread_evaluator, THREAD_EVAL_AVAILABLE
+
+
+class ThreadCloseRequest(BaseModel):
+    """Request to close a thread."""
+    goal_id: str
+
+
+class ThreadCloseResponse(BaseModel):
+    """Response from closing a thread."""
+    success: bool
+    thread_id: str
+    status: str
+    message: str
+
+
+class ThreadEvaluateRequest(BaseModel):
+    """Request to evaluate a goal thread."""
+    goal_id: str
+    close_first: bool = True  # Close thread before evaluation (required for scoring)
+
+
+class ThreadEvaluateResponse(BaseModel):
+    """Response from thread evaluation."""
+    success: bool
+    thread_id: str
+    status: str
+    coherence_score: Optional[float] = None
+    frustration_score: Optional[float] = None
+    feedback_logged: bool = False
+    error_message: Optional[str] = None
+
+
+@router.get("/threads/status")
+async def get_thread_evaluation_status():
+    """
+    Check if Opik Thread Evaluation is available.
+
+    Thread evaluation allows:
+    - Closing threads (marking them as inactive)
+    - Evaluating entire conversation threads with built-in metrics
+    - Logging aggregated feedback scores to threads
+
+    Note: Threads must be inactive before feedback scores can be assigned.
+    """
+    evaluator = get_thread_evaluator()
+    return evaluator.get_thread_status()
+
+
+@router.post("/threads/close", response_model=ThreadCloseResponse)
+async def close_goal_thread(request: ThreadCloseRequest):
+    """
+    Close a goal's thread to mark it as inactive.
+
+    Threads must be inactive before feedback scores can be assigned.
+    By default, threads become inactive after 15 minutes of no activity.
+    This endpoint forces immediate closure.
+
+    Use this when:
+    - A user completes their goal journey
+    - You want to evaluate a thread immediately
+    - You want to assign feedback scores to the thread
+    """
+    evaluator = get_thread_evaluator()
+    result = evaluator.close_thread(f"goal_{request.goal_id}")
+
+    return ThreadCloseResponse(
+        success=result.get("success", False),
+        thread_id=result.get("thread_id", f"goal_{request.goal_id}"),
+        status=result.get("status", "unknown"),
+        message=result.get("message", "")
+    )
+
+
+@router.post("/threads/close-batch")
+async def close_goal_threads_batch(goal_ids: List[str]):
+    """
+    Close multiple goal threads in a batch operation.
+
+    Useful for:
+    - End-of-day batch processing
+    - Closing all threads for a user
+    - Preparing multiple threads for evaluation
+    """
+    evaluator = get_thread_evaluator()
+    thread_ids = [f"goal_{gid}" for gid in goal_ids]
+    result = evaluator.close_threads_batch(thread_ids)
+
+    return result
+
+
+@router.post("/threads/evaluate", response_model=ThreadEvaluateResponse)
+async def evaluate_goal_thread(request: ThreadEvaluateRequest):
+    """
+    Evaluate a goal's conversation thread with built-in Opik metrics.
+
+    This evaluates the entire conversation history for a goal, measuring:
+    - Conversation Coherence: Is the conversation logical and consistent?
+    - User Frustration: Does the user seem frustrated?
+
+    The scores are automatically logged as feedback scores on the thread
+    and visible in the Opik Thread view.
+
+    Note: By default, this will close the thread first (required for evaluation).
+    Set close_first=false if the thread is already inactive.
+    """
+    if not THREAD_EVAL_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail="Thread evaluation not available. Install opik with evaluation extras."
+        )
+
+    evaluator = get_thread_evaluator()
+    result = evaluator.evaluate_goal_thread(
+        goal_id=request.goal_id,
+        close_first=request.close_first
+    )
+
+    return ThreadEvaluateResponse(
+        success=result.status == "success",
+        thread_id=result.thread_id,
+        status=result.status,
+        coherence_score=result.coherence_score,
+        frustration_score=result.frustration_score,
+        feedback_logged=result.feedback_logged,
+        error_message=result.error_message
+    )

@@ -99,7 +99,7 @@ class MotivationPromptOptimizer:
     3. Evolutionary - Evolves prompts using genetic algorithms
     """
 
-    def __init__(self, reasoning_model: str = "gemini/gemini-2.0-flash"):
+    def __init__(self, reasoning_model: str = "gemini/gemini-3-flash-preview"):
         """
         Initialize the optimizer.
 
@@ -207,7 +207,7 @@ class MotivationPromptOptimizer:
                 {"role": "system", "content": base_prompt_text},
                 {"role": "user", "content": "Goal: {goal_title}\nStreak: {user_streak} days\n\nGenerate a motivation message:"},
             ],
-            model="gemini/gemini-2.0-flash"
+            model="gemini/gemini-3-flash-preview"
         )
 
         # Initialize MetaPrompt optimizer
@@ -274,7 +274,7 @@ class MotivationPromptOptimizer:
                 {"role": "system", "content": base_prompt_text},
                 {"role": "user", "content": "Goal: {goal_title}\n\nGenerate a motivation message:"},
             ],
-            model="gemini/gemini-2.0-flash"
+            model="gemini/gemini-3-flash-preview"
         )
 
         optimizer = FewShotBayesianOptimizer(
@@ -347,7 +347,7 @@ class MotivationPromptOptimizer:
                 {"role": "system", "content": base_prompt_text},
                 {"role": "user", "content": "Goal: {goal_title}\n\nGenerate a motivation message:"},
             ],
-            model="gemini/gemini-2.0-flash"
+            model="gemini/gemini-3-flash-preview"
         )
 
         optimizer = EvolutionaryOptimizer(

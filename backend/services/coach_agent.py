@@ -86,7 +86,7 @@ class AICoachAgent:
     Every step is traced in Opik for full observability.
     """
     
-    def __init__(self, model: str = "gemini/gemini-1.5-flash"):
+    def __init__(self, model: str = "gemini/gemini-3-flash-preview"):
         self.model = model
         self.agent_name = "ResolutionCoach"
         self.agent_version = "1.0.0"

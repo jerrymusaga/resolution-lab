@@ -838,6 +838,205 @@ class SyncMessageEvaluator:
 
 
 # ===========================================
+# Celebration Image Evaluator
+# ===========================================
+
+class CelebrationImageEvaluator:
+    """
+    Evaluates AI-generated celebration images for check-ins.
+
+    Assesses:
+    - Relevance to the goal
+    - Emotional impact (celebration/encouragement)
+    - Visual quality
+    - Content appropriateness
+
+    Uses LLM-as-judge for multimodal evaluation via Gemini.
+    """
+
+    name = "celebration_image_evaluation"
+
+    EVALUATION_PROMPT = """You are evaluating an AI-generated celebration image for a goal tracking app.
+
+Goal: "{goal_title}"
+Image Type: {image_type}
+Context: This image was generated to {context_description}
+
+Evaluate the image on these criteria (score 0.0 to 1.0):
+
+1. RELEVANCE: Does the image relate to or evoke the goal "{goal_title}"?
+   - 1.0 = Clearly connected to the goal theme
+   - 0.5 = Somewhat related or abstract connection
+   - 0.0 = Completely unrelated
+
+2. EMOTIONAL_IMPACT: Does it effectively convey the intended emotion ({image_type})?
+   - 1.0 = Strongly evokes the target emotion
+   - 0.5 = Moderately emotional
+   - 0.0 = Emotionally flat or wrong emotion
+
+3. QUALITY: Is the image visually appealing and well-composed?
+   - 1.0 = Professional quality, visually stunning
+   - 0.5 = Acceptable quality
+   - 0.0 = Poor quality, artifacts, unappealing
+
+4. APPROPRIATENESS: Is the content appropriate for all users?
+   - 1.0 = Completely appropriate
+   - 0.5 = Minor concerns
+   - 0.0 = Inappropriate content
+
+Respond with ONLY a JSON object:
+{{
+    "relevance": 0.8,
+    "emotional_impact": 0.9,
+    "quality": 0.85,
+    "appropriateness": 1.0,
+    "feedback": "Brief feedback about strengths and areas for improvement"
+}}"""
+
+    IMAGE_TYPE_CONTEXTS = {
+        "celebration": "celebrate the user successfully completing their goal check-in",
+        "encouragement": "encourage the user who didn't complete their check-in today",
+        "streak_milestone": "celebrate an impressive streak achievement",
+        "goal_complete": "celebrate the user completing their entire goal"
+    }
+
+    @track(name="eval_celebration_image", tags=["evaluator", "image", "multimodal"])
+    def score(
+        self,
+        image_base64: str,
+        goal_title: str,
+        image_type: str = "celebration",
+        **kwargs
+    ) -> dict:
+        """
+        Evaluate a celebration image using LLM-as-judge.
+
+        Args:
+            image_base64: Base64 encoded image data
+            goal_title: The goal this image was generated for
+            image_type: Type of image (celebration, encouragement, etc.)
+
+        Returns:
+            dict with scores and feedback
+        """
+        if not image_base64:
+            return {
+                "score": 0.0,
+                "grade": "F",
+                "explanation": "No image provided for evaluation"
+            }
+
+        # Get context description for image type
+        context_desc = self.IMAGE_TYPE_CONTEXTS.get(
+            image_type,
+            "motivate the user"
+        )
+
+        # Format the evaluation prompt
+        prompt = self.EVALUATION_PROMPT.format(
+            goal_title=goal_title,
+            image_type=image_type,
+            context_description=context_desc
+        )
+
+        try:
+            # Use litellm for multimodal evaluation with Gemini
+            from config import get_settings
+            settings = get_settings()
+
+            response = litellm.completion(
+                model=settings.llm_model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": prompt},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/png;base64,{image_base64}"
+                                }
+                            }
+                        ]
+                    }
+                ],
+                max_tokens=500
+            )
+
+            # Parse response
+            response_text = response.choices[0].message.content.strip()
+
+            # Handle markdown code blocks
+            if "```" in response_text:
+                response_text = response_text.split("```")[1]
+                if response_text.startswith("json"):
+                    response_text = response_text[4:]
+                response_text = response_text.strip()
+
+            scores = json.loads(response_text)
+
+            # Calculate weighted overall score
+            overall_score = (
+                scores.get("relevance", 0.5) * 0.30 +
+                scores.get("emotional_impact", 0.5) * 0.35 +
+                scores.get("quality", 0.5) * 0.25 +
+                scores.get("appropriateness", 1.0) * 0.10
+            )
+
+            # Assign grade
+            if overall_score >= 0.85:
+                grade = "A"
+            elif overall_score >= 0.7:
+                grade = "B"
+            elif overall_score >= 0.6:
+                grade = "C"
+            elif overall_score >= 0.4:
+                grade = "D"
+            else:
+                grade = "F"
+
+            return {
+                "score": round(overall_score, 3),
+                "grade": grade,
+                "breakdown": {
+                    "relevance": scores.get("relevance", 0.5),
+                    "emotional_impact": scores.get("emotional_impact", 0.5),
+                    "quality": scores.get("quality", 0.5),
+                    "appropriateness": scores.get("appropriateness", 1.0)
+                },
+                "feedback": scores.get("feedback", ""),
+                "explanation": self._generate_explanation(overall_score, grade)
+            }
+
+        except Exception as e:
+            # Return default scores on error
+            return {
+                "score": 0.5,
+                "grade": "C",
+                "breakdown": {
+                    "relevance": 0.5,
+                    "emotional_impact": 0.5,
+                    "quality": 0.5,
+                    "appropriateness": 1.0
+                },
+                "feedback": f"Evaluation error: {str(e)}",
+                "explanation": "Could not complete full evaluation"
+            }
+
+    def _generate_explanation(self, score: float, grade: str) -> str:
+        if grade == "A":
+            return "Excellent celebration image - highly relevant, emotionally impactful, and high quality"
+        elif grade == "B":
+            return "Good celebration image - effective but could be improved in some areas"
+        elif grade == "C":
+            return "Acceptable image - meets basic requirements but lacks impact"
+        elif grade == "D":
+            return "Below average - significant improvements needed"
+        else:
+            return "Poor quality image - does not meet standards"
+
+
+# ===========================================
 # Global Evaluator Instances
 # ===========================================
 
@@ -848,6 +1047,7 @@ tone_consistency_evaluator = ToneConsistencyEvaluator()
 comprehensive_evaluator = ComprehensiveMessageEvaluator()
 insight_quality_evaluator = InsightQualityEvaluator()
 sync_message_evaluator = SyncMessageEvaluator()
+celebration_image_evaluator = CelebrationImageEvaluator()
 
 
 # ===========================================
@@ -859,7 +1059,8 @@ CUSTOM_EVALUATORS = [
     motivation_effectiveness_evaluator,
     personalization_evaluator,
     tone_consistency_evaluator,
-    insight_quality_evaluator
+    insight_quality_evaluator,
+    celebration_image_evaluator
 ]
 
 __all__ = [
@@ -870,8 +1071,10 @@ __all__ = [
     "ComprehensiveMessageEvaluator",
     "InsightQualityEvaluator",
     "SyncMessageEvaluator",
+    "CelebrationImageEvaluator",
     "comprehensive_evaluator",
     "insight_quality_evaluator",
     "sync_message_evaluator",
+    "celebration_image_evaluator",
     "CUSTOM_EVALUATORS"
 ]

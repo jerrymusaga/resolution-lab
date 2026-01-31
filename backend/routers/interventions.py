@@ -25,6 +25,11 @@ from models.schemas import (
 from services.intervention_generator import generate_intervention_message, get_fallback_message
 from services.experiment_engine import experiment_engine
 from services.analysis_engine import analyze_user_sentiment
+from services.celebration_image_generator import (
+    generate_checkin_celebration,
+    CelebrationImageResult,
+    GENAI_AVAILABLE as CELEBRATION_IMAGE_AVAILABLE
+)
 from routers.goals import get_goal_by_id, update_goal_stats
 
 # Import database service
@@ -298,6 +303,36 @@ async def record_check_in(
                         print(f"⚠️ Thread evaluation: {eval_result.status} - {eval_result.error_message}")
         except Exception as e:
             print(f"⚠️ Auto-evaluation check failed: {e}")
+
+    # Generate celebration/encouragement image using Nano Banana
+    if CELEBRATION_IMAGE_AVAILABLE and intervention_goal_id:
+        try:
+            # Get goal title for image generation
+            goal = get_goal_by_id(intervention_goal_id, user_id)
+            goal_title = goal.title if goal else "your goal"
+
+            # Get current streak for the goal
+            current_streak = goal.current_streak if goal else 0
+
+            # Generate celebration image
+            print(f"🎨 Generating {'celebration' if outcome.completed else 'encouragement'} image for: {goal_title}")
+            image_result: CelebrationImageResult = await generate_checkin_celebration(
+                goal_title=goal_title,
+                completed=outcome.completed,
+                current_streak=current_streak
+            )
+
+            if image_result.success:
+                outcome_record.celebration_image = image_result.image_base64
+                outcome_record.celebration_image_type = image_result.image_type.value
+                outcome_record.celebration_image_grade = image_result.evaluation_grade
+                print(f"✅ Generated {image_result.image_type.value} image (grade: {image_result.evaluation_grade})")
+            else:
+                print(f"⚠️ Image generation failed: {image_result.error_message}")
+
+        except Exception as e:
+            print(f"⚠️ Celebration image generation failed: {e}")
+            # Don't fail the check-in if image generation fails
 
     return outcome_record
 

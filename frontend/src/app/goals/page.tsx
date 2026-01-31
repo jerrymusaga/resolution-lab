@@ -17,7 +17,7 @@ import {
   completeGoal,
   deleteGoal
 } from '@/lib/api';
-import { GoalWithCheckInStatus, InterventionResponse } from '@/types';
+import { GoalWithCheckInStatus, InterventionResponse, Outcome } from '@/types';
 import { Plus, Target, Filter, Brain, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -74,25 +74,24 @@ function GoalsContent() {
     }
   };
 
-  const handleCheckInSubmit = async (completed: boolean, feedback?: string) => {
-    if (!currentIntervention) return;
+  const handleCheckInSubmit = async (completed: boolean, feedback?: string): Promise<Outcome | null> => {
+    if (!currentIntervention) return null;
 
     try {
       setCheckInLoading(true);
       setCheckInError(null);
-      await recordCheckIn(userId, {
+      const outcome = await recordCheckIn(userId, {
         intervention_id: currentIntervention.intervention_id,
         completed,
         user_feedback: feedback,
       });
-      setCheckInGoalId(null);
-      setCurrentIntervention(null);
+      // Don't close modal immediately - let the celebration view show
       await loadGoals(userId);
+      return outcome;
     } catch (err) {
       console.error('Failed to record check-in:', err);
       setCheckInError(err instanceof Error ? err.message : 'Failed to record check-in. Please try again.');
-      setCheckInGoalId(null);
-      setCurrentIntervention(null);
+      return null;
     } finally {
       setCheckInLoading(false);
     }

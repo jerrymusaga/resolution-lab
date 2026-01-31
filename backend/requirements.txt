@@ -17,6 +17,7 @@ opik>=1.9.7
 opik-optimizer>=3.0.0  # Automatic prompt optimization
 litellm>=1.79.2
 google-generativeai==0.8.4
+google-genai>=1.0.0  # Nano Banana image generation (Gemini native images)
 
 # Utilities
 httpx==0.27.2

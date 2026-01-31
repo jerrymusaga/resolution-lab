@@ -17,7 +17,7 @@ import {
   completeGoal,
   deleteGoal
 } from '@/lib/api';
-import { GoalWithCheckInStatus, InterventionResponse, InsightsSummary } from '@/types';
+import { GoalWithCheckInStatus, InterventionResponse, InsightsSummary, Outcome } from '@/types';
 import { cn, formatPercent } from '@/lib/utils';
 import {
   Plus,
@@ -101,23 +101,25 @@ function DashboardContent() {
     }
   };
 
-  const handleCheckInSubmit = async (completed: boolean, feedback?: string) => {
-    if (!currentIntervention) return;
+  const handleCheckInSubmit = async (completed: boolean, feedback?: string): Promise<Outcome | null> => {
+    if (!currentIntervention) return null;
 
     try {
       setCheckInLoading(true);
 
-      await recordCheckIn(userId, {
+      const outcome = await recordCheckIn(userId, {
         intervention_id: currentIntervention.intervention_id,
         completed,
         user_feedback: feedback,
       });
 
-      setCheckInGoalId(null);
-      setCurrentIntervention(null);
+      // Don't close modal immediately - let the celebration view show
+      // Modal will close when user clicks the action button
       await loadData(userId);
+      return outcome;
     } catch (err) {
       console.error('Failed to record check-in:', err);
+      return null;
     } finally {
       setCheckInLoading(false);
     }

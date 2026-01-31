@@ -120,8 +120,8 @@ class AICoachAgent:
         # Step 2: THINK - Reason about the observations
         thought = await self._think(observation, goal_title, insights)
         
-        # Step 3: PLAN - Decide on strategy (pass user_id for formula lookup)
-        plan = await self._plan(user_id, thought, goal_title, goal_description, insights)
+        # Step 3: PLAN - Decide on strategy (pass user_id and goal_id for formula lookup)
+        plan = await self._plan(user_id, thought, goal_title, goal_description, insights, goal_id)
         
         # Step 4: ACT - Generate the intervention
         action = await self._act(plan, goal_title, goal_description, thought)
@@ -285,7 +285,8 @@ Respond in JSON format:
         thought: AgentThought,
         goal_title: str,
         goal_description: str,
-        insights: dict
+        insights: dict,
+        goal_id: Optional[str] = None
     ) -> AgentPlan:
         """
         PLAN: Decide on the intervention strategy.
@@ -297,7 +298,7 @@ Respond in JSON format:
         # Get strategy from bandit algorithm (respects user's formula if applied)
         strategy_result = experiment_engine.select_strategy(
             user_id=user_id,
-            goal_id=goal_title
+            goal_id=goal_id
         )
         chosen_strategy = InterventionStrategy(strategy_result["strategy"])
         formula_active = strategy_result.get("formula_active", False)

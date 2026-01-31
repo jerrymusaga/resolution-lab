@@ -20,6 +20,9 @@ A comprehensive guide to how Resolution Lab works from the user's perspective.
 12. [Micro-Commitment Fallback](#12-micro-commitment-fallback)
 13. [Streak Calendar & Highlights](#13-streak-calendar--highlights)
 14. [Personalized Greetings](#14-personalized-greetings)
+15. [Thread Evaluation (Opik)](#15-thread-evaluation-opik)
+16. [Per-Goal Formula](#16-per-goal-formula)
+17. [In-App Reminders](#17-in-app-reminders)
 
 ---
 
@@ -1028,6 +1031,458 @@ ENGAGEMENT FEATURES (NEW!)
 QUALITY ASSURANCE
 ├── 🔒 Protected routes (authentication required)
 ├── 📈 Custom Opik evaluators (A-F grades)
+└── 🔍 Full observability in Opik
+```
+
+---
+
+---
+
+## 15. Thread Evaluation (Opik)
+
+### Scenario 15.1: Automatic Thread Evaluation After 5 Check-ins
+
+**User:** Sarah has been checking in on her "Exercise 30 min" goal consistently.
+
+```
+CHECK-IN #5 - AUTO EVALUATION TRIGGER
+─────────────────────────────────────────────────────────────────
+Sarah completes her 5th check-in
+         │
+         ▼
+BEHIND THE SCENES (Backend)
+─────────────────────────────────────────────────────────────────
+1. Check-in recorded as usual (outcome: completed)
+
+2. System detects: checkin_count = 5 (threshold reached!)
+   └─→ Triggers thread evaluation automatically
+
+3. Thread Evaluation Process:
+   ┌─────────────────────────────────────────────────────────┐
+   │ Step 1: Close thread (mark goal thread as "inactive")  │
+   │         status = "inactive" for goal_id: abc123        │
+   │                                                         │
+   │ Step 2: Fetch all traces for this thread               │
+   │         SELECT * FROM traces WHERE thread_id = abc123  │
+   │                                                         │
+   │ Step 3: Run Opik evaluate_threads() with:              │
+   │         • ConversationalCoherenceMetric                │
+   │         • UserFrustrationMetric                        │
+   │                                                         │
+   │ Step 4: Attach feedback scores to thread               │
+   │         coherence: 0.85, frustration: 0.12             │
+   │                                                         │
+   │ Step 5: Reopen thread (resume tracking)                │
+   │         status = "active" for goal_id: abc123          │
+   └─────────────────────────────────────────────────────────┘
+
+4. Logs printed:
+   📊 Reached 5 check-ins - triggering thread evaluation
+   🧵 Evaluating thread for goal abc123
+   ✅ Thread evaluation complete: coherence=0.85, frustration=0.12
+```
+
+### Scenario 15.2: Viewing Thread Scores in Opik Dashboard
+
+**User:** A developer/judge opens the Opik dashboard to see thread evaluations.
+
+```
+OPIK DASHBOARD - THREADS VIEW
+─────────────────────────────────────────────────────────────────
+Thread: goal_abc123 (Exercise 30 min)
+Status: Active
+Traces: 5
+
+Feedback Scores:
+┌─────────────────────────────────────────────────────────────┐
+│  📊 CONVERSATIONAL COHERENCE                                 │
+│  Score: 0.85 / 1.0                                          │
+│  ████████████████████████████████░░░░░░                     │
+│                                                             │
+│  Interpretation: The conversation flow is coherent.         │
+│  Messages maintain context and build on previous check-ins. │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│  😤 USER FRUSTRATION                                         │
+│  Score: 0.12 / 1.0 (Lower is better)                        │
+│  ████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░                       │
+│                                                             │
+│  Interpretation: User shows minimal frustration.             │
+│  Strategies are working well for this goal.                 │
+└─────────────────────────────────────────────────────────────┘
+
+Thread Timeline:
+├─ Check-in 1: streak_gamification → completed ✓
+├─ Check-in 2: gentle_reminder → completed ✓
+├─ Check-in 3: identity_reinforcement → completed ✓
+├─ Check-in 4: loss_aversion → NOT completed ✗
+├─ Check-in 5: identity_reinforcement → completed ✓
+└─ [EVALUATION TRIGGERED] scores attached
+```
+
+### Scenario 15.3: Thread Evaluation for Struggling User
+
+**User:** Mike has been struggling with his "Meditate" goal - many missed check-ins.
+
+```
+THREAD EVALUATION - HIGH FRUSTRATION DETECTED
+─────────────────────────────────────────────────────────────────
+Thread: goal_xyz789 (Meditate 10 min)
+Status: Active
+Traces: 10 (2nd evaluation cycle)
+
+Feedback Scores:
+┌─────────────────────────────────────────────────────────────┐
+│  📊 CONVERSATIONAL COHERENCE                                 │
+│  Score: 0.62 / 1.0                                          │
+│  ████████████████████░░░░░░░░░░░░░░░░                       │
+│                                                             │
+│  Lower coherence - messaging may not be resonating          │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│  😤 USER FRUSTRATION                                         │
+│  Score: 0.67 / 1.0 (HIGH!)                                  │
+│  ██████████████████████████████████████░░░░                 │
+│                                                             │
+│  ⚠️ Warning: High frustration detected!                     │
+│  Consider adjusting strategy for this goal.                 │
+└─────────────────────────────────────────────────────────────┘
+
+Thread Timeline:
+├─ Check-in 1: accountability → NOT completed ✗
+├─ Check-in 2: loss_aversion → NOT completed ✗
+├─ Check-in 3: streak_gamification → NOT completed ✗
+├─ Check-in 4: gentle_reminder → completed ✓
+├─ Check-in 5: micro_commitment → completed ✓
+├─ [EVALUATION #1] coherence=0.45, frustration=0.78
+├─ Check-in 6: gentle_reminder → completed ✓
+├─ ...
+└─ [EVALUATION #2] coherence=0.62, frustration=0.67 (improving!)
+```
+
+**Key Insight for Judges:**
+- Thread evaluation happens automatically every 5 check-ins
+- Feedback scores are attached to threads in Opik
+- High frustration scores can identify struggling users early
+- System learns to avoid strategies that increase frustration
+
+---
+
+## 16. Per-Goal Formula
+
+### Scenario 16.1: Discovering Different Formulas for Different Goals
+
+**User:** Sarah has multiple goals and notices different strategies work for each.
+
+```
+GOALS PAGE - FORMULA STATUS
+─────────────────────────────────────────────────────────────────
+┌─────────────────────────────────────────────────────────────┐
+│ 🎯 Exercise for 30 minutes                      [Active]    │
+│                                                             │
+│ 🔥 Streak: 12 days | ✅ Total: 28 | 📊 Rate: 82%            │
+│                                                             │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ 🧪 Best: Streak Gamification                            │ │
+│ │ 28 check-ins analyzed                                   │ │
+│ │                                    [Apply Formula]      │ │
+│ └─────────────────────────────────────────────────────────┘ │
+│                                                             │
+│ [Check In Now]                                          ⋮   │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│ 🎯 Read 20 pages                                 [Active]   │
+│                                                             │
+│ 🔥 Streak: 5 days | ✅ Total: 20 | 📊 Rate: 76%             │
+│                                                             │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ ✨ Formula: Gentle Reminder                              │ │
+│ │ AI optimized for this goal                              │ │
+│ │                                              [Reset]    │ │
+│ └─────────────────────────────────────────────────────────┘ │
+│                                                             │
+│ [Check In Now]                                          ⋮   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Scenario 16.2: Applying a Per-Goal Formula
+
+**User:** Sarah clicks "Apply Formula" on her Exercise goal.
+
+```
+APPLYING FORMULA
+─────────────────────────────────────────────────────────────────
+Sarah clicks [Apply Formula] on Exercise goal
+         │
+         ▼
+BEHIND THE SCENES
+─────────────────────────────────────────────────────────────────
+1. API Call: POST /api/insights/goals/{goal_id}/formula/apply
+   └─→ user_id: sarah123, goal_id: exercise_abc
+
+2. Database Update:
+   UPDATE goals SET
+     formula_applied = true,
+     preferred_strategy = 'streak_gamification'
+   WHERE id = 'exercise_abc'
+
+3. Strategy Selection Changes:
+
+   BEFORE (Exploration Mode):
+   ┌─────────────────────────────────────────────────────────┐
+   │ Each check-in: Multi-armed bandit selects strategy      │
+   │ • 20% exploration (try all strategies)                  │
+   │ • 80% exploitation (use what's working)                 │
+   └─────────────────────────────────────────────────────────┘
+
+   AFTER (Formula Applied):
+   ┌─────────────────────────────────────────────────────────┐
+   │ Each check-in: Priority given to preferred strategy     │
+   │ • 90% preferred strategy (streak_gamification)          │
+   │ • 10% exploration (still learning!)                     │
+   └─────────────────────────────────────────────────────────┘
+
+4. UI Updates:
+   └─→ Shows: ✨ Formula: Streak Gamification
+             AI optimized for this goal
+             [Reset] button
+```
+
+### Scenario 16.3: Different Formulas for Different Goals
+
+**User:** Sarah has applied different formulas to each of her goals.
+
+```
+SARAH'S PERSONALIZED FORMULAS
+─────────────────────────────────────────────────────────────────
+
+🏋️ EXERCISE 30 MIN
+   Formula: ✨ Streak Gamification
+   Why it works: "Day 15! Don't break the chain!"
+   → Sarah responds to competitive, game-like messaging
+
+📚 READ 20 PAGES
+   Formula: ✨ Gentle Reminder
+   Why it works: "Just a friendly nudge about your reading..."
+   → Sarah prefers low-pressure approach for reading
+
+🧘 MEDITATE 10 MIN
+   Formula: ✨ Micro-Commitment
+   Why it works: "Just 2 minutes? That's all you need..."
+   → Meditation needs to feel less daunting
+
+💧 DRINK 8 GLASSES
+   Formula: Not applied yet (still exploring)
+   Best so far: Identity Reinforcement (68%)
+   → [Apply Formula] button visible
+
+KEY INSIGHT:
+Different goals need different motivation strategies!
+Exercise benefits from gamification, but that same
+approach would stress Sarah out for meditation.
+```
+
+### Scenario 16.4: Resetting a Formula
+
+**User:** Sarah's reading has plateaued and she wants to try different strategies again.
+
+```
+RESETTING FORMULA
+─────────────────────────────────────────────────────────────────
+Sarah clicks [Reset] on her Reading goal
+         │
+         ▼
+CONFIRMATION
+─────────────────────────────────────────────────────────────────
+Formula cleared. The AI will resume testing different
+strategies to find a better approach.
+         │
+         ▼
+RESULT
+─────────────────────────────────────────────────────────────────
+┌─────────────────────────────────────────────────────────────┐
+│ 🎯 Read 20 pages                                 [Active]   │
+│                                                             │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ 🧪 Best: Gentle Reminder                                │ │
+│ │ 20 check-ins analyzed                                   │ │
+│ │                                    [Apply Formula]      │ │
+│ └─────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+
+System returns to exploration mode for this goal.
+```
+
+---
+
+## 17. In-App Reminders
+
+### Scenario 17.1: Seeing the Reminder Banner
+
+**User:** Sarah opens the Goals page and hasn't checked in on some goals today.
+
+```
+GOALS PAGE WITH REMINDER BANNER
+─────────────────────────────────────────────────────────────────
+┌─────────────────────────────────────────────────────────────┐
+│ 🔔 Goals need your attention                                │
+│ You have 2 active goals ready for check-in                  │
+│                                                             │
+│ [Check In Now]                              [✕ Dismiss]     │
+└─────────────────────────────────────────────────────────────┘
+
+Your Goals:
+┌─────────────────────────────────────────────────────────────┐
+│ 🎯 Exercise for 30 minutes                      [Active]    │
+│ ...                                                         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Scenario 17.2: Clicking the Reminder - Full Opik Tracing
+
+**User:** Sarah clicks "Check In Now" on the reminder banner.
+
+```
+REMINDER INTERACTION - OPIK TRACED
+─────────────────────────────────────────────────────────────────
+Sarah clicks [Check In Now]
+         │
+         ▼
+BEHIND THE SCENES - FULL OPIK TRACING
+─────────────────────────────────────────────────────────────────
+1. Track Reminder Interaction API called:
+   POST /api/reminders/interaction
+   {
+     "user_id": "sarah123",
+     "action": "click",
+     "goal_count": 2,
+     "time_to_action": 3500  // ms since banner appeared
+   }
+
+2. Opik Trace Created:
+   ┌─────────────────────────────────────────────────────────┐
+   │ Trace: track_reminder_interaction                       │
+   │ ├─ input: {action: "click", goal_count: 2}              │
+   │ ├─ output: {success: true, score: 0.9}                  │
+   │ └─ tags: ["reminder", "engagement", "click"]            │
+   └─────────────────────────────────────────────────────────┘
+
+3. Feedback Scores Attached:
+   ┌─────────────────────────────────────────────────────────┐
+   │ reminder_engagement: 0.9 (high - clicked quickly)       │
+   │ reminder_response_time: 3.5 (seconds to action)         │
+   │ reminder_urgency: 4 (2 goals needed attention)          │
+   └─────────────────────────────────────────────────────────┘
+
+4. User navigated to check-in flow
+```
+
+### Scenario 17.3: Dismissing the Reminder
+
+**User:** Sarah is busy and dismisses the reminder.
+
+```
+REMINDER DISMISSED - STILL TRACKED
+─────────────────────────────────────────────────────────────────
+Sarah clicks [✕ Dismiss]
+         │
+         ▼
+OPIK TRACE
+─────────────────────────────────────────────────────────────────
+1. Track Reminder Interaction:
+   {
+     "action": "dismiss",
+     "goal_count": 2,
+     "time_to_action": 8200  // took longer to decide
+   }
+
+2. Feedback Scores:
+   reminder_engagement: 0.3 (low - dismissed)
+   reminder_response_time: 8.2 (seconds)
+   reminder_urgency: 4
+
+3. Banner disappears, stored in localStorage to avoid spam
+```
+
+### Scenario 17.4: Analyzing Reminder Effectiveness in Opik
+
+**User:** Developer views reminder analytics in Opik dashboard.
+
+```
+OPIK DASHBOARD - REMINDER ANALYTICS
+─────────────────────────────────────────────────────────────────
+
+📊 REMINDER ENGAGEMENT OVER TIME
+─────────────────────────────────────────────────────────────────
+Average Scores (Last 7 days):
+• reminder_engagement: 0.72 (72% interact positively)
+• reminder_response_time: 4.2 seconds average
+• reminder_urgency: 3.1 average (most users have 2-3 goals)
+
+Breakdown by Action:
+┌────────────┬─────────┬────────────────────────────────────┐
+│ Action     │ Count   │ Avg Response Time                   │
+├────────────┼─────────┼────────────────────────────────────┤
+│ click      │ 156     │ 3.2s  ████████████░░░░░░░░░        │
+│ view       │ 210     │ N/A   (just viewed, no action)     │
+│ dismiss    │ 54      │ 7.8s  █████████████████████░░░░    │
+└────────────┴─────────┴────────────────────────────────────┘
+
+INSIGHT:
+Users who click do so within 3 seconds.
+Dismissals take longer (user weighing decision).
+High engagement rate suggests reminders are valuable.
+```
+
+---
+
+## Summary: Complete Feature Set (Updated)
+
+```
+CORE FEATURES
+├── 🤖 AI Coach Agent (6-step cognitive loop)
+├── 🧪 Multi-armed bandit experiment
+├── 📊 Personal insights & analytics
+└── 🎯 Goal management
+
+OPIK INTEGRATION (⭐ HACKATHON HIGHLIGHT)
+├── 🧵 Thread Evaluation
+│   ├── Each goal = 1 thread in Opik
+│   ├── Auto-evaluates every 5 check-ins
+│   ├── ConversationalCoherence metric
+│   ├── UserFrustration metric
+│   └── Feedback scores visible in Thread view
+│
+├── 📈 Feedback Scores
+│   ├── reminder_engagement (in-app reminders)
+│   ├── reminder_response_time (time to action)
+│   ├── reminder_urgency (goal count)
+│   └── Thread evaluation scores
+│
+└── 🔍 Full Tracing
+    ├── Nested parent-child traces
+    ├── Custom evaluators (A-F grades)
+    └── LLM-as-Judge hybrid evaluation
+
+ENGAGEMENT FEATURES
+├── 🔊 Voice Motivation (TTS)
+├── 🎯 Micro-Commitment Fallback
+├── 📅 Streak Calendar
+├── 🔥 Per-Goal Streak Highlights
+├── ⏰ Personalized Greetings
+├── 🔔 In-App Reminders (Opik traced)
+└── 🧪 Per-Goal Formula
+    ├── Each goal has its own best strategy
+    ├── 90/10 split when formula applied
+    └── Easy reset to exploration mode
+
+QUALITY ASSURANCE
+├── 🔒 Protected routes (authentication required)
+├── 📈 Custom Opik evaluators (A-F grades)
+├── 🧵 Thread evaluation (auto every 5 check-ins)
 └── 🔍 Full observability in Opik
 ```
 

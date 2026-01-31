@@ -144,15 +144,95 @@ Goals with 3+ day streaks get prominent visual highlights:
 - **3-6 day streaks**: Orange highlight with flame icon
 - **7+ day streaks**: Gradient highlight with "On fire!" badge
 
+### 🔔 In-App Reminders (Opik Traced)
+Smart notification banners remind users when goals need attention:
+
+- **Priority-based**: Goals without recent check-ins shown first
+- **Full Opik tracing**: Every view, click, and dismiss is tracked
+- **Engagement scoring**: `reminder_engagement`, `reminder_response_time`, `reminder_urgency`
+- **Non-intrusive**: Dismissible banner that respects user flow
+
+### 🧪 Per-Goal Formula
+**Each goal can have its own "motivation formula"** - the strategy that works best for that specific goal:
+
+```
+GOAL: "Exercise 30 min"          GOAL: "Read 20 pages"
+├── Best Strategy: streak_gamification   ├── Best Strategy: gentle_reminder
+├── Completion Rate: 82%                 ├── Completion Rate: 76%
+└── [Apply Formula ✓]                    └── [Apply Formula ✓]
+```
+
+- **Goal-specific optimization**: Exercise might need gamification, reading might need gentle nudges
+- **90/10 split when applied**: 90% uses preferred strategy, 10% still explores
+- **Easy reset**: Clear formula to return to experimentation mode
+
 ---
 
 ## 🔍 Opik Integration (Deep)
 
+Resolution Lab showcases **production-grade Opik integration** with threads, traces, feedback scores, and automated evaluation.
+
+### 🧵 Thread Evaluation - The Star Feature
+
+**Every goal is a conversation thread in Opik.** When users check in on their goals, all interactions are grouped into a thread, enabling:
+
+```
+THREAD ARCHITECTURE
+─────────────────────────────────────────────────────────────────────────
+                         GOAL: "Exercise 30 min"
+                              thread_id: goal_abc123
+                                    │
+        ┌───────────────┬───────────┼───────────┬───────────────┐
+        ▼               ▼           ▼           ▼               ▼
+   [Check-in 1]    [Check-in 2] [Check-in 3] [Check-in 4]   [Check-in 5]
+   Strategy: A     Strategy: B  Strategy: A  Strategy: C    Strategy: A
+   Outcome: ✓      Outcome: ✗   Outcome: ✓   Outcome: ✓     Outcome: ✓
+        │               │           │           │               │
+        └───────────────┴───────────┴───────────┴───────────────┘
+                                    │
+                                    ▼
+                         🔄 AUTO-EVALUATION TRIGGER
+                           (Every 5 check-ins)
+                                    │
+                    ┌───────────────┴───────────────┐
+                    ▼                               ▼
+        ConversationalCoherence           UserFrustrationMetric
+              Metric                      (Detects struggling users)
+                    │                               │
+                    └───────────────┬───────────────┘
+                                    ▼
+                         FEEDBACK SCORES → Opik Thread View
+                         • Coherence: 0.85
+                         • Frustration: 0.12
+```
+
+**Key Innovation:** After every 5 check-ins, the system automatically:
+1. Closes the thread (marks as inactive)
+2. Runs `evaluate_threads()` with custom metrics
+3. Attaches feedback scores visible in Opik's Thread view
+4. Reopens for continued tracking
+
+```python
+# Auto-triggered every 5 check-ins (interventions.py:82)
+if checkin_count % 5 == 0:
+    evaluator.evaluate_goal_thread(goal_id=goal_id, close_first=True)
+```
+
+### 📊 Full Tracing Architecture
+
 ```
 TRACING
 ├── LiteLLM Callback ──────── All LLM calls auto-traced
-├── @opik.track (12+) ─────── Decorated functions
-└── Nested traces ─────────── Parent-child relationships
+├── @opik.track (15+) ─────── Decorated functions
+├── Nested traces ─────────── Parent-child relationships
+└── Thread grouping ───────── goal_id as thread_id
+
+THREAD FEATURES (⭐ HACKATHON HIGHLIGHT)
+├── Thread Creation ─────────── Each goal = 1 thread
+├── Thread Lifecycle ────────── Active → Inactive → Evaluated
+├── Thread Evaluation ───────── evaluate_threads() with custom metrics
+├── Feedback Scores ─────────── ConversationalCoherence, UserFrustration
+└── Auto-Trigger ────────────── Every 5 check-ins
 
 AGENT TRACES (Nested)
 └── agent_full_loop (parent)
@@ -168,13 +248,19 @@ A/B EXPERIMENTS
 ├── prompt_experiment_record
 └── prompt_experiment_report
 
-CUSTOM OPIK EVALUATORS (NEW!)
+CUSTOM OPIK EVALUATORS
 ├── StrategyAlignmentEvaluator ─── Message matches intended strategy
 ├── MotivationEffectivenessEvaluator ─── Likely to motivate action
 ├── PersonalizationEvaluator ───── Feels tailored, not generic
 ├── ToneConsistencyEvaluator ───── Tone matches strategy style
 ├── InsightQualityEvaluator ────── Insight is actionable & data-grounded
 └── ComprehensiveMessageEvaluator ─ Combines all with A-F grades
+
+FEEDBACK SCORES
+├── reminder_engagement ────── In-app reminder interaction score
+├── reminder_response_time ─── Time to action (seconds)
+├── reminder_urgency ───────── Urgency level (1-5)
+└── thread evaluation scores ─ Coherence, frustration metrics
 
 LLM-AS-JUDGE
 ├── analyze_user_sentiment
@@ -183,9 +269,8 @@ LLM-AS-JUDGE
 
 ENGAGEMENT ANALYTICS
 ├── api_voice_play ─────────── Track voice playback events
-│   ├── voice_played (metric)
-│   └── voice_auto_played (metric)
-└── api_record_checkin ─────── Track micro-commitment usage
+├── api_record_checkin ─────── Track micro-commitment usage
+└── track_reminder_interaction ─ In-app notification analytics
 ```
 
 ### Custom Opik Evaluators - App-Wide Quality Assessment
@@ -237,9 +322,11 @@ npm run dev
 ## 🎬 Demo Scenarios
 
 **New User:** Agent explores all strategies, learns preferences
+**After 5 Check-ins:** Thread auto-evaluated, feedback scores visible in Opik
 **After 30 Check-ins:** Agent exploits best strategy (80% of time)
-**Struggling User:** Agent adapts, uses gentler approaches
-**Insights Page:** User sees their personal motivation formula
+**Per-Goal Formula:** User applies "Exercise = gamification", "Reading = gentle reminder"
+**In-App Reminders:** User sees banner for goals needing attention, interaction tracked
+**Insights Page:** User sees their personal motivation formula per goal
 
 See `USER_STORIES.md` for complete scenarios.
 
@@ -250,12 +337,14 @@ See `USER_STORIES.md` for complete scenarios.
 | Criteria | Implementation |
 |----------|----------------|
 | ✅ True Agent | 6-step cognitive loop, not just LLM wrapper |
-| ✅ Deep Opik | Nested traces, experiments, custom metrics, voice analytics |
+| ⭐ **Thread Evaluation** | **Auto-evaluates conversations every 5 check-ins with feedback scores** |
+| ✅ Deep Opik | Nested traces, threads, experiments, custom metrics, feedback scores |
 | ✅ Custom Evaluators | 6 evaluators assess ALL AI outputs with grades (A-F) |
+| ✅ Feedback Scores | reminder_engagement, coherence, frustration metrics |
 | ✅ Hybrid Evaluation | Custom evaluators (40%) + LLM-as-Judge (60%) |
-| ✅ Novel Use Case | Expose experiment data TO users |
+| ✅ Novel Use Case | Expose experiment data TO users via per-goal formulas |
 | ✅ Production Ready | Full-stack, polished UI with evaluator visualizations |
-| ✅ Engagement Features | Voice TTS, streak calendar, micro-commitments, personalized greetings |
+| ✅ Engagement Features | Voice TTS, streak calendar, micro-commitments, in-app reminders |
 | ✅ Authentication | Supabase Auth with Google OAuth, protected routes |
 
 ---
@@ -264,18 +353,22 @@ See `USER_STORIES.md` for complete scenarios.
 
 ```
 backend/services/coach_agent.py        # 🤖 AI Agent (6-step loop)
+backend/services/thread_evaluator.py   # ⭐ Opik Thread Evaluation (auto every 5 check-ins)
+backend/services/reminder_service.py   # 🔔 In-app reminders with Opik tracing
 backend/services/evaluators.py         # 🎯 Custom Opik Evaluators
-backend/services/experiment_engine.py  # Multi-armed bandit
+backend/services/experiment_engine.py  # Multi-armed bandit + per-goal formula
 backend/services/intervention_generator.py  # Message generation + evaluation
 backend/services/analysis_engine.py    # Insight generation + evaluation
-backend/routers/interventions.py       # API endpoints including voice tracking
+backend/routers/interventions.py       # API endpoints (triggers thread eval at 5 check-ins)
+backend/routers/insights.py            # Per-goal formula endpoints
 
 frontend/src/app/agent/page.tsx        # Agent visualization with voice + micro-commitment
 frontend/src/app/experiment/page.tsx   # Experiment page with grade distribution
 frontend/src/app/insights/page.tsx     # User insights with insight quality grades
 frontend/src/app/dashboard/page.tsx    # Dashboard with streak calendar
 frontend/src/components/StreakCalendar.tsx  # 📅 Visual check-in calendar
-frontend/src/components/GoalCard.tsx   # 🔥 Goal cards with streak highlights
+frontend/src/components/GoalCard.tsx   # 🔥 Goal cards with per-goal formula UI
+frontend/src/components/ReminderBanner.tsx  # 🔔 In-app reminder notification
 frontend/src/hooks/useTextToSpeech.ts  # 🔊 Text-to-speech hook
 ```
 

@@ -94,11 +94,14 @@ async def generate_intervention(
     opik_context.update_current_trace(thread_id=f"goal_{goal_id}")
 
     # Select strategy using experiment engine (or use forced strategy)
+    formula_active = False
     if force_strategy:
         strategy = force_strategy
     else:
-        strategy_result = experiment_engine.select_strategy(user_id)
+        # Pass goal_id to enable per-goal formula selection
+        strategy_result = experiment_engine.select_strategy(user_id, goal_id=str(goal_id))
         strategy = InterventionStrategy(strategy_result["strategy"])
+        formula_active = strategy_result.get("formula_active", False)
 
     # Generate personalized message using LLM
     try:
@@ -123,7 +126,7 @@ async def generate_intervention(
             strategy=strategy.value,
             message=message,
             goal_id=str(goal_id),
-            formula_active=False,
+            formula_active=formula_active,
         )
         if db_intervention:
             intervention_id = UUID(db_intervention["id"])

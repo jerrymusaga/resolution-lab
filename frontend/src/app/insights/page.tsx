@@ -29,8 +29,6 @@ import {
   Rocket,
   Heart,
   Shield,
-  HelpCircle,
-  CheckCircle2,
   ChevronRight,
   Info,
 } from 'lucide-react';
@@ -193,14 +191,14 @@ function InsightsContent() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <Lightbulb className="w-7 h-7 text-yellow-500" />
             Your Insights
           </h1>
           <p className="text-gray-500 mt-1">
-            Discover what truly motivates you
+            See which motivation strategies work best for you
           </p>
         </div>
         <Button
@@ -212,6 +210,43 @@ function InsightsContent() {
           Refresh
         </Button>
       </div>
+
+      {/* How It Works - Collapsible info banner */}
+      <Card variant="bordered" className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+        <CardContent className="py-4">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+              <Info className="w-5 h-5 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900 mb-2">How This Works</h3>
+              <div className="grid sm:grid-cols-3 gap-4 text-sm">
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center text-xs font-bold flex-shrink-0">1</div>
+                  <div>
+                    <p className="font-medium text-gray-800">We Experiment</p>
+                    <p className="text-gray-600">Each check-in tests a different motivation strategy</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center text-xs font-bold flex-shrink-0">2</div>
+                  <div>
+                    <p className="font-medium text-gray-800">We Learn</p>
+                    <p className="text-gray-600">Your responses reveal what motivates you most</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center text-xs font-bold flex-shrink-0">3</div>
+                  <div>
+                    <p className="font-medium text-gray-800">You Apply</p>
+                    <p className="text-gray-600">Lock in your best strategy per goal from the Goals page</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Error */}
       {error && (
@@ -455,7 +490,54 @@ function InsightsContent() {
         </div>
       )}
 
+      {/* Next Steps - Guide users to apply formulas */}
+      {hasDiscovery && (
+        <Card variant="bordered" className="mb-8 bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200">
+          <CardContent className="py-5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                  <Rocket className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">Ready to Apply Your Formula?</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Go to your Goals page and click <span className="font-medium text-purple-600">"Apply Formula"</span> on any goal card to lock in its best strategy.
+                    Each goal can have its own personalized formula!
+                  </p>
+                </div>
+              </div>
+              <Link href="/goals">
+                <Button className="bg-purple-600 hover:bg-purple-700 whitespace-nowrap">
+                  <Target className="w-4 h-4 mr-2" />
+                  Go to Goals
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </Link>
+            </div>
+            {/* Subtle AI Coach tip */}
+            <div className="mt-4 pt-4 border-t border-purple-200 flex items-center gap-2 text-sm text-gray-500">
+              <Brain className="w-4 h-4 text-purple-400" />
+              <span>
+                Want to see how the AI thinks?{' '}
+                <Link href="/agent" className="text-purple-600 hover:text-purple-700 font-medium hover:underline">
+                  Try the AI Coach
+                </Link>
+                {' '}to watch the full reasoning process.
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Summary Stats - Cleaner design */}
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <BarChart3 className="w-5 h-5 text-blue-500" />
+          Your Progress
+        </h2>
+        <p className="text-sm text-gray-500">Track your experimentation journey</p>
+      </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <Card variant="bordered" className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100">
           <CardContent className="text-center py-5">
@@ -514,10 +596,15 @@ function InsightsContent() {
       {chartData.length > 0 && (
         <Card variant="bordered" className="mb-8">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-primary-600" />
-              Strategy Performance
-            </CardTitle>
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-emerald-500" />
+                Strategy Performance
+              </CardTitle>
+              <p className="text-sm text-gray-500 mt-1">
+                Compare how each motivation strategy performs for you
+              </p>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid lg:grid-cols-2 gap-8">
@@ -630,10 +717,15 @@ function InsightsContent() {
       {/* All Strategies Breakdown - Compact cards */}
       {insights && insights.strategy_stats.length > 0 && (
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-primary-600" />
-            All Strategies Ranked
-          </h2>
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <Award className="w-5 h-5 text-yellow-500" />
+              All Strategies Ranked
+            </h2>
+            <p className="text-sm text-gray-500">
+              Your personal ranking based on completion rates. Higher = works better for you.
+            </p>
+          </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             {insights.strategy_stats.map((stat, index) => {
               const info = STRATEGY_INFO[stat.strategy];

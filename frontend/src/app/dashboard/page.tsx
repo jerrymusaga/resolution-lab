@@ -465,6 +465,7 @@ function DashboardContent() {
               <GoalCard
                 key={goal.id}
                 goal={goal}
+                userId={userId}
                 onCheckIn={goal.can_check_in ? handleCheckIn : undefined}
                 onPause={handlePauseGoal}
                 onResume={handleResumeGoal}

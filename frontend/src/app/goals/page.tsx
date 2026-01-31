@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Button } from '@/components/ui';
+import { Button, Card } from '@/components/ui';
 import GoalCard from '@/components/GoalCard';
 import CheckInModal from '@/components/CheckInModal';
 import ReminderBanner from '@/components/ReminderBanner';
@@ -18,7 +18,7 @@ import {
   deleteGoal
 } from '@/lib/api';
 import { GoalWithCheckInStatus, InterventionResponse } from '@/types';
-import { Plus, Target, Filter } from 'lucide-react';
+import { Plus, Target, Filter, Brain, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type FilterStatus = 'all' | 'active' | 'paused' | 'completed';
@@ -154,15 +154,18 @@ function GoalsContent() {
     .map(g => ({ id: g.id, title: g.title }));
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="page-container bg-mesh min-h-screen">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Your Goals</h1>
-          <p className="text-gray-500 mt-1">Manage and track all your goals</p>
+          <h1 className="text-2xl font-bold text-surface-900 flex items-center gap-2">
+            <CheckCircle2 className="w-7 h-7 text-brand-600" />
+            Your Goals
+          </h1>
+          <p className="text-surface-500 mt-1">Manage and track all your goals</p>
         </div>
         <Link href="/goals/new">
-          <Button className="mt-4 sm:mt-0">
+          <Button className="mt-4 sm:mt-0 bg-brand-600 hover:bg-brand-700 shadow-soft-sm">
             <Plus className="w-4 h-4 mr-2" />
             New Goal
           </Button>
@@ -180,20 +183,20 @@ function GoalsContent() {
 
       {/* Filters */}
       <div className="flex items-center space-x-2 mb-6 overflow-x-auto pb-2">
-        <Filter className="w-4 h-4 text-gray-400 flex-shrink-0" />
+        <Filter className="w-4 h-4 text-surface-400 flex-shrink-0" />
         {(['all', 'active', 'paused', 'completed'] as FilterStatus[]).map((status) => (
           <button
             key={status}
             onClick={() => setFilter(status)}
             className={cn(
-              'px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap',
+              'px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 whitespace-nowrap',
               filter === status
-                ? 'bg-primary-100 text-primary-700'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-brand-100 text-brand-700 shadow-soft-xs'
+                : 'bg-surface-100 text-surface-600 hover:bg-surface-200'
             )}
           >
             {status.charAt(0).toUpperCase() + status.slice(1)}
-            <span className="ml-1 text-xs">({filterCounts[status]})</span>
+            <span className="ml-1.5 text-xs opacity-70">({filterCounts[status]})</span>
           </button>
         ))}
       </div>
@@ -202,16 +205,18 @@ function GoalsContent() {
       {loading ? (
         <div className="grid md:grid-cols-2 gap-6">
           {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-64 bg-gray-200 rounded-xl animate-pulse" />
+            <div key={i} className="h-64 bg-surface-200 rounded-2xl animate-pulse" />
           ))}
         </div>
       ) : filteredGoals.length === 0 ? (
-        <div className="text-center py-16">
-          <Target className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+        <Card variant="bordered" className="text-center py-16 bg-surface-50/50">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface-100 mb-4">
+            <Target className="w-8 h-8 text-surface-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-surface-900 mb-2">
             {filter === 'all' ? 'No goals yet' : `No ${filter} goals`}
           </h3>
-          <p className="text-gray-500 mb-6">
+          <p className="text-surface-500 mb-6 max-w-sm mx-auto">
             {filter === 'all'
               ? 'Create your first goal to start your motivation experiment'
               : `You don't have any ${filter} goals at the moment`
@@ -219,13 +224,13 @@ function GoalsContent() {
           </p>
           {filter === 'all' && (
             <Link href="/goals/new">
-              <Button>
+              <Button className="bg-brand-600 hover:bg-brand-700">
                 <Plus className="w-4 h-4 mr-2" />
                 Create Your First Goal
               </Button>
             </Link>
           )}
-        </div>
+        </Card>
       ) : (
         <div className="grid md:grid-cols-2 gap-6">
           {filteredGoals.map(goal => (
@@ -246,11 +251,11 @@ function GoalsContent() {
 
       {/* Error message */}
       {checkInError && (
-        <div className="fixed top-4 right-4 z-50 bg-red-100 border border-red-300 text-red-800 px-4 py-3 rounded-lg shadow-lg flex items-center gap-3">
+        <div className="fixed top-4 right-4 z-50 bg-danger-50 border border-danger-200 text-danger-800 px-4 py-3 rounded-xl shadow-soft-lg flex items-center gap-3 animate-fade-in">
           <span>{checkInError}</span>
           <button
             onClick={() => setCheckInError(null)}
-            className="text-red-600 hover:text-red-800 font-bold"
+            className="text-danger-600 hover:text-danger-800 font-bold transition-colors"
           >
             ×
           </button>
@@ -259,12 +264,15 @@ function GoalsContent() {
 
       {/* Loading overlay when generating intervention */}
       {checkInGoalId && !currentIntervention && checkInLoading && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-8 text-center max-w-sm mx-4">
-            <div className="w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-gray-900 font-medium">Generating your check-in...</p>
-            <p className="text-gray-500 text-sm mt-1">Finding the best motivation for you</p>
-          </div>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <Card variant="elevated" className="p-8 text-center max-w-sm mx-4 shadow-soft-2xl">
+            <div className="relative w-16 h-16 mx-auto mb-4">
+              <div className="w-16 h-16 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin" />
+              <Brain className="w-6 h-6 text-brand-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+            </div>
+            <p className="text-surface-900 font-semibold">Generating your check-in...</p>
+            <p className="text-surface-500 text-sm mt-1">Finding the best motivation for you</p>
+          </Card>
         </div>
       )}
 

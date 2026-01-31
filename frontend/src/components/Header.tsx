@@ -48,16 +48,16 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <header className="bg-white/80 backdrop-blur-md border-b border-surface-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-purple-600 rounded-lg flex items-center justify-center">
+          <Link href="/" className="flex items-center space-x-2.5 group">
+            <div className="w-9 h-9 bg-gradient-to-br from-brand-500 via-brand-600 to-brand-700 rounded-xl flex items-center justify-center shadow-soft-sm group-hover:shadow-glow-brand transition-shadow duration-300">
               <FlaskConical className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900">
-              Resolution<span className="text-primary-600">Lab</span>
+            <span className="text-xl font-bold text-surface-900">
+              Resolution<span className="text-brand-600">Lab</span>
             </span>
           </Link>
 
@@ -73,13 +73,16 @@ export default function Header() {
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      'flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                      'flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200',
                       isActive
-                        ? 'bg-primary-50 text-primary-700'
-                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                        ? 'bg-brand-50 text-brand-700 shadow-soft-xs'
+                        : 'text-surface-600 hover:bg-surface-100 hover:text-surface-900'
                     )}
                   >
-                    <Icon className="w-4 h-4" />
+                    <Icon className={cn(
+                      'w-4 h-4',
+                      isActive && 'text-brand-600'
+                    )} />
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -90,53 +93,53 @@ export default function Header() {
           {/* Auth section */}
           <div className="hidden md:flex items-center space-x-3">
             {loading ? (
-              <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
+              <div className="w-8 h-8 rounded-full bg-surface-200 animate-pulse" />
             ) : user ? (
               <div className="relative" ref={userMenuRef}>
                 {/* User button */}
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex items-center space-x-2 px-3 py-2 rounded-xl hover:bg-surface-100 transition-colors duration-200"
                 >
                   {user.avatar_url ? (
                     <img
                       src={user.avatar_url}
                       alt={user.full_name || user.email}
-                      className="w-8 h-8 rounded-full border border-gray-200"
+                      className="w-8 h-8 rounded-full border-2 border-surface-200"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
-                      <User className="w-4 h-4 text-primary-600" />
+                    <div className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center">
+                      <User className="w-4 h-4 text-brand-600" />
                     </div>
                   )}
                   <ChevronDown className={cn(
-                    "w-4 h-4 text-gray-500 transition-transform",
+                    "w-4 h-4 text-surface-500 transition-transform duration-200",
                     userMenuOpen && "rotate-180"
                   )} />
                 </button>
 
                 {/* User dropdown menu */}
                 {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
+                  <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-soft-xl border border-surface-200 py-2 z-50 animate-fade-in">
                     {/* User info section */}
-                    <div className="px-4 py-3 border-b border-gray-100">
+                    <div className="px-4 py-3 border-b border-surface-100">
                       <div className="flex items-center space-x-3">
                         {user.avatar_url ? (
                           <img
                             src={user.avatar_url}
                             alt={user.full_name || user.email}
-                            className="w-12 h-12 rounded-full border border-gray-200"
+                            className="w-12 h-12 rounded-full border-2 border-surface-200"
                           />
                         ) : (
-                          <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
-                            <User className="w-6 h-6 text-primary-600" />
+                          <div className="w-12 h-12 rounded-full bg-brand-100 flex items-center justify-center">
+                            <User className="w-6 h-6 text-brand-600" />
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-900 truncate">
+                          <p className="font-semibold text-surface-900 truncate">
                             {user.full_name || 'User'}
                           </p>
-                          <div className="flex items-center space-x-1 text-sm text-gray-500">
+                          <div className="flex items-center space-x-1 text-sm text-surface-500">
                             <Mail className="w-3 h-3" />
                             <span className="truncate">{user.email}</span>
                           </div>
@@ -151,10 +154,10 @@ export default function Header() {
                           signOut();
                           setUserMenuOpen(false);
                         }}
-                        className="flex items-center space-x-3 w-full px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                        className="flex items-center space-x-3 w-full px-3 py-2.5 rounded-xl text-danger-600 hover:bg-danger-50 transition-colors duration-200"
                       >
                         <LogOut className="w-4 h-4" />
-                        <span>Sign Out</span>
+                        <span className="font-medium">Sign Out</span>
                       </button>
                     </div>
                   </div>
@@ -163,7 +166,7 @@ export default function Header() {
             ) : (
               <Button
                 onClick={signInWithGoogle}
-                className="bg-primary-600 hover:bg-primary-700 text-white"
+                className="bg-brand-600 hover:bg-brand-700 text-white shadow-soft-sm hover:shadow-soft-md transition-all duration-200"
               >
                 Sign In with Google
               </Button>
@@ -172,7 +175,7 @@ export default function Header() {
 
           {/* Mobile menu button */}
           <button
-            className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100"
+            className="md:hidden p-2 rounded-xl text-surface-600 hover:bg-surface-100 transition-colors duration-200"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? (
@@ -186,8 +189,8 @@ export default function Header() {
 
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-gray-200 bg-white">
-          <nav className="px-4 py-2 space-y-1">
+        <div className="md:hidden border-t border-surface-200 bg-white/95 backdrop-blur-md animate-fade-in-down">
+          <nav className="px-4 py-3 space-y-1">
             {/* Only show nav items if authenticated */}
             {user && navItems.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
@@ -199,13 +202,16 @@ export default function Header() {
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
-                    'flex items-center space-x-3 px-4 py-3 rounded-lg text-base font-medium transition-colors',
+                    'flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium transition-all duration-200',
                     isActive
-                      ? 'bg-primary-50 text-primary-700'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                      ? 'bg-brand-50 text-brand-700'
+                      : 'text-surface-600 hover:bg-surface-100 hover:text-surface-900'
                   )}
                 >
-                  <Icon className="w-5 h-5" />
+                  <Icon className={cn(
+                    'w-5 h-5',
+                    isActive && 'text-brand-600'
+                  )} />
                   <span>{item.label}</span>
                 </Link>
               );
@@ -214,7 +220,7 @@ export default function Header() {
             {/* Mobile Auth */}
             <div className={cn(
               "pt-3 mt-3",
-              user && "border-t border-gray-200"
+              user && "border-t border-surface-200"
             )}>
               {user ? (
                 <div className="px-4 py-2">
@@ -223,16 +229,16 @@ export default function Header() {
                       <img
                         src={user.avatar_url}
                         alt={user.full_name || user.email}
-                        className="w-12 h-12 rounded-full border border-gray-200"
+                        className="w-12 h-12 rounded-full border-2 border-surface-200"
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
-                        <User className="w-6 h-6 text-primary-600" />
+                      <div className="w-12 h-12 rounded-full bg-brand-100 flex items-center justify-center">
+                        <User className="w-6 h-6 text-brand-600" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900">{user.full_name || 'User'}</p>
-                      <p className="text-sm text-gray-500 truncate">{user.email}</p>
+                      <p className="font-semibold text-surface-900">{user.full_name || 'User'}</p>
+                      <p className="text-sm text-surface-500 truncate">{user.email}</p>
                     </div>
                   </div>
                   <button
@@ -240,10 +246,10 @@ export default function Header() {
                       signOut();
                       setMobileMenuOpen(false);
                     }}
-                    className="flex items-center space-x-3 w-full px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                    className="flex items-center space-x-3 w-full px-4 py-3 rounded-xl text-danger-600 hover:bg-danger-50 transition-colors duration-200"
                   >
                     <LogOut className="w-5 h-5" />
-                    <span>Sign Out</span>
+                    <span className="font-medium">Sign Out</span>
                   </button>
                 </div>
               ) : (
@@ -253,7 +259,7 @@ export default function Header() {
                       signInWithGoogle();
                       setMobileMenuOpen(false);
                     }}
-                    className="flex items-center justify-center space-x-2 w-full px-4 py-3 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-700 transition-colors"
+                    className="flex items-center justify-center space-x-2 w-full px-4 py-3 rounded-xl bg-brand-600 text-white font-medium hover:bg-brand-700 transition-colors duration-200 shadow-soft-sm"
                   >
                     <span>Sign In with Google</span>
                   </button>

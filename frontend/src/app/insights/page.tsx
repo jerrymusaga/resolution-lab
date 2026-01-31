@@ -176,35 +176,35 @@ function InsightsContent() {
   // Custom loading animation
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="page-container">
         <div className="min-h-[60vh] flex flex-col items-center justify-center">
           <div className="relative">
-            <div className="w-24 h-24 rounded-full border-4 border-primary-200 border-t-primary-600 animate-spin" />
-            <Brain className="w-10 h-10 text-primary-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+            <div className="w-24 h-24 rounded-full border-4 border-brand-200 border-t-brand-600 animate-spin" />
+            <Brain className="w-10 h-10 text-brand-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
           </div>
-          <p className="mt-6 text-lg text-gray-600 animate-pulse">Analyzing your motivation patterns...</p>
+          <p className="mt-6 text-lg text-surface-600 animate-pulse">Analyzing your motivation patterns...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="page-container bg-mesh min-h-screen">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Lightbulb className="w-7 h-7 text-yellow-500" />
+          <h1 className="text-2xl font-bold text-surface-900 flex items-center gap-2">
+            <Lightbulb className="w-7 h-7 text-warning-500" />
             Your Insights
           </h1>
-          <p className="text-gray-500 mt-1">
+          <p className="text-surface-500 mt-1">
             See which motivation strategies work best for you
           </p>
         </div>
         <Button
           variant="outline"
           onClick={() => loadInsights(userId)}
-          className="mt-4 sm:mt-0"
+          className="mt-4 sm:mt-0 border-brand-200 text-brand-700 hover:bg-brand-50"
         >
           <RefreshCw className="w-4 h-4 mr-2" />
           Refresh
@@ -212,34 +212,34 @@ function InsightsContent() {
       </div>
 
       {/* How It Works - Collapsible info banner */}
-      <Card variant="bordered" className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+      <Card variant="bordered" className="mb-6 bg-gradient-to-r from-brand-50 to-brand-100/50 border-brand-200">
         <CardContent className="py-4">
           <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-              <Info className="w-5 h-5 text-blue-600" />
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center">
+              <Info className="w-5 h-5 text-brand-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-gray-900 mb-2">How This Works</h3>
+              <h3 className="font-semibold text-surface-900 mb-2">How This Works</h3>
               <div className="grid sm:grid-cols-3 gap-4 text-sm">
                 <div className="flex items-start gap-2">
-                  <div className="w-6 h-6 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center text-xs font-bold flex-shrink-0">1</div>
+                  <div className="w-6 h-6 rounded-full bg-brand-200 text-brand-700 flex items-center justify-center text-xs font-bold flex-shrink-0">1</div>
                   <div>
-                    <p className="font-medium text-gray-800">We Experiment</p>
-                    <p className="text-gray-600">Each check-in tests a different motivation strategy</p>
+                    <p className="font-medium text-surface-800">We Experiment</p>
+                    <p className="text-surface-600">Each check-in tests a different motivation strategy</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
-                  <div className="w-6 h-6 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center text-xs font-bold flex-shrink-0">2</div>
+                  <div className="w-6 h-6 rounded-full bg-brand-200 text-brand-700 flex items-center justify-center text-xs font-bold flex-shrink-0">2</div>
                   <div>
-                    <p className="font-medium text-gray-800">We Learn</p>
-                    <p className="text-gray-600">Your responses reveal what motivates you most</p>
+                    <p className="font-medium text-surface-800">We Learn</p>
+                    <p className="text-surface-600">Your responses reveal what motivates you most</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
-                  <div className="w-6 h-6 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center text-xs font-bold flex-shrink-0">3</div>
+                  <div className="w-6 h-6 rounded-full bg-brand-200 text-brand-700 flex items-center justify-center text-xs font-bold flex-shrink-0">3</div>
                   <div>
-                    <p className="font-medium text-gray-800">You Apply</p>
-                    <p className="text-gray-600">Lock in your best strategy per goal from the Goals page</p>
+                    <p className="font-medium text-surface-800">You Apply</p>
+                    <p className="text-surface-600">Lock in your best strategy per goal from the Goals page</p>
                   </div>
                 </div>
               </div>
@@ -250,18 +250,18 @@ function InsightsContent() {
 
       {/* Error */}
       {error && (
-        <Card variant="bordered" className="mb-6 border-red-200 bg-red-50">
+        <Card variant="bordered" className="mb-6 border-danger-200 bg-danger-50">
           <CardContent className="flex items-center space-x-3">
-            <AlertCircle className="w-5 h-5 text-red-500" />
-            <p className="text-red-700">{error}</p>
+            <AlertCircle className="w-5 h-5 text-danger-500" />
+            <p className="text-danger-700">{error}</p>
           </CardContent>
         </Card>
       )}
 
       {/* Not enough data - Beautiful CTA */}
       {!hasEnoughData && (
-        <Card variant="bordered" className="mb-8 overflow-hidden">
-          <div className="relative bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white">
+        <Card variant="bordered" className="mb-8 overflow-hidden shadow-soft-xl">
+          <div className="relative bg-gradient-hero text-white">
             <div className="absolute inset-0 bg-black/10" />
             <div className="relative px-8 py-12 text-center">
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm mb-6">
@@ -290,7 +290,7 @@ function InsightsContent() {
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Link href="/goals">
-                  <Button className="bg-white text-purple-600 hover:bg-white/90">
+                  <Button className="bg-white text-brand-700 hover:bg-white/90 shadow-soft-md">
                     <Target className="w-4 h-4 mr-2" />
                     Do a Check-in
                   </Button>
@@ -309,9 +309,9 @@ function InsightsContent() {
       {/* THE BIG REVEAL - Your Motivation Formula */}
       {hasDiscovery && (
         <div ref={heroRef} className="mb-10">
-          <Card variant="bordered" className="overflow-hidden border-0 shadow-2xl">
+          <Card variant="bordered" className="overflow-hidden border-0 shadow-soft-2xl">
             {/* Gradient header */}
-            <div className="relative bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white px-6 py-8 sm:px-10 sm:py-12">
+            <div className="relative bg-gradient-to-r from-accent-500 via-accent-600 to-accent-700 text-white px-6 py-8 sm:px-10 sm:py-12">
               <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTRzMiAyIDIgNC0yIDQtMiA0LTItMi0yLTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30" />
 
               <div className={cn(
@@ -334,43 +334,43 @@ function InsightsContent() {
             </div>
 
             {/* Main content - The comparison */}
-            <CardContent className="p-6 sm:p-10 bg-gradient-to-b from-gray-50 to-white">
+            <CardContent className="p-6 sm:p-10 bg-gradient-to-b from-surface-50 to-white">
               {/* Best Strategy - THE HERO */}
               <div className={cn(
                 "transition-all duration-500 delay-200",
                 revealStep >= 1 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
               )}>
-                <div className="relative bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-6 sm:p-8 border-2 border-emerald-200 mb-6">
+                <div className="relative bg-gradient-to-br from-accent-50 to-accent-100/50 rounded-2xl p-6 sm:p-8 border-2 border-accent-200 mb-6">
                   {/* Trophy badge */}
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-yellow-400 to-amber-500 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-lg flex items-center gap-2">
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-warning-400 to-warning-500 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-soft-lg flex items-center gap-2">
                     <Award className="w-4 h-4" />
                     #1 BEST FOR YOU
                   </div>
 
                   <div className="text-center mt-4">
-                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 text-white mb-4 shadow-lg">
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-accent-400 to-accent-600 text-white mb-4 shadow-soft-lg">
                       {bestStrategy && STRATEGY_ICONS[bestStrategy.key]}
                     </div>
 
-                    <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                    <h3 className="text-2xl sm:text-3xl font-bold text-surface-900 mb-2">
                       {bestStrategy?.info?.name}
                     </h3>
-                    <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                    <p className="text-surface-600 mb-6 max-w-md mx-auto">
                       {bestStrategy?.info?.description}
                     </p>
 
                     {/* Big success number */}
-                    <div className="inline-block bg-white rounded-xl px-8 py-4 shadow-sm border border-emerald-100">
-                      <div className="text-5xl sm:text-6xl font-bold text-emerald-600">
+                    <div className="inline-block bg-white rounded-xl px-8 py-4 shadow-soft-sm border border-accent-100">
+                      <div className="text-5xl sm:text-6xl font-bold text-accent-600">
                         {formatPercent(bestStrategy?.stats?.completion_rate || 0)}
                       </div>
-                      <div className="text-sm text-gray-500 mt-1">Success Rate</div>
+                      <div className="text-sm text-surface-500 mt-1">Success Rate</div>
                     </div>
 
                     {/* Example message */}
-                    <div className="mt-6 bg-white/80 rounded-lg p-4 border border-emerald-100 max-w-md mx-auto">
-                      <p className="text-sm text-gray-500 mb-1">Example message:</p>
-                      <p className="text-gray-700 italic">"{bestStrategy?.info?.example}"</p>
+                    <div className="mt-6 bg-white/80 rounded-lg p-4 border border-accent-100 max-w-md mx-auto">
+                      <p className="text-sm text-surface-500 mb-1">Example message:</p>
+                      <p className="text-surface-700 italic">"{bestStrategy?.info?.example}"</p>
                     </div>
                   </div>
                 </div>
@@ -381,15 +381,15 @@ function InsightsContent() {
                 "flex items-center justify-center my-6 transition-all duration-500 delay-300",
                 revealStep >= 2 ? "opacity-100 scale-100" : "opacity-0 scale-50"
               )}>
-                <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-gray-300" />
+                <div className="flex-1 h-px bg-gradient-to-r from-transparent via-surface-300 to-surface-300" />
                 <div className="mx-4 flex items-center gap-3">
                   {improvementPercent > 0 && (
-                    <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-4 py-2 rounded-full font-bold text-lg shadow-md">
+                    <div className="bg-gradient-to-r from-accent-500 to-accent-600 text-white px-4 py-2 rounded-full font-bold text-lg shadow-soft-md">
                       +{improvementPercent}% better
                     </div>
                   )}
                 </div>
-                <div className="flex-1 h-px bg-gradient-to-l from-transparent via-gray-300 to-gray-300" />
+                <div className="flex-1 h-px bg-gradient-to-l from-transparent via-surface-300 to-surface-300" />
               </div>
 
               {/* Worst Strategy - Smaller, less prominent */}
@@ -397,27 +397,27 @@ function InsightsContent() {
                 "transition-all duration-500 delay-400",
                 revealStep >= 3 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
               )}>
-                <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                <div className="bg-surface-50 rounded-xl p-5 border border-surface-200">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 flex-shrink-0">
+                    <div className="w-14 h-14 rounded-full bg-surface-200 flex items-center justify-center text-surface-500 flex-shrink-0">
                       {worstStrategy && STRATEGY_ICONS[worstStrategy.key]}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Least Effective</span>
+                        <span className="text-xs font-medium text-surface-400 uppercase tracking-wider">Least Effective</span>
                       </div>
-                      <h4 className="text-lg font-semibold text-gray-700 truncate">
+                      <h4 className="text-lg font-semibold text-surface-700 truncate">
                         {worstStrategy?.info?.name}
                       </h4>
-                      <p className="text-sm text-gray-500 truncate">
+                      <p className="text-sm text-surface-500 truncate">
                         {worstStrategy?.info?.description}
                       </p>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <div className="text-2xl font-bold text-gray-400">
+                      <div className="text-2xl font-bold text-surface-400">
                         {formatPercent(worstStrategy?.stats?.completion_rate || 0)}
                       </div>
-                      <div className="text-xs text-gray-400">Success Rate</div>
+                      <div className="text-xs text-surface-400">Success Rate</div>
                     </div>
                   </div>
                 </div>
@@ -428,16 +428,16 @@ function InsightsContent() {
                 "mt-8 transition-all duration-500 delay-500",
                 revealStep >= 4 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
               )}>
-                <div className="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl p-6 border border-amber-200">
+                <div className="bg-gradient-to-r from-warning-50 to-warning-100/50 rounded-xl p-6 border border-warning-200">
                   <div className="flex gap-4">
                     <div className="flex-shrink-0">
-                      <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
-                        <Lightbulb className="w-6 h-6 text-amber-600" />
+                      <div className="w-12 h-12 rounded-full bg-warning-100 flex items-center justify-center">
+                        <Lightbulb className="w-6 h-6 text-warning-600" />
                       </div>
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-bold text-gray-900">What This Means For You</h4>
+                        <h4 className="font-bold text-surface-900">What This Means For You</h4>
                         {/* Evaluation Badge */}
                         {recommendationEval && (
                           <div className="flex items-center gap-2">

@@ -8,10 +8,6 @@ import {
   getUserInsights,
   getStrategyComparison,
   getRecommendation,
-  getFormulaStatus,
-  applyFormula,
-  clearFormula,
-  FormulaStatus
 } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -33,8 +29,10 @@ import {
   Rocket,
   Heart,
   Shield,
+  HelpCircle,
   CheckCircle2,
-  Loader2
+  ChevronRight,
+  Info,
 } from 'lucide-react';
 import {
   BarChart,
@@ -88,11 +86,6 @@ function InsightsContent() {
   const [revealStep, setRevealStep] = useState(0);
   const heroRef = useRef<HTMLDivElement>(null);
 
-  // Formula state
-  const [formulaStatus, setFormulaStatus] = useState<FormulaStatus | null>(null);
-  const [applyingFormula, setApplyingFormula] = useState(false);
-  const [formulaMessage, setFormulaMessage] = useState<string | null>(null);
-
   useEffect(() => {
     // Use authenticated user ID
     const id = user?.id || '';
@@ -124,72 +117,21 @@ function InsightsContent() {
       setShowReveal(false);
       setRevealStep(0);
 
-      const [insightsData, comparisonData, recData, formulaData] = await Promise.all([
+      const [insightsData, comparisonData, recData] = await Promise.all([
         getUserInsights(uid).catch(() => null),
         getStrategyComparison(uid).catch(() => null),
         getRecommendation(uid).catch(() => ({ recommendation: '', evaluation: null })),
-        getFormulaStatus(uid).catch(() => null),
       ]);
 
       setInsights(insightsData);
       setComparison(comparisonData);
       setRecommendation(recData?.recommendation || '');
       setRecommendationEval(recData?.evaluation || null);
-      setFormulaStatus(formulaData);
     } catch (err) {
       console.error('Failed to load insights:', err);
       setError('Failed to load insights. Make sure the backend is running.');
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Formula handlers
-  const handleApplyFormula = async () => {
-    if (!userId || !insights?.best_strategy) return;
-
-    setApplyingFormula(true);
-    setFormulaMessage(null);
-
-    try {
-      const result = await applyFormula(userId, insights.best_strategy);
-      if (result.success) {
-        setFormulaMessage(`Formula applied! Your AI coach will now prioritize ${STRATEGY_INFO[insights.best_strategy]?.name || insights.best_strategy}.`);
-        // Refresh formula status
-        const newStatus = await getFormulaStatus(userId);
-        setFormulaStatus(newStatus);
-      } else {
-        setFormulaMessage(result.reason || 'Failed to apply formula');
-      }
-    } catch (err) {
-      console.error('Failed to apply formula:', err);
-      setFormulaMessage('Failed to apply formula. Please try again.');
-    } finally {
-      setApplyingFormula(false);
-    }
-  };
-
-  const handleClearFormula = async () => {
-    if (!userId) return;
-
-    setApplyingFormula(true);
-    setFormulaMessage(null);
-
-    try {
-      const result = await clearFormula(userId);
-      if (result.success) {
-        setFormulaMessage('Formula cleared. Your AI coach will continue exploring strategies.');
-        // Refresh formula status
-        const newStatus = await getFormulaStatus(userId);
-        setFormulaStatus(newStatus);
-      } else {
-        setFormulaMessage('Failed to clear formula');
-      }
-    } catch (err) {
-      console.error('Failed to clear formula:', err);
-      setFormulaMessage('Failed to clear formula. Please try again.');
-    } finally {
-      setApplyingFormula(false);
     }
   };
 
@@ -507,126 +449,6 @@ function InsightsContent() {
                     </div>
                   </div>
                 </div>
-              </div>
-
-              {/* Apply My Formula Section */}
-              <div className={cn(
-                "mt-8 transition-all duration-500 delay-600",
-                revealStep >= 4 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-              )}>
-                {formulaStatus?.formula_applied ? (
-                  // Formula is active
-                  <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-6 border-2 border-emerald-200">
-                    <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0">
-                        <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
-                          <CheckCircle2 className="w-6 h-6 text-emerald-600" />
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-gray-900 mb-1">Formula Active!</h4>
-                        <p className="text-gray-600 mb-4">
-                          Your AI coach is using <span className="font-semibold text-emerald-600">{STRATEGY_INFO[formulaStatus.preferred_strategy as InterventionStrategy]?.name || formulaStatus.preferred_strategy}</span> as your preferred strategy.
-                        </p>
-                        <div className="flex flex-wrap items-center gap-3">
-                          <Link href="/agent">
-                            <Button className="bg-emerald-600 hover:bg-emerald-700">
-                              <Rocket className="w-4 h-4 mr-2" />
-                              Chat with AI Coach
-                            </Button>
-                          </Link>
-                          <Button
-                            variant="outline"
-                            onClick={handleClearFormula}
-                            disabled={applyingFormula}
-                            className="border-gray-300"
-                          >
-                            {applyingFormula ? (
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            ) : (
-                              <RefreshCw className="w-4 h-4 mr-2" />
-                            )}
-                            Reset & Keep Exploring
-                          </Button>
-                        </div>
-                        {formulaMessage && (
-                          <p className="mt-3 text-sm text-emerald-600">{formulaMessage}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ) : formulaStatus?.ready_to_apply ? (
-                  // Ready to apply formula
-                  <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-6 border-2 border-purple-200">
-                    <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0">
-                        <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
-                          <Rocket className="w-6 h-6 text-purple-600" />
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-gray-900 mb-1">Apply Your Formula</h4>
-                        <p className="text-gray-600 mb-4">
-                          Ready to put your discovery into action? Apply your formula and your AI coach will prioritize <span className="font-semibold text-purple-600">{bestStrategy?.info?.name}</span> when motivating you.
-                        </p>
-                        <div className="flex flex-wrap items-center gap-3">
-                          <Button
-                            onClick={handleApplyFormula}
-                            disabled={applyingFormula}
-                            className="bg-purple-600 hover:bg-purple-700"
-                          >
-                            {applyingFormula ? (
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            ) : (
-                              <Sparkles className="w-4 h-4 mr-2" />
-                            )}
-                            Apply My Formula
-                          </Button>
-                          <Link href="/agent">
-                            <Button variant="outline">
-                              Chat with AI Coach
-                              <ArrowRight className="w-4 h-4 ml-2" />
-                            </Button>
-                          </Link>
-                        </div>
-                        {formulaMessage && (
-                          <p className="mt-3 text-sm text-purple-600">{formulaMessage}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  // Not enough data yet
-                  <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                    <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0">
-                        <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
-                          <FlaskConical className="w-6 h-6 text-gray-500" />
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-gray-900 mb-1">Keep Experimenting</h4>
-                        <p className="text-gray-600 mb-4">
-                          You need more data before applying your formula. Continue using the app and we'll let you know when you have enough insights.
-                        </p>
-                        <div className="flex flex-wrap items-center gap-3">
-                          <Link href="/goals">
-                            <Button variant="outline">
-                              <Target className="w-4 h-4 mr-2" />
-                              Do a Check-in
-                            </Button>
-                          </Link>
-                          <Link href="/experiment">
-                            <Button variant="outline">
-                              Run Simulation
-                              <ArrowRight className="w-4 h-4 ml-2" />
-                            </Button>
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>

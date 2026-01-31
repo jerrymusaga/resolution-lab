@@ -229,6 +229,86 @@ def clear_formula(user_id: str) -> dict:
 
 
 # =====================
+# Per-Goal Formula Operations
+# =====================
+
+def apply_goal_formula(goal_id: str, strategy: str) -> Optional[dict]:
+    """Apply a formula to a specific goal."""
+    return update_goal(goal_id, {
+        "preferred_strategy": strategy,
+        "formula_applied": True
+    })
+
+
+def clear_goal_formula(goal_id: str) -> Optional[dict]:
+    """Clear a goal's formula and return to exploration."""
+    return update_goal(goal_id, {
+        "preferred_strategy": None,
+        "formula_applied": False
+    })
+
+
+def get_goal_formula_status(goal_id: str) -> dict:
+    """Get formula status for a specific goal."""
+    goal = get_goal_by_id(goal_id)
+    if not goal:
+        return {"error": "Goal not found"}
+
+    return {
+        "goal_id": goal_id,
+        "title": goal.get("title"),
+        "formula_applied": goal.get("formula_applied", False),
+        "preferred_strategy": goal.get("preferred_strategy")
+    }
+
+
+def get_goal_strategy_stats(user_id: str, goal_id: str) -> list:
+    """Get strategy stats for a specific goal based on its interventions."""
+    interventions = get_user_interventions(user_id, limit=500, goal_id=goal_id)
+
+    if not interventions:
+        return []
+
+    # Group by strategy
+    stats = {}
+    for i in interventions:
+        strategy = i.get("strategy")
+        if not strategy:
+            continue
+
+        if strategy not in stats:
+            stats[strategy] = {
+                "strategy": strategy,
+                "total_interventions": 0,
+                "completed": 0,
+                "effectiveness_sum": 0.0
+            }
+
+        stats[strategy]["total_interventions"] += 1
+        if i.get("outcome") == "completed":
+            stats[strategy]["completed"] += 1
+        if i.get("effectiveness_score"):
+            stats[strategy]["effectiveness_sum"] += i["effectiveness_score"]
+
+    # Calculate rates
+    result = []
+    for strategy, data in stats.items():
+        total = data["total_interventions"]
+        completed = data["completed"]
+        result.append({
+            "strategy": strategy,
+            "total_interventions": total,
+            "completed": completed,
+            "completion_rate": completed / total if total > 0 else 0.0,
+            "effectiveness_score": data["effectiveness_sum"] / total if total > 0 else 0.0
+        })
+
+    # Sort by completion rate
+    result.sort(key=lambda x: x["completion_rate"], reverse=True)
+    return result
+
+
+# =====================
 # Interventions Operations
 # =====================
 

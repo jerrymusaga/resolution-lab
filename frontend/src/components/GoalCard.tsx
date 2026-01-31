@@ -5,20 +5,24 @@ import Progress from '@/components/ui/Progress';
 import Button from '@/components/ui/Button';
 import { cn, formatDate } from '@/lib/utils';
 import { Goal } from '@/types';
-import { 
-  Target, 
-  Calendar, 
+import {
+  Target,
+  Calendar,
   Flame,
   CheckCircle2,
   Pause,
   Play,
   Trash2,
-  MoreVertical
+  MoreVertical,
+  Sparkles,
+  FlaskConical
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getGoalFormulaStatus, applyGoalFormula, clearGoalFormula, GoalFormulaStatus } from '@/lib/api';
 
 interface GoalCardProps {
   goal: Goal;
+  userId: string;
   onCheckIn?: (goalId: string) => void;
   onPause?: (goalId: string) => void;
   onResume?: (goalId: string) => void;
@@ -29,6 +33,7 @@ interface GoalCardProps {
 
 export default function GoalCard({
   goal,
+  userId,
   onCheckIn,
   onPause,
   onResume,
@@ -37,6 +42,50 @@ export default function GoalCard({
   checkedInToday = false,
 }: GoalCardProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const [formulaStatus, setFormulaStatus] = useState<GoalFormulaStatus | null>(null);
+  const [formulaLoading, setFormulaLoading] = useState(false);
+
+  // Fetch formula status for this goal
+  useEffect(() => {
+    if (userId && goal.id) {
+      getGoalFormulaStatus(userId, goal.id)
+        .then(setFormulaStatus)
+        .catch(err => console.warn('Failed to load formula status:', err));
+    }
+  }, [userId, goal.id]);
+
+  const handleApplyFormula = async () => {
+    if (!userId || formulaLoading) return;
+    setFormulaLoading(true);
+    try {
+      const result = await applyGoalFormula(userId, goal.id);
+      if (result.success) {
+        // Refresh formula status
+        const status = await getGoalFormulaStatus(userId, goal.id);
+        setFormulaStatus(status);
+      }
+    } catch (err) {
+      console.error('Failed to apply formula:', err);
+    } finally {
+      setFormulaLoading(false);
+    }
+  };
+
+  const handleClearFormula = async () => {
+    if (!userId || formulaLoading) return;
+    setFormulaLoading(true);
+    try {
+      const result = await clearGoalFormula(userId, goal.id);
+      if (result.success) {
+        const status = await getGoalFormulaStatus(userId, goal.id);
+        setFormulaStatus(status);
+      }
+    } catch (err) {
+      console.error('Failed to clear formula:', err);
+    } finally {
+      setFormulaLoading(false);
+    }
+  };
   
   const statusColors = {
     active: 'bg-green-100 text-green-700',
@@ -130,7 +179,59 @@ export default function GoalCard({
           <p className="text-xs text-gray-500">Success Rate</p>
         </div>
       </div>
-      
+
+      {/* Formula status */}
+      {formulaStatus && goal.status === 'active' && (
+        <div className={cn(
+          "mt-4 px-3 py-2 rounded-lg flex items-center justify-between",
+          formulaStatus.formula_applied
+            ? "bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200"
+            : formulaStatus.ready_to_apply
+            ? "bg-gray-50 border border-gray-200"
+            : "hidden"
+        )}>
+          {formulaStatus.formula_applied ? (
+            <>
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-purple-500" />
+                <div>
+                  <p className="text-sm font-medium text-purple-700">
+                    Formula: {formulaStatus.preferred_strategy?.replace(/_/g, ' ')}
+                  </p>
+                  <p className="text-xs text-purple-600">AI optimized for this goal</p>
+                </div>
+              </div>
+              <button
+                onClick={handleClearFormula}
+                disabled={formulaLoading}
+                className="text-xs text-purple-600 hover:text-purple-800 underline"
+              >
+                {formulaLoading ? '...' : 'Reset'}
+              </button>
+            </>
+          ) : formulaStatus.ready_to_apply ? (
+            <>
+              <div className="flex items-center gap-2">
+                <FlaskConical className="w-4 h-4 text-gray-500" />
+                <div>
+                  <p className="text-sm font-medium text-gray-700">
+                    Best: {formulaStatus.best_strategy?.replace(/_/g, ' ')}
+                  </p>
+                  <p className="text-xs text-gray-500">{formulaStatus.total_interventions} check-ins analyzed</p>
+                </div>
+              </div>
+              <button
+                onClick={handleApplyFormula}
+                disabled={formulaLoading}
+                className="px-2 py-1 text-xs bg-purple-500 hover:bg-purple-600 text-white rounded-md font-medium"
+              >
+                {formulaLoading ? '...' : 'Apply Formula'}
+              </button>
+            </>
+          ) : null}
+        </div>
+      )}
+
       {/* Progress bar */}
       <div className="mt-4">
         <Progress value={completionRate} max={1} showLabel label="Overall Progress" />

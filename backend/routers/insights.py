@@ -267,6 +267,102 @@ async def clear_formula(
     return experiment_engine.clear_user_formula(user_id)
 
 
+# ===================
+# Per-Goal Formula Endpoints
+# ===================
+
+@router.get("/goals/{goal_id}/formula/status", response_model=dict)
+async def get_goal_formula_status(
+    goal_id: str,
+    user_id: str = Query(..., description="User ID"),
+):
+    """
+    Get the formula status for a specific goal.
+
+    Returns:
+    - Whether formula is applied for this goal
+    - The preferred strategy for this goal
+    - Strategy stats specific to this goal
+    - Whether ready to apply formula
+    """
+    return experiment_engine.get_goal_formula_status(user_id, goal_id)
+
+
+@router.post("/goals/{goal_id}/formula/apply", response_model=dict)
+async def apply_goal_formula(
+    goal_id: str,
+    user_id: str = Query(..., description="User ID"),
+    strategy: Optional[str] = Query(None, description="Specific strategy (uses goal's best if not provided)"),
+):
+    """
+    Apply a formula to a specific goal.
+
+    Each goal can have its own preferred strategy based on what works best
+    for that particular goal type. For example:
+    - Exercise goals might work best with "streak_gamification"
+    - Reading goals might work best with "gentle_reminder"
+
+    Once applied:
+    - 90% of check-ins for this goal will use the preferred strategy
+    - 10% will still explore to continue learning
+    """
+    return experiment_engine.apply_goal_formula(user_id, goal_id, strategy)
+
+
+@router.post("/goals/{goal_id}/formula/clear", response_model=dict)
+async def clear_goal_formula(
+    goal_id: str,
+    user_id: str = Query(..., description="User ID"),
+):
+    """
+    Clear a goal's formula and return to experimentation.
+
+    The AI will resume testing different strategies for this goal
+    to potentially find a better formula.
+    """
+    return experiment_engine.clear_goal_formula(user_id, goal_id)
+
+
+@router.get("/goals/{goal_id}/insights", response_model=dict)
+async def get_goal_insights(
+    goal_id: str,
+    user_id: str = Query(..., description="User ID"),
+):
+    """
+    Get insights specific to a goal.
+
+    Returns strategy effectiveness data for this specific goal,
+    which may differ from user-wide insights.
+    """
+    from services.database import get_goal_by_id, get_goal_strategy_stats, get_user_interventions
+
+    goal = get_goal_by_id(goal_id)
+    if not goal:
+        return {"error": "Goal not found"}
+
+    if goal.get("user_id") != user_id:
+        return {"error": "Not authorized"}
+
+    # Get goal-specific stats
+    strategy_stats = get_goal_strategy_stats(user_id, goal_id)
+    interventions = get_user_interventions(user_id, limit=500, goal_id=goal_id)
+    completed_count = len([i for i in interventions if i.get("outcome") == "completed"])
+    total_with_outcome = len([i for i in interventions if i.get("outcome")])
+
+    return {
+        "goal_id": goal_id,
+        "title": goal.get("title"),
+        "total_interventions": total_with_outcome,
+        "completed": completed_count,
+        "completion_rate": completed_count / total_with_outcome if total_with_outcome > 0 else 0,
+        "formula_applied": goal.get("formula_applied", False),
+        "preferred_strategy": goal.get("preferred_strategy"),
+        "best_strategy": strategy_stats[0]["strategy"] if strategy_stats else None,
+        "strategy_stats": strategy_stats,
+        "ready_to_apply": len(strategy_stats) > 0 and not goal.get("formula_applied", False),
+    }
+
+
 @router.get("/recommendation", response_model=dict)
 async def get_recommendation(
     user_id: str = Query(..., description="User ID"),

@@ -279,9 +279,10 @@ class ExperimentEngine:
         Select the next strategy to use for a user.
 
         Uses epsilon-greedy multi-armed bandit algorithm:
-        1. If user has applied their formula: use preferred strategy (90% of time)
-        2. In exploration phase: cycle through untried strategies
-        3. After exploration: epsilon chance to explore, else exploit best
+        1. If goal has its own formula: use goal's preferred strategy (90% of time)
+        2. If user has applied their formula: use preferred strategy (90% of time)
+        3. In exploration phase: cycle through untried strategies
+        4. After exploration: epsilon chance to explore, else exploit best
 
         Args:
             user_id: The user's ID
@@ -298,7 +299,27 @@ class ExperimentEngine:
         if not available:
             available = ALL_STRATEGIES
 
-        # Priority 0: If user has applied their formula, use it most of the time
+        # Priority 0: Check if this specific GOAL has a formula applied
+        if goal_id and self._use_database:
+            goal = db.get_goal_by_id(goal_id)
+            if goal and goal.get("formula_applied") and goal.get("preferred_strategy"):
+                try:
+                    goal_preferred = InterventionStrategy(goal["preferred_strategy"])
+                    if goal_preferred in available:
+                        # 90% use goal's preferred, 10% still explore
+                        if random.random() < 0.9:
+                            self._log_selection(state, goal_preferred, "goal_formula_applied")
+                            return {
+                                "strategy": goal_preferred.value,
+                                "reason": "goal_formula_applied",
+                                "preferred_strategy": goal_preferred.value,
+                                "formula_active": True,
+                                "goal_specific": True
+                            }
+                except ValueError:
+                    pass  # Invalid strategy, continue to fallback
+
+        # Priority 1: If user has applied their formula (legacy/fallback), use it
         if state.formula_applied and state.preferred_strategy:
             if state.preferred_strategy in available:
                 # 90% use preferred, 10% still explore to gather data
@@ -308,7 +329,8 @@ class ExperimentEngine:
                         "strategy": state.preferred_strategy.value,
                         "reason": "formula_applied",
                         "preferred_strategy": state.preferred_strategy.value,
-                        "formula_active": True
+                        "formula_active": True,
+                        "goal_specific": False
                     }
 
         # Phase 1: Initial exploration - ensure each strategy is tried
@@ -614,6 +636,134 @@ class ExperimentEngine:
             "ready_to_apply": best is not None and not state.formula_applied,
             "total_interventions": state.total_interventions,
             "exploration_complete": not state.exploration_phase,
+        }
+
+    # ===================
+    # Per-Goal Formula Methods
+    # ===================
+
+    def apply_goal_formula(
+        self,
+        user_id: str,
+        goal_id: str,
+        strategy: Optional[str] = None
+    ) -> dict:
+        """
+        Apply a formula to a specific goal.
+
+        Args:
+            user_id: The user's ID
+            goal_id: The goal's ID
+            strategy: Optional specific strategy (uses goal's best if not provided)
+
+        Returns:
+            dict with result
+        """
+        if not self._use_database:
+            return {"success": False, "reason": "Database not available"}
+
+        goal = db.get_goal_by_id(goal_id)
+        if not goal:
+            return {"success": False, "reason": "Goal not found"}
+
+        if goal.get("user_id") != user_id:
+            return {"success": False, "reason": "Not authorized"}
+
+        # Get best strategy for this goal if not provided
+        if not strategy:
+            goal_stats = db.get_goal_strategy_stats(user_id, goal_id)
+            if goal_stats and len(goal_stats) > 0:
+                strategy = goal_stats[0]["strategy"]  # Best performing
+            else:
+                return {"success": False, "reason": "Not enough data to determine best strategy for this goal"}
+
+        # Validate strategy
+        try:
+            strategy_enum = InterventionStrategy(strategy)
+        except ValueError:
+            return {"success": False, "reason": f"Invalid strategy: {strategy}"}
+
+        # Apply to goal
+        result = db.apply_goal_formula(goal_id, strategy)
+        if result:
+            return {
+                "success": True,
+                "goal_id": goal_id,
+                "preferred_strategy": strategy,
+                "message": f"Formula applied! This goal will now use '{strategy}' strategy."
+            }
+        else:
+            return {"success": False, "reason": "Failed to save formula"}
+
+    def clear_goal_formula(self, user_id: str, goal_id: str) -> dict:
+        """
+        Clear a goal's formula and return to experimentation.
+
+        Args:
+            user_id: The user's ID
+            goal_id: The goal's ID
+
+        Returns:
+            dict with result
+        """
+        if not self._use_database:
+            return {"success": False, "reason": "Database not available"}
+
+        goal = db.get_goal_by_id(goal_id)
+        if not goal:
+            return {"success": False, "reason": "Goal not found"}
+
+        if goal.get("user_id") != user_id:
+            return {"success": False, "reason": "Not authorized"}
+
+        result = db.clear_goal_formula(goal_id)
+        if result:
+            return {
+                "success": True,
+                "goal_id": goal_id,
+                "message": "Formula cleared. AI will resume experimenting with strategies for this goal."
+            }
+        else:
+            return {"success": False, "reason": "Failed to clear formula"}
+
+    def get_goal_formula_status(self, user_id: str, goal_id: str) -> dict:
+        """
+        Get formula status for a specific goal.
+
+        Args:
+            user_id: The user's ID
+            goal_id: The goal's ID
+
+        Returns:
+            dict with goal formula status
+        """
+        if not self._use_database:
+            return {"error": "Database not available"}
+
+        goal = db.get_goal_by_id(goal_id)
+        if not goal:
+            return {"error": "Goal not found"}
+
+        if goal.get("user_id") != user_id:
+            return {"error": "Not authorized"}
+
+        # Get strategy stats for this goal
+        goal_stats = db.get_goal_strategy_stats(user_id, goal_id)
+        best_strategy = goal_stats[0]["strategy"] if goal_stats else None
+
+        # Count interventions for this goal
+        interventions = db.get_user_interventions(user_id, limit=500, goal_id=goal_id)
+        total_interventions = len([i for i in interventions if i.get("outcome")])
+
+        return {
+            "goal_id": goal_id,
+            "title": goal.get("title"),
+            "formula_applied": goal.get("formula_applied", False),
+            "preferred_strategy": goal.get("preferred_strategy"),
+            "best_strategy": best_strategy,
+            "ready_to_apply": best_strategy is not None and not goal.get("formula_applied", False),
+            "total_interventions": total_interventions,
+            "strategy_stats": goal_stats
         }
 
 

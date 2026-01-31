@@ -232,6 +232,7 @@ function GoalsContent() {
             <GoalCard
               key={goal.id}
               goal={goal}
+              userId={userId}
               onCheckIn={goal.can_check_in ? handleCheckIn : undefined}
               onPause={goal.status === 'active' ? handlePauseGoal : undefined}
               onResume={goal.status === 'paused' ? handleResumeGoal : undefined}

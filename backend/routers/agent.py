@@ -414,6 +414,54 @@ async def get_current_prompts():
     return {"prompts": prompts}
 
 
+@router.get("/optimization/auto-status")
+async def get_auto_optimization_status_endpoint():
+    """
+    Get current auto-optimization status.
+
+    Shows:
+    - How many interventions each strategy has accumulated
+    - Which strategies are ready for optimization
+    - Results from previous optimizations
+    - Threshold settings
+    """
+    try:
+        from services.auto_optimizer import get_auto_optimization_status, AUTO_OPTIMIZER_AVAILABLE
+        if not AUTO_OPTIMIZER_AVAILABLE:
+            return {
+                "auto_optimizer_available": False,
+                "message": "Auto-optimizer not available. Check opik-optimizer installation."
+            }
+        return get_auto_optimization_status()
+    except ImportError:
+        return {
+            "auto_optimizer_available": False,
+            "message": "Auto-optimizer module not found."
+        }
+    except Exception as e:
+        return {
+            "auto_optimizer_available": False,
+            "error": str(e)
+        }
+
+
+@router.post("/optimization/reset-counts")
+async def reset_optimization_counts():
+    """
+    Reset all optimization counts (for testing/debugging).
+
+    This clears the intervention counts but keeps the optimized prompts.
+    """
+    try:
+        from services.auto_optimizer import get_optimization_state
+        state = get_optimization_state()
+        state.intervention_counts = {}
+        state._save_state()
+        return {"success": True, "message": "Optimization counts reset"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 # ============================================
 # Opik Thread Evaluation Endpoints
 # ============================================

@@ -32,6 +32,20 @@ from services.celebration_image_generator import (
 )
 from routers.goals import get_goal_by_id, update_goal_stats
 
+# Import auto-optimizer for background prompt optimization
+AUTO_OPTIMIZER_AVAILABLE = False
+try:
+    from services.auto_optimizer import (
+        check_and_trigger_optimization,
+        get_auto_optimization_status,
+        AUTO_OPTIMIZER_AVAILABLE as _AUTO_OPT_AVAILABLE,
+    )
+    AUTO_OPTIMIZER_AVAILABLE = True
+except (ImportError, Exception) as e:
+    print(f"⚠️ Auto-optimizer not available: {e}")
+    check_and_trigger_optimization = None
+    get_auto_optimization_status = None
+
 # Import database service
 try:
     from services.database import (
@@ -334,6 +348,24 @@ async def record_check_in(
         except Exception as e:
             print(f"⚠️ Celebration image generation failed: {e}")
             # Don't fail the check-in if image generation fails
+
+    # Trigger auto-optimization if threshold reached (runs in background)
+    if AUTO_OPTIMIZER_AVAILABLE and check_and_trigger_optimization:
+        try:
+            async def get_interventions_for_optimization(uid: str):
+                """Fetch intervention history for optimization."""
+                if DB_ENABLED:
+                    return db_get_user_interventions(uid, limit=100)
+                return []
+
+            await check_and_trigger_optimization(
+                strategy=intervention_strategy.value,
+                user_id=user_id,
+                get_interventions_func=get_interventions_for_optimization,
+            )
+        except Exception as e:
+            print(f"⚠️ Auto-optimization check failed: {e}")
+            # Don't fail the check-in if optimization fails
 
     return outcome_record
 

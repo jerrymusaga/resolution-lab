@@ -107,6 +107,7 @@ export interface Outcome {
   celebration_image?: string;  // Base64 encoded image
   celebration_image_type?: 'celebration' | 'encouragement' | 'streak_milestone' | 'goal_complete';
   celebration_image_grade?: string;  // A, B, C, D, F
+  celebration_image_category?: string;  // Detected goal category (fitness, reading, etc.)
 }
 
 // ===================

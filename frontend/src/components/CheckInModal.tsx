@@ -274,18 +274,25 @@ export default function CheckInModal({
                 alt={outcome.completed ? "Celebration" : "Encouragement"}
                 className="w-full h-auto"
               />
-              {/* Image grade badge */}
-              {outcome.celebration_image_grade && (
-                <div className={cn(
-                  "absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-bold",
-                  outcome.celebration_image_grade === 'A' ? "bg-green-500 text-white" :
-                  outcome.celebration_image_grade === 'B' ? "bg-blue-500 text-white" :
-                  outcome.celebration_image_grade === 'C' ? "bg-yellow-500 text-white" :
-                  "bg-gray-500 text-white"
-                )}>
-                  AI Grade: {outcome.celebration_image_grade}
-                </div>
-              )}
+              {/* Image info badges */}
+              <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
+                {outcome.celebration_image_grade && (
+                  <div className={cn(
+                    "px-2 py-1 rounded-full text-xs font-bold",
+                    outcome.celebration_image_grade === 'A' ? "bg-green-500 text-white" :
+                    outcome.celebration_image_grade === 'B' ? "bg-blue-500 text-white" :
+                    outcome.celebration_image_grade === 'C' ? "bg-yellow-500 text-white" :
+                    "bg-gray-500 text-white"
+                  )}>
+                    AI Grade: {outcome.celebration_image_grade}
+                  </div>
+                )}
+                {outcome.celebration_image_category && (
+                  <div className="px-2 py-1 rounded-full text-xs font-medium bg-black/50 text-white backdrop-blur-sm">
+                    {outcome.celebration_image_category}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Download button */}

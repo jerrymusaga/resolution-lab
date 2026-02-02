@@ -60,9 +60,12 @@ function DashboardContent() {
     }
   }, [userId]);
 
-  const loadData = async (uid: string) => {
+  const loadData = async (uid: string, showLoadingSpinner = true) => {
     try {
-      setLoading(true);
+      // Only show loading spinner for initial load, not background refreshes
+      if (showLoadingSpinner) {
+        setLoading(true);
+      }
       setError(null);
 
       const [goalsData, summaryData] = await Promise.all([
@@ -81,7 +84,9 @@ function DashboardContent() {
       console.error('Failed to load data:', err);
       setError('Failed to connect to backend. Make sure the server is running on localhost:8000');
     } finally {
-      setLoading(false);
+      if (showLoadingSpinner) {
+        setLoading(false);
+      }
     }
   };
 
@@ -113,13 +118,23 @@ function DashboardContent() {
         user_feedback: feedback,
       });
 
-      // Don't close modal immediately - let the celebration view show
-      // Modal will close when user clicks the action button
-      await loadData(userId);
+      // Refresh data in background without showing loading spinner
+      // This prevents the modal from being unmounted during the refresh
+      loadData(userId, false);
+
       return outcome;
     } catch (err) {
       console.error('Failed to record check-in:', err);
-      return null;
+      // Return a minimal outcome so the modal can still show feedback
+      // even if image generation failed
+      return {
+        id: crypto.randomUUID(),
+        intervention_id: currentIntervention.intervention_id,
+        user_id: userId,
+        goal_id: checkInGoalId || '',
+        completed,
+        recorded_at: new Date().toISOString(),
+      } as Outcome;
     } finally {
       setCheckInLoading(false);
     }

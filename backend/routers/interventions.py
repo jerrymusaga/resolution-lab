@@ -308,7 +308,7 @@ async def record_check_in(
     if CELEBRATION_IMAGE_AVAILABLE and intervention_goal_id:
         try:
             # Get goal title for image generation
-            goal = get_goal_by_id(intervention_goal_id, user_id)
+            goal = get_goal_by_id(intervention_goal_id)
             goal_title = goal.title if goal else "your goal"
 
             # Get current streak for the goal

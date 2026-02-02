@@ -410,7 +410,7 @@ class CelebrationImageGenerator:
     def __init__(self, api_key: Optional[str] = None):
         """Initialize the generator with Google API key."""
         self.api_key = api_key or os.getenv("GOOGLE_API_KEY")
-        self.model = "gemini-2.5-flash-preview-image-generation"  # Nano Banana model
+        self.model = "gemini-2.5-flash-image"  # Nano Banana - Gemini's native image generation model
         self.client = None
 
         if GENAI_AVAILABLE and self.api_key:

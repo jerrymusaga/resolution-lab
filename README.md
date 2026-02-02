@@ -166,6 +166,105 @@ GOAL: "Exercise 30 min"          GOAL: "Read 20 pages"
 - **90/10 split when applied**: 90% uses preferred strategy, 10% still explores
 - **Easy reset**: Clear formula to return to experimentation mode
 
+### 🎨 Nano Banana Celebration Images
+**AI-generated personalized celebration images** when users complete check-ins, powered by Google's Gemini `gemini-2.5-flash-image` (Nano Banana).
+
+```
+USER CHECKS IN "Exercise 30 min" ✓
+         │
+         ▼
+┌─────────────────────────────────────────┐
+│     GOAL CATEGORY DETECTION             │
+│     "Exercise" → FITNESS category       │
+│     Confidence: 0.95                    │
+└─────────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────────────────────────┐
+│     PERSONALIZED VISUAL ELEMENTS        │
+│     • Imagery: dumbbells, finish line   │
+│     • Colors: energetic orange, blue    │
+│     • Style: watercolor painting        │
+│     • Background: mountain landscape    │
+└─────────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────────────────────────────┐
+│     NANO BANANA GENERATES IMAGE         │
+│     Unique celebration image with       │
+│     fitness-themed visuals!             │
+└─────────────────────────────────────────┘
+```
+
+**12 Goal Categories** with unique visual styles:
+| Category | Visual Theme | Colors |
+|----------|--------------|--------|
+| 🏃 Fitness | Running figures, dumbbells, mountains | Orange, red, blue |
+| 📚 Reading | Books, cozy nooks, floating letters | Amber, burgundy, green |
+| 🧠 Learning | Lightbulbs, graduation caps, puzzles | Yellow, royal blue |
+| 🧘 Meditation | Lotus flowers, zen stones, mandalas | Lavender, serene blue |
+| 🥗 Nutrition | Fresh vegetables, fruit bowls | Fresh green, orange |
+| 🎨 Creativity | Paint splashes, musical notes | Rainbow, magenta |
+| 📋 Productivity | Checkmarks, rising graphs, rockets | Navy, success green |
+| 👥 Social | Connected hearts, handshakes | Coral, friendly orange |
+| 💰 Finance | Piggy banks, money trees, coins | Gold, money green |
+| 😴 Sleep | Crescent moon, peaceful clouds | Midnight blue, lavender |
+| 🎮 Hobby | Game controllers, garden plants | Teal, playful yellow |
+| ⭐ General | Trophies, confetti, fireworks | Gold, royal purple |
+
+**Streak Milestone Images**: Epic celebrations at 3, 7, 14, 30, 50, and 100-day streaks!
+
+### 🤖 Auto Prompt Optimization (Opik Agent Optimizer)
+**Automatic prompt improvement** using Opik's optimization algorithms. The system learns from user interactions and automatically improves motivation message prompts.
+
+```
+HOW IT WORKS
+─────────────────────────────────────────────────────────────────────────
+
+                    USER CHECK-INS
+                         │
+                         ▼
+┌─────────────────────────────────────────┐
+│         INTERVENTION COUNTER            │
+│   Strategy: "gentle_reminder"           │
+│   Count: 14/15 → 15/15 ✓ THRESHOLD!     │
+└─────────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────┐
+│    BACKGROUND OPTIMIZATION TRIGGERED    │
+│    (Non-blocking, runs in thread)       │
+│                                         │
+│    Algorithm: MetaPromptOptimizer       │
+│    • LLM critiques current prompt       │
+│    • Iteratively refines for better     │
+│      completion rates                   │
+└─────────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────┐
+│         RESULTS LOGGED TO OPIK          │
+│    • Original score: 0.65               │
+│    • Optimized score: 0.78              │
+│    • Improvement: +20%                  │
+│    • New prompt saved & used            │
+└─────────────────────────────────────────┘
+```
+
+**Three Optimization Algorithms:**
+| Algorithm | Description | Best For |
+|-----------|-------------|----------|
+| MetaPromptOptimizer | LLM critiques and iteratively refines prompts | General prompt improvement |
+| FewShotBayesianOptimizer | Finds optimal examples to include in prompts | Example selection |
+| EvolutionaryOptimizer | Genetic algorithm (mutation/crossover) evolution | Novel prompt discovery |
+
+**Configuration:**
+- **Threshold**: Triggers after 15 new interventions per strategy
+- **Storage**: Persistent state in `backend/data/optimization_state.json`
+- **API Endpoints**:
+  - `GET /api/agent/optimization/auto-status` - View optimization status
+  - `POST /api/agent/optimization/reset-counts` - Reset for testing
+
 ---
 
 ## 🔍 Opik Integration (Deep)
@@ -254,18 +353,31 @@ CUSTOM OPIK EVALUATORS
 ├── PersonalizationEvaluator ───── Feels tailored, not generic
 ├── ToneConsistencyEvaluator ───── Tone matches strategy style
 ├── InsightQualityEvaluator ────── Insight is actionable & data-grounded
-└── ComprehensiveMessageEvaluator ─ Combines all with A-F grades
+├── ComprehensiveMessageEvaluator ─ Combines all with A-F grades
+└── CelebrationImageEvaluator ──── Image quality assessment
 
 FEEDBACK SCORES
 ├── reminder_engagement ────── In-app reminder interaction score
 ├── reminder_response_time ─── Time to action (seconds)
 ├── reminder_urgency ───────── Urgency level (1-5)
-└── thread evaluation scores ─ Coherence, frustration metrics
+├── thread evaluation scores ─ Coherence, frustration metrics
+└── optimization_improvement ─ Prompt improvement percentage
 
 LLM-AS-JUDGE
 ├── analyze_user_sentiment
 ├── judge_goal_completion
 └── agent_evaluate (hybrid: custom evaluators + LLM judge)
+
+AUTO OPTIMIZATION (Opik Agent Optimizer)
+├── auto_optimize_strategy ──── Background optimization run
+├── optimize_strategy_prompt ─── MetaPrompt optimization
+├── optimize_with_few_shot ───── Bayesian few-shot selection
+└── evolve_prompts ───────────── Evolutionary optimization
+
+NANO BANANA IMAGE GENERATION
+├── generate_checkin_image ───── Main image generation
+├── evaluate_celebration_image ─ Image quality evaluation
+└── Goal category detection ──── Fitness, reading, etc.
 
 ENGAGEMENT ANALYTICS
 ├── api_voice_play ─────────── Track voice playback events
@@ -342,6 +454,8 @@ See `USER_STORIES.md` for complete scenarios.
 | ✅ Custom Evaluators | 6 evaluators assess ALL AI outputs with grades (A-F) |
 | ✅ Feedback Scores | reminder_engagement, coherence, frustration metrics |
 | ✅ Hybrid Evaluation | Custom evaluators (40%) + LLM-as-Judge (60%) |
+| ⭐ **Auto Optimization** | **Opik Agent Optimizer auto-improves prompts after 15 interventions** |
+| ⭐ **Nano Banana Images** | **Personalized celebration images via Gemini 2.5 Flash Image** |
 | ✅ Novel Use Case | Expose experiment data TO users via per-goal formulas |
 | ✅ Production Ready | Full-stack, polished UI with evaluator visualizations |
 | ✅ Engagement Features | Voice TTS, streak calendar, micro-commitments, in-app reminders |
@@ -359,8 +473,12 @@ backend/services/evaluators.py         # 🎯 Custom Opik Evaluators
 backend/services/experiment_engine.py  # Multi-armed bandit + per-goal formula
 backend/services/intervention_generator.py  # Message generation + evaluation
 backend/services/analysis_engine.py    # Insight generation + evaluation
-backend/routers/interventions.py       # API endpoints (triggers thread eval at 5 check-ins)
+backend/services/celebration_image_generator.py  # 🎨 Nano Banana celebration images
+backend/services/auto_optimizer.py     # 🤖 Auto prompt optimization with Opik
+backend/services/prompt_optimizer.py   # Opik Agent Optimizer integration
+backend/routers/interventions.py       # API endpoints (triggers thread eval + auto-optimization)
 backend/routers/insights.py            # Per-goal formula endpoints
+backend/routers/agent.py               # Agent + optimization endpoints
 
 frontend/src/app/agent/page.tsx        # Agent visualization with voice + micro-commitment
 frontend/src/app/experiment/page.tsx   # Experiment page with grade distribution
@@ -368,6 +486,7 @@ frontend/src/app/insights/page.tsx     # User insights with insight quality grad
 frontend/src/app/dashboard/page.tsx    # Dashboard with streak calendar
 frontend/src/components/StreakCalendar.tsx  # 📅 Visual check-in calendar
 frontend/src/components/GoalCard.tsx   # 🔥 Goal cards with per-goal formula UI
+frontend/src/components/CheckInModal.tsx    # ✨ Check-in with celebration images
 frontend/src/components/ReminderBanner.tsx  # 🔔 In-app reminder notification
 frontend/src/hooks/useTextToSpeech.ts  # 🔊 Text-to-speech hook
 ```

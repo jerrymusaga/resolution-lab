@@ -326,7 +326,8 @@ async def record_check_in(
                 outcome_record.celebration_image = image_result.image_base64
                 outcome_record.celebration_image_type = image_result.image_type.value
                 outcome_record.celebration_image_grade = image_result.evaluation_grade
-                print(f"✅ Generated {image_result.image_type.value} image (grade: {image_result.evaluation_grade})")
+                outcome_record.celebration_image_category = image_result.goal_category
+                print(f"✅ Generated {image_result.image_type.value} image for '{image_result.goal_category}' goal (grade: {image_result.evaluation_grade})")
             else:
                 print(f"⚠️ Image generation failed: {image_result.error_message}")
 

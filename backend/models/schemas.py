@@ -212,6 +212,10 @@ class Outcome(BaseModel):
         None,
         description="Opik evaluation grade: A, B, C, D, F"
     )
+    celebration_image_category: Optional[str] = Field(
+        None,
+        description="Detected goal category used for personalized imagery (fitness, reading, learning, etc.)"
+    )
 
     class Config:
         from_attributes = True

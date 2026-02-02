@@ -627,21 +627,36 @@ Respond ONLY with a JSON object in this exact format:
             pass
 
         try:
-            # Generate image using Nano Banana
+            # Add unique identifier to prompt to prevent caching
+            import time
+            unique_id = f"[Generation ID: {int(time.time() * 1000)}]"
+            full_prompt = f"{prompt}\n\n{unique_id}"
+
+            # Log the full prompt for debugging
+            print(f"🎨 Full image prompt:\n{full_prompt[:500]}...")
+
+            # Generate image using Nano Banana with high temperature for variety
             response = self.client.models.generate_content(
                 model=self.model,
-                contents=[prompt],
+                contents=[full_prompt],
                 config=types.GenerateContentConfig(
                     response_modalities=["IMAGE", "TEXT"],
+                    temperature=1.0,  # Higher temperature for more variety
                 ),
             )
 
             # Extract image from response
             image_base64 = None
-            for part in response.candidates[0].content.parts:
-                if hasattr(part, 'inline_data') and part.inline_data:
-                    image_base64 = part.inline_data.data
-                    break
+            print(f"🔍 Response candidates: {len(response.candidates) if response.candidates else 0}")
+
+            if response.candidates and len(response.candidates) > 0:
+                print(f"🔍 Response parts: {len(response.candidates[0].content.parts) if response.candidates[0].content.parts else 0}")
+                for i, part in enumerate(response.candidates[0].content.parts):
+                    print(f"🔍 Part {i}: has inline_data={hasattr(part, 'inline_data')}")
+                    if hasattr(part, 'inline_data') and part.inline_data:
+                        image_base64 = part.inline_data.data
+                        print(f"✅ Found image data (length: {len(image_base64) if image_base64 else 0})")
+                        break
 
             if not image_base64:
                 return CelebrationImageResult(

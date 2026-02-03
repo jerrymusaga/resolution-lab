@@ -111,6 +111,7 @@ export default function AgentPage() {
     setCompletion: setStreamingMessage,
   } = useCompletion({
     api: '/api/chat',
+    streamProtocol: 'text',
   });
 
   // Load voice auto-play preference on mount

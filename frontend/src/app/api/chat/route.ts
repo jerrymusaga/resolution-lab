@@ -293,7 +293,7 @@ Generate the intervention message now:`;
       // Use Vercel AI SDK for streaming
       console.log(`Starting streaming with Gemini (strategy: ${effectiveStrategy}, formula: ${formulaActive})...`);
       const result = streamText({
-        model: google('gemini-1.5-flash'),
+        model: google('gemini-3-flash-preview'),
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
@@ -319,7 +319,7 @@ Generate the intervention message now:`;
     } else {
       // Non-streaming mode
       const result = await generateText({
-        model: google('gemini-1.5-flash'),
+        model: google('gemini-3-flash-preview'),
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },

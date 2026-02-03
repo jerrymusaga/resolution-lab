@@ -27,6 +27,14 @@ from models.schemas import InterventionStrategy, STRATEGY_DESCRIPTIONS
 from services.experiment_engine import experiment_engine
 from services.evaluators import comprehensive_evaluator
 
+# Import user context builder for personalization
+try:
+    from services.user_context_builder import build_user_context, UserContext
+    USER_CONTEXT_AVAILABLE = True
+except ImportError:
+    USER_CONTEXT_AVAILABLE = False
+    UserContext = None
+
 
 class AgentThought(BaseModel):
     """Structured thought from the agent's reasoning"""
@@ -123,8 +131,8 @@ class AICoachAgent:
         # Step 3: PLAN - Decide on strategy (pass user_id and goal_id for formula lookup)
         plan = await self._plan(user_id, thought, goal_title, goal_description, insights, goal_id)
         
-        # Step 4: ACT - Generate the intervention
-        action = await self._act(plan, goal_title, goal_description, thought)
+        # Step 4: ACT - Generate the intervention (with rich user context)
+        action = await self._act(plan, goal_title, goal_description, thought, user_id, goal_id)
         
         # Step 5: EVALUATE - Self-assess the output
         evaluation = await self._evaluate(action, plan, goal_title)
@@ -384,20 +392,51 @@ Create a plan. Respond in JSON:
         plan: AgentPlan,
         goal_title: str,
         goal_description: str,
-        thought: AgentThought
+        thought: AgentThought,
+        user_id: Optional[str] = None,
+        goal_id: Optional[str] = None
     ) -> AgentAction:
         """
         ACT: Generate the intervention message.
-        
-        Creates a personalized message based on the plan.
+
+        Creates a DEEPLY PERSONALIZED message based on:
+        - The plan and strategy
+        - Rich user context from their history
+        - Momentum and emotional state
         """
-        
+
         strategy_desc = STRATEGY_DESCRIPTIONS.get(
             plan.chosen_strategy,
             "A helpful motivation message"
         )
-        
-        prompt = f"""Generate a motivation message for someone working on their goal.
+
+        # Build rich user context for deep personalization
+        personalization_context = ""
+        user_context = None
+        if USER_CONTEXT_AVAILABLE and user_id:
+            try:
+                user_context = build_user_context(
+                    user_id=user_id,
+                    goal_title=goal_title,
+                    goal_id=goal_id,
+                    goal_description=goal_description,
+                    user_name=None,
+                    time_of_day=self._get_time_of_day(),
+                )
+                personalization_context = user_context.to_prompt_context()
+                print(f"Agent built rich context: momentum={user_context.momentum}, state={user_context.emotional_state}")
+            except Exception as e:
+                print(f"Failed to build user context in agent: {e}")
+
+        # Build the personalization section
+        personalization_section = ""
+        if personalization_context:
+            personalization_section = f"""
+DEEP PERSONALIZATION CONTEXT (use this to make the message feel UNIQUE to this user):
+{personalization_context}
+"""
+
+        prompt = f"""Generate a DEEPLY PERSONALIZED motivation message for someone working on their goal.
 
 GOAL: {goal_title}
 {f"DESCRIPTION: {goal_description}" if goal_description else ""}
@@ -408,13 +447,15 @@ STRATEGY DESCRIPTION: {strategy_desc}
 PERSONALIZATION NOTES: {plan.personalization_notes}
 
 USER INSIGHT: {thought.hypothesis}
-
+{personalization_section}
 Guidelines:
 - Keep it to 2-3 sentences max
 - Be warm and encouraging
 - Match the strategy's approach
-- Make it feel personal, not generic
+- Make it feel PERSONAL - reference their specific situation, momentum, or patterns
+- If they're struggling, be extra supportive. If they're crushing it, celebrate with them.
 - Don't be preachy or condescending
+- Sound like a friend who knows their journey
 
 Respond in JSON:
 {{

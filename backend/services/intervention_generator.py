@@ -2,7 +2,10 @@
 Resolution Lab - Intervention Generator Service
 Generates personalized motivation messages using LLM with Opik tracing.
 
-Now includes custom Opik evaluators for comprehensive message quality assessment.
+Now includes:
+- Custom Opik evaluators for comprehensive message quality assessment
+- Rich user context for deeply personalized messages
+- Momentum-aware messaging based on user history
 """
 
 import opik
@@ -17,6 +20,14 @@ sys.path.append('..')
 from config import get_settings
 from models.schemas import InterventionStrategy
 from services.evaluators import sync_message_evaluator
+
+# Import user context builder for personalization
+try:
+    from services.user_context_builder import build_user_context, UserContext
+    USER_CONTEXT_AVAILABLE = True
+except ImportError:
+    USER_CONTEXT_AVAILABLE = False
+    UserContext = None
 
 settings = get_settings()
 
@@ -83,16 +94,37 @@ Maximum 2 sentences.
 
 
 SYSTEM_PROMPT = """You are Resolution Lab, an AI coach helping users achieve their goals.
-Your task is to generate a short, personalized motivation message.
+Your task is to generate a short, DEEPLY PERSONALIZED motivation message.
 
 Rules:
 1. Be concise - maximum 2 sentences
-2. Be personal - use "you" language
+2. Be personal - use "you" language and reference their specific situation
 3. Match the strategy style exactly
 4. Reference the specific goal naturally
 5. Current time awareness - if morning, afternoon, or evening, acknowledge it subtly
 6. Never be preachy or lecture the user
 7. Sound human, not robotic
+8. ADAPT to their momentum - if they're struggling, be gentler; if they're on fire, match their energy
+9. Make it feel like you KNOW them - reference patterns, streaks, or recent behavior when provided
+10. Never use generic phrases like "keep it up" without context
+
+Output ONLY the message text, nothing else."""
+
+
+PERSONALIZED_SYSTEM_PROMPT = """You are Resolution Lab, an AI coach with DEEP KNOWLEDGE of this specific user.
+Your task is to generate a short, DEEPLY PERSONALIZED motivation message that feels like it was written just for them.
+
+PERSONALIZATION CONTEXT:
+{personalization_context}
+
+Rules:
+1. Be concise - maximum 2 sentences
+2. Use the personalization context above to make this message feel unique to this user
+3. Match the strategy style exactly
+4. Reference their specific situation, not generic motivation
+5. If they're struggling, be extra supportive. If they're on fire, celebrate with them.
+6. Never be preachy or lecture the user
+7. Sound like a friend who knows their journey, not a robot
 
 Output ONLY the message text, nothing else."""
 
@@ -106,13 +138,17 @@ def generate_intervention_message(
     user_name: Optional[str] = None,
     time_of_day: Optional[str] = None,
     include_evaluation: bool = True,
+    user_id: Optional[str] = None,
+    goal_id: Optional[str] = None,
 ) -> dict:
     """
     Generate a personalized intervention message using LLM.
 
     This function is tracked by Opik for observability.
     All LLM calls are automatically traced via litellm callback.
-    Now includes custom Opik evaluators for quality assessment.
+    Now includes:
+    - Custom Opik evaluators for quality assessment
+    - Rich user context for deep personalization
 
     Args:
         goal_title: The user's goal title
@@ -122,10 +158,31 @@ def generate_intervention_message(
         user_name: Optional user's name for personalization
         time_of_day: Optional time context (morning/afternoon/evening)
         include_evaluation: Whether to run quality evaluation (default True)
+        user_id: Optional user ID for building rich context from history
+        goal_id: Optional goal ID for goal-specific context
 
     Returns:
         dict with message, evaluation scores, and metadata
     """
+    # Build rich user context if available
+    user_context = None
+    personalization_context = ""
+    if USER_CONTEXT_AVAILABLE and user_id:
+        try:
+            user_context = build_user_context(
+                user_id=user_id,
+                goal_title=goal_title,
+                goal_id=goal_id,
+                goal_description=goal_description,
+                current_streak=current_streak,
+                user_name=user_name,
+                time_of_day=time_of_day,
+            )
+            personalization_context = user_context.to_prompt_context()
+            print(f"Built rich context: momentum={user_context.momentum}, emotional_state={user_context.emotional_state}")
+        except Exception as e:
+            print(f"Failed to build user context: {e}")
+
     # Build the strategy-specific prompt
     strategy_instruction = STRATEGY_PROMPTS.get(
         strategy,
@@ -143,6 +200,21 @@ def generate_intervention_message(
     if time_of_day:
         context_parts.append(f"Time of day: {time_of_day}")
 
+    # Add rich context if available
+    if user_context:
+        if user_context.momentum != "neutral":
+            context_parts.append(f"Momentum: {user_context.momentum}")
+        if user_context.consecutive_misses > 0:
+            context_parts.append(f"Consecutive misses: {user_context.consecutive_misses}")
+        if user_context.recent_completions > 0:
+            context_parts.append(f"Completions in last 7 days: {user_context.recent_completions}")
+        if user_context.overall_completion_rate > 0:
+            context_parts.append(f"Overall completion rate: {user_context.overall_completion_rate:.0%}")
+        if user_context.best_strategy and user_context.best_strategy != strategy.value:
+            context_parts.append(f"Note: User usually responds best to '{user_context.best_strategy}' messages")
+        if user_context.goal_age_days > 0:
+            context_parts.append(f"Days working on this goal: {user_context.goal_age_days}")
+
     context = "\n".join(context_parts)
 
     user_prompt = f"""Strategy to use:
@@ -153,12 +225,20 @@ Context:
 
 Generate the intervention message now:"""
 
+    # Choose system prompt based on whether we have rich context
+    if personalization_context:
+        system_prompt = PERSONALIZED_SYSTEM_PROMPT.format(
+            personalization_context=personalization_context
+        )
+    else:
+        system_prompt = SYSTEM_PROMPT
+
     try:
         # LLM call - automatically traced by Opik via litellm callback
         response = litellm.completion(
             model=settings.llm_model,
             messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
             max_tokens=150,
@@ -180,17 +260,28 @@ Generate the intervention message now:"""
 
         # Log to Opik trace (metadata + feedback scores)
         try:
+            # Build metadata with user context info
+            trace_metadata = {
+                "strategy": strategy.value,
+                "goal_title": goal_title,
+                "current_streak": current_streak,
+                "message_length": len(message),
+                "evaluation_grade": evaluation["grade"] if evaluation else None,
+                "evaluation_score": evaluation["overall_score"] if evaluation else None,
+                "has_rich_context": bool(personalization_context),
+            }
+            # Add user context insights if available
+            if user_context:
+                trace_metadata.update({
+                    "user_momentum": user_context.momentum,
+                    "user_emotional_state": user_context.emotional_state,
+                    "user_completion_rate": round(user_context.overall_completion_rate, 2),
+                    "user_best_strategy": user_context.best_strategy,
+                    "user_consecutive_misses": user_context.consecutive_misses,
+                })
+
             # Update trace metadata
-            opik_context.update_current_trace(
-                metadata={
-                    "strategy": strategy.value,
-                    "goal_title": goal_title,
-                    "current_streak": current_streak,
-                    "message_length": len(message),
-                    "evaluation_grade": evaluation["grade"] if evaluation else None,
-                    "evaluation_score": evaluation["overall_score"] if evaluation else None,
-                }
-            )
+            opik_context.update_current_trace(metadata=trace_metadata)
 
             # Log feedback scores using trace data
             if evaluation:
@@ -214,15 +305,28 @@ Generate the intervention message now:"""
         except Exception as e:
             print(f"❌ Failed to log to Opik: {e}")
 
+        # Build return metadata
+        result_metadata = {
+            "goal_title": goal_title,
+            "current_streak": current_streak,
+            "time_of_day": time_of_day,
+            "has_rich_context": bool(personalization_context),
+        }
+        if user_context:
+            result_metadata["user_context"] = {
+                "momentum": user_context.momentum,
+                "emotional_state": user_context.emotional_state,
+                "completion_rate": round(user_context.overall_completion_rate, 2),
+                "best_strategy": user_context.best_strategy,
+                "consecutive_misses": user_context.consecutive_misses,
+                "recent_completions": user_context.recent_completions,
+            }
+
         return {
             "message": message,
             "strategy": strategy.value,
             "evaluation": evaluation,
-            "metadata": {
-                "goal_title": goal_title,
-                "current_streak": current_streak,
-                "time_of_day": time_of_day
-            }
+            "metadata": result_metadata
         }
 
     except Exception as e:

@@ -547,6 +547,10 @@ class ExperimentEngine:
             if worst_stat:
                 worst = worst_stat["strategy"]
 
+        # Calculate overall completion rate across all strategies
+        total_successes = sum(s["successful_completions"] for s in strategy_stats)
+        overall_rate = total_successes / state.total_interventions if state.total_interventions > 0 else 0
+
         return {
             "user_id": user_id,
             "strategy_stats": strategy_stats,
@@ -555,6 +559,7 @@ class ExperimentEngine:
             "experiment_phase": "exploring" if state.exploration_phase else "optimizing",
             "total_interventions": state.total_interventions,
             "strategies_tested": len([s for s in strategy_stats if s["total_interventions"] > 0]),
+            "overall_completion_rate": round(overall_rate, 3),
             # New fields for formula application
             "formula_applied": state.formula_applied,
             "preferred_strategy": state.preferred_strategy.value if state.preferred_strategy else None,

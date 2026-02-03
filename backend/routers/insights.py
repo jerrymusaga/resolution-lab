@@ -428,6 +428,124 @@ async def get_checkin_calendar(
         return []
 
 
+@router.get("/patterns", response_model=dict)
+@opik.track(name="api_get_user_patterns")
+async def get_user_patterns(
+    user_id: str = Query(..., description="User ID"),
+):
+    """
+    Get user behavior patterns based on intervention history.
+
+    Returns insights about:
+    - Best/worst day of week for completions
+    - Current momentum (rising, falling, stable, comeback)
+    - Emotional state (struggling, on_fire, building_momentum, etc.)
+    - Weekend vs weekday performance
+    - Recent completion trends
+    """
+    from services.user_context_builder import build_user_context
+
+    # Build user context (analyzes intervention history)
+    ctx = build_user_context(
+        user_id=user_id,
+        goal_title="",  # Not needed for patterns
+    )
+
+    # Calculate day-of-week performance data for chart
+    day_performance = []
+    days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+    # Get intervention history to calculate day stats
+    try:
+        from services.database import get_user_interventions, DB_ENABLED
+        from datetime import datetime
+        from collections import defaultdict
+
+        if DB_ENABLED:
+            interventions = get_user_interventions(user_id, limit=200)
+
+            day_stats = defaultdict(lambda: {"completed": 0, "total": 0})
+            for inv in interventions:
+                created_str = inv.get("created_at", "")
+                if created_str and inv.get("outcome"):
+                    try:
+                        created = datetime.fromisoformat(created_str.replace("Z", "+00:00"))
+                        day_name = created.strftime("%A")
+                        day_stats[day_name]["total"] += 1
+                        if inv.get("outcome") == "completed":
+                            day_stats[day_name]["completed"] += 1
+                    except:
+                        pass
+
+            for day in days_of_week:
+                stats = day_stats[day]
+                rate = stats["completed"] / stats["total"] if stats["total"] > 0 else 0
+                day_performance.append({
+                    "day": day,
+                    "shortDay": day[:3],
+                    "completionRate": round(rate * 100, 1),
+                    "total": stats["total"],
+                    "completed": stats["completed"],
+                    "isBest": day == ctx.best_day_of_week,
+                    "isWorst": day == ctx.worst_day_of_week,
+                })
+    except Exception as e:
+        print(f"Error calculating day performance: {e}")
+
+    return {
+        # Momentum and emotional state
+        "momentum": ctx.momentum,
+        "momentumDescription": get_momentum_description(ctx.momentum),
+        "emotionalState": ctx.emotional_state,
+        "emotionalStateDescription": get_emotional_state_description(ctx.emotional_state),
+
+        # Day patterns
+        "bestDayOfWeek": ctx.best_day_of_week,
+        "worstDayOfWeek": ctx.worst_day_of_week,
+        "weekendVsWeekday": ctx.weekend_vs_weekday,
+        "dayPerformance": day_performance,
+
+        # Recent activity
+        "recentCompletions": ctx.recent_completions,
+        "recentMisses": ctx.recent_misses,
+        "consecutiveMisses": ctx.consecutive_misses,
+        "lastCompletedDaysAgo": ctx.last_completed_days_ago,
+
+        # Strategy insights
+        "bestStrategy": ctx.best_strategy,
+        "bestStrategyRate": round(ctx.best_strategy_rate * 100, 1),
+
+        # User status
+        "isNewUser": ctx.is_new_user,
+        "overallCompletionRate": round(ctx.overall_completion_rate * 100, 1),
+        "totalInterventions": ctx.total_interventions,
+    }
+
+
+def get_momentum_description(momentum: str) -> str:
+    """Get human-readable description for momentum state."""
+    descriptions = {
+        "rising": "You're on a roll! Keep up the great work.",
+        "falling": "You've had some misses recently. Let's get back on track!",
+        "stable": "You're maintaining steady progress.",
+        "comeback": "Great to see you back! Every day is a fresh start.",
+        "neutral": "Keep going to build your momentum!",
+    }
+    return descriptions.get(momentum, "Keep going!")
+
+
+def get_emotional_state_description(state: str) -> str:
+    """Get human-readable description for emotional state."""
+    descriptions = {
+        "struggling": "It's been tough lately, but don't give up. Small steps count!",
+        "building_momentum": "You're building something great. Keep the momentum going!",
+        "on_fire": "You're crushing it! Ride this wave of success!",
+        "comeback": "Welcome back! Your comeback story starts now.",
+        "neutral": "Stay consistent and watch your progress grow.",
+    }
+    return descriptions.get(state, "You're doing great!")
+
+
 # ===================
 # Helper Functions
 # ===================

@@ -54,9 +54,11 @@ try:
         get_intervention_by_id as db_get_intervention_by_id,
         get_user_interventions as db_get_user_interventions,
         update_intervention_outcome as db_update_intervention_outcome,
+        get_goal_by_id as db_get_goal_by_id,
     )
 except ImportError:
     DB_ENABLED = False
+    db_get_goal_by_id = None
 
 router = APIRouter(prefix="/interventions", tags=["Interventions"])
 
@@ -759,6 +761,100 @@ async def simulate_experiment(
 # ===================
 
 from services.reminder_service import get_reminder_service
+from services.user_context_builder import build_user_context, UserContext
+
+
+# ===================
+# User Context Endpoint (for Streaming API)
+# ===================
+
+class UserContextRequest(PydanticBaseModel):
+    """Request to get rich user context for personalized messages."""
+    user_id: str
+    goal_id: str
+    goal_title: str
+    goal_description: Optional[str] = None
+    current_streak: int = 0
+    user_name: Optional[str] = None
+    time_of_day: Optional[str] = None
+
+
+class UserContextResponse(PydanticBaseModel):
+    """Rich user context for personalized message generation."""
+    # Personalization context (natural language for prompt)
+    personalization_context: str
+
+    # Formula status
+    formula_applied: bool = False
+    preferred_strategy: Optional[str] = None
+    goal_formula_applied: bool = False
+    goal_preferred_strategy: Optional[str] = None
+
+    # User insights summary
+    momentum: str = "neutral"
+    emotional_state: str = "neutral"
+    best_strategy: Optional[str] = None
+    best_strategy_rate: float = 0.0
+    overall_completion_rate: float = 0.0
+    is_new_user: bool = True
+
+    # Day patterns
+    best_day_of_week: Optional[str] = None
+    worst_day_of_week: Optional[str] = None
+
+
+@router.post("/user-context", response_model=UserContextResponse)
+@opik.track(name="api_get_user_context")
+async def get_user_context_for_streaming(request: UserContextRequest):
+    """
+    Get rich user context for personalized message generation.
+
+    This endpoint is called by the Vercel AI SDK streaming API to:
+    1. Build personalized context from user history
+    2. Check if user/goal has an applied formula
+    3. Return context and strategy recommendations
+
+    Used to make streaming messages deeply personalized.
+    """
+    # Build rich user context
+    ctx = build_user_context(
+        user_id=request.user_id,
+        goal_title=request.goal_title,
+        goal_id=request.goal_id,
+        goal_description=request.goal_description,
+        current_streak=request.current_streak,
+        user_name=request.user_name,
+        time_of_day=request.time_of_day,
+    )
+
+    # Check goal-level formula
+    goal_formula_applied = False
+    goal_preferred_strategy = None
+    if request.goal_id and DB_ENABLED:
+        goal = db_get_goal_by_id(request.goal_id)
+        if goal:
+            goal_formula_applied = goal.get("formula_applied", False)
+            goal_preferred_strategy = goal.get("preferred_strategy")
+
+    # Check user-level formula from experiment engine
+    from services.experiment_engine import experiment_engine
+    user_state = experiment_engine.get_user_state(request.user_id)
+
+    return UserContextResponse(
+        personalization_context=ctx.to_prompt_context(),
+        formula_applied=user_state.formula_applied,
+        preferred_strategy=user_state.preferred_strategy.value if user_state.preferred_strategy else None,
+        goal_formula_applied=goal_formula_applied,
+        goal_preferred_strategy=goal_preferred_strategy,
+        momentum=ctx.momentum,
+        emotional_state=ctx.emotional_state,
+        best_strategy=ctx.best_strategy,
+        best_strategy_rate=ctx.best_strategy_rate,
+        overall_completion_rate=ctx.overall_completion_rate,
+        is_new_user=ctx.is_new_user,
+        best_day_of_week=ctx.best_day_of_week,
+        worst_day_of_week=ctx.worst_day_of_week,
+    )
 
 
 class ReminderInteractionRequest(PydanticBaseModel):

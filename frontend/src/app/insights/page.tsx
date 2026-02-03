@@ -8,6 +8,8 @@ import {
   getUserInsights,
   getStrategyComparison,
   getRecommendation,
+  getUserPatterns,
+  UserPatterns,
 } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -31,6 +33,13 @@ import {
   Shield,
   ChevronRight,
   Info,
+  Calendar,
+  Flame,
+  TrendingDown,
+  Minus,
+  RotateCcw,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import {
   BarChart,
@@ -78,6 +87,7 @@ function InsightsContent() {
   const [comparison, setComparison] = useState<InsightsComparison | null>(null);
   const [recommendation, setRecommendation] = useState<string>('');
   const [recommendationEval, setRecommendationEval] = useState<InsightEvaluation | null>(null);
+  const [patterns, setPatterns] = useState<UserPatterns | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showReveal, setShowReveal] = useState(false);
@@ -115,16 +125,18 @@ function InsightsContent() {
       setShowReveal(false);
       setRevealStep(0);
 
-      const [insightsData, comparisonData, recData] = await Promise.all([
+      const [insightsData, comparisonData, recData, patternsData] = await Promise.all([
         getUserInsights(uid).catch(() => null),
         getStrategyComparison(uid).catch(() => null),
         getRecommendation(uid).catch(() => ({ recommendation: '', evaluation: null })),
+        getUserPatterns(uid).catch(() => null),
       ]);
 
       setInsights(insightsData);
       setComparison(comparisonData);
       setRecommendation(recData?.recommendation || '');
       setRecommendationEval(recData?.evaluation || null);
+      setPatterns(patternsData);
     } catch (err) {
       console.error('Failed to load insights:', err);
       setError('Failed to load insights. Make sure the backend is running.');
@@ -591,6 +603,187 @@ function InsightsContent() {
           </CardContent>
         </Card>
       </div>
+
+      {/* User Patterns Section */}
+      {patterns && patterns.totalInterventions > 0 && (
+        <div className="mb-8">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-purple-500" />
+              Your Patterns
+            </h2>
+            <p className="text-sm text-gray-500">Discover when and how you perform best</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Momentum & Emotional State Card */}
+            <Card variant="bordered" className="overflow-hidden">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  {patterns.momentum === 'rising' && <TrendingUp className="w-5 h-5 text-emerald-500" />}
+                  {patterns.momentum === 'falling' && <TrendingDown className="w-5 h-5 text-red-500" />}
+                  {patterns.momentum === 'stable' && <Minus className="w-5 h-5 text-blue-500" />}
+                  {patterns.momentum === 'comeback' && <RotateCcw className="w-5 h-5 text-purple-500" />}
+                  {patterns.momentum === 'neutral' && <Minus className="w-5 h-5 text-gray-400" />}
+                  Current Momentum
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {/* Momentum indicator */}
+                <div className={cn(
+                  "rounded-lg p-4 mb-4",
+                  patterns.momentum === 'rising' && "bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200",
+                  patterns.momentum === 'falling' && "bg-gradient-to-r from-red-50 to-orange-50 border border-red-200",
+                  patterns.momentum === 'stable' && "bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200",
+                  patterns.momentum === 'comeback' && "bg-gradient-to-r from-purple-50 to-violet-50 border border-purple-200",
+                  patterns.momentum === 'neutral' && "bg-gray-50 border border-gray-200",
+                )}>
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "w-12 h-12 rounded-full flex items-center justify-center",
+                      patterns.momentum === 'rising' && "bg-emerald-100",
+                      patterns.momentum === 'falling' && "bg-red-100",
+                      patterns.momentum === 'stable' && "bg-blue-100",
+                      patterns.momentum === 'comeback' && "bg-purple-100",
+                      patterns.momentum === 'neutral' && "bg-gray-100",
+                    )}>
+                      {patterns.emotionalState === 'on_fire' && <Flame className="w-6 h-6 text-orange-500" />}
+                      {patterns.emotionalState === 'building_momentum' && <Rocket className="w-6 h-6 text-blue-500" />}
+                      {patterns.emotionalState === 'struggling' && <Heart className="w-6 h-6 text-red-500" />}
+                      {patterns.emotionalState === 'comeback' && <Sparkles className="w-6 h-6 text-purple-500" />}
+                      {patterns.emotionalState === 'neutral' && <Target className="w-6 h-6 text-gray-500" />}
+                    </div>
+                    <div className="flex-1">
+                      <p className={cn(
+                        "font-semibold capitalize",
+                        patterns.momentum === 'rising' && "text-emerald-700",
+                        patterns.momentum === 'falling' && "text-red-700",
+                        patterns.momentum === 'stable' && "text-blue-700",
+                        patterns.momentum === 'comeback' && "text-purple-700",
+                        patterns.momentum === 'neutral' && "text-gray-700",
+                      )}>
+                        {patterns.momentum === 'rising' && "Rising 🔥"}
+                        {patterns.momentum === 'falling' && "Needs Attention"}
+                        {patterns.momentum === 'stable' && "Steady Progress"}
+                        {patterns.momentum === 'comeback' && "Making a Comeback!"}
+                        {patterns.momentum === 'neutral' && "Getting Started"}
+                      </p>
+                      <p className="text-sm text-gray-600 mt-1">{patterns.momentumDescription}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Recent Activity Stats */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-emerald-50 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-emerald-600">{patterns.recentCompletions}</p>
+                    <p className="text-xs text-gray-500">Completed (7 days)</p>
+                  </div>
+                  <div className="bg-red-50 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-red-500">{patterns.recentMisses}</p>
+                    <p className="text-xs text-gray-500">Missed (7 days)</p>
+                  </div>
+                </div>
+
+                {/* Consecutive misses warning */}
+                {patterns.consecutiveMisses >= 2 && (
+                  <div className="mt-3 bg-amber-50 rounded-lg p-3 flex items-center gap-2 border border-amber-200">
+                    <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                    <p className="text-sm text-amber-700">
+                      {patterns.consecutiveMisses} consecutive misses. Let's get back on track!
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Day of Week Performance */}
+            <Card variant="bordered">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-indigo-500" />
+                  Best Days of the Week
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {patterns.dayPerformance && patterns.dayPerformance.length > 0 ? (
+                  <>
+                    {/* Day bars */}
+                    <div className="space-y-2">
+                      {patterns.dayPerformance.map((day) => (
+                        <div key={day.day} className="flex items-center gap-2">
+                          <span className={cn(
+                            "w-10 text-xs font-medium",
+                            day.isBest && "text-emerald-600",
+                            day.isWorst && "text-red-500",
+                            !day.isBest && !day.isWorst && "text-gray-500"
+                          )}>
+                            {day.shortDay}
+                          </span>
+                          <div className="flex-1 h-6 bg-gray-100 rounded-full overflow-hidden relative">
+                            <div
+                              className={cn(
+                                "h-full rounded-full transition-all duration-500",
+                                day.isBest && "bg-gradient-to-r from-emerald-400 to-emerald-500",
+                                day.isWorst && "bg-gradient-to-r from-red-300 to-red-400",
+                                !day.isBest && !day.isWorst && "bg-gradient-to-r from-blue-300 to-blue-400"
+                              )}
+                              style={{ width: `${Math.max(day.completionRate, 5)}%` }}
+                            />
+                            <span className="absolute inset-0 flex items-center justify-end pr-2 text-xs font-medium text-gray-700">
+                              {day.completionRate.toFixed(0)}%
+                            </span>
+                          </div>
+                          {day.isBest && <Award className="w-4 h-4 text-yellow-500" />}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Best/Worst day summary */}
+                    <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 gap-4">
+                      {patterns.bestDayOfWeek && (
+                        <div className="flex items-center gap-2">
+                          <Sun className="w-4 h-4 text-emerald-500" />
+                          <div>
+                            <p className="text-xs text-gray-500">Best Day</p>
+                            <p className="text-sm font-semibold text-emerald-600">{patterns.bestDayOfWeek}s</p>
+                          </div>
+                        </div>
+                      )}
+                      {patterns.worstDayOfWeek && (
+                        <div className="flex items-center gap-2">
+                          <Moon className="w-4 h-4 text-red-400" />
+                          <div>
+                            <p className="text-xs text-gray-500">Hardest Day</p>
+                            <p className="text-sm font-semibold text-red-500">{patterns.worstDayOfWeek}s</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Weekend vs Weekday insight */}
+                    {patterns.weekendVsWeekday && patterns.weekendVsWeekday !== 'same' && (
+                      <div className="mt-3 bg-indigo-50 rounded-lg p-3 flex items-center gap-2">
+                        <Info className="w-4 h-4 text-indigo-500 flex-shrink-0" />
+                        <p className="text-sm text-indigo-700">
+                          {patterns.weekendVsWeekday === 'better_weekends'
+                            ? "You perform better on weekends. Consider scheduling important goals then!"
+                            : "You perform better on weekdays. Weekends might need extra motivation."}
+                        </p>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-center py-6 text-gray-500">
+                    <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Keep checking in to reveal your daily patterns!</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
 
       {/* Strategy Performance Chart - Enhanced */}
       {chartData.length > 0 && (

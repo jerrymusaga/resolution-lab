@@ -3,6 +3,7 @@
  *
  * Uses Vercel AI SDK for streaming responses with Google Gemini.
  * Logs traces to Opik via the backend for observability.
+ * Now includes deep personalization using user history and patterns.
  */
 
 import { google } from '@ai-sdk/google';
@@ -50,7 +51,8 @@ Make it feel easy and achievable.
 Maximum 2 sentences.`,
 };
 
-const SYSTEM_PROMPT = `You are Resolution Lab, an AI coach helping users achieve their goals.
+// Base system prompt
+const BASE_SYSTEM_PROMPT = `You are Resolution Lab, an AI coach helping users achieve their goals.
 Your task is to generate a short, personalized motivation message.
 
 Rules:
@@ -63,6 +65,73 @@ Rules:
 7. Sound human, not robotic
 
 Output ONLY the message text, nothing else.`;
+
+// User context type from backend
+interface UserContext {
+  personalization_context: string;
+  formula_applied: boolean;
+  preferred_strategy: string | null;
+  goal_formula_applied: boolean;
+  goal_preferred_strategy: string | null;
+  momentum: string;
+  emotional_state: string;
+  best_strategy: string | null;
+  best_strategy_rate: number;
+  overall_completion_rate: number;
+  is_new_user: boolean;
+  best_day_of_week: string | null;
+  worst_day_of_week: string | null;
+}
+
+// Fetch rich user context from backend
+async function fetchUserContext(params: {
+  userId: string;
+  goalId: string;
+  goalTitle: string;
+  goalDescription?: string;
+  currentStreak: number;
+  userName?: string;
+  timeOfDay: string;
+}): Promise<UserContext | null> {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+  try {
+    const response = await fetch(`${API_URL}/api/interventions/user-context`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: params.userId,
+        goal_id: params.goalId,
+        goal_title: params.goalTitle,
+        goal_description: params.goalDescription,
+        current_streak: params.currentStreak,
+        user_name: params.userName,
+        time_of_day: params.timeOfDay,
+      }),
+    });
+
+    if (response.ok) {
+      return await response.json();
+    }
+    console.error('Failed to fetch user context:', response.status);
+    return null;
+  } catch (error) {
+    console.error('Error fetching user context:', error);
+    return null;
+  }
+}
+
+// Build personalized system prompt
+function buildPersonalizedSystemPrompt(userContext: UserContext | null): string {
+  if (!userContext || !userContext.personalization_context) {
+    return BASE_SYSTEM_PROMPT;
+  }
+
+  return `${BASE_SYSTEM_PROMPT}
+
+PERSONALIZATION CONTEXT (Use this to make your message deeply personal):
+${userContext.personalization_context}`;
+}
 
 // Helper to get time of day
 function getTimeOfDay(): string {
@@ -121,7 +190,7 @@ export async function POST(req: NextRequest) {
     const {
       goalTitle,
       goalDescription,
-      strategy = 'gentle_reminder',
+      strategy: requestedStrategy = 'gentle_reminder',
       currentStreak = 0,
       userId,
       goalId,
@@ -136,16 +205,63 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Build the strategy-specific prompt
-    const strategyInstruction = STRATEGY_PROMPTS[strategy] || STRATEGY_PROMPTS.gentle_reminder;
     const timeOfDay = getTimeOfDay();
 
-    // Build context
+    // Fetch rich user context from backend (includes formula status)
+    let userContext: UserContext | null = null;
+    let effectiveStrategy = requestedStrategy;
+    let formulaActive = false;
+
+    if (userId && goalId) {
+      userContext = await fetchUserContext({
+        userId,
+        goalId,
+        goalTitle,
+        goalDescription,
+        currentStreak,
+        userName,
+        timeOfDay,
+      });
+
+      if (userContext) {
+        // Check if a formula is applied (goal-level takes priority over user-level)
+        if (userContext.goal_formula_applied && userContext.goal_preferred_strategy) {
+          // 90% use goal's preferred strategy, 10% explore
+          if (Math.random() < 0.9) {
+            effectiveStrategy = userContext.goal_preferred_strategy;
+            formulaActive = true;
+            console.log(`Using goal formula strategy: ${effectiveStrategy}`);
+          }
+        } else if (userContext.formula_applied && userContext.preferred_strategy) {
+          // 90% use user's preferred strategy, 10% explore
+          if (Math.random() < 0.9) {
+            effectiveStrategy = userContext.preferred_strategy;
+            formulaActive = true;
+            console.log(`Using user formula strategy: ${effectiveStrategy}`);
+          }
+        }
+      }
+    }
+
+    // Build the strategy-specific prompt
+    const strategyInstruction = STRATEGY_PROMPTS[effectiveStrategy] || STRATEGY_PROMPTS.gentle_reminder;
+
+    // Build context - now includes personalization
     const contextParts = [`Goal: ${goalTitle}`];
     if (goalDescription) contextParts.push(`Description: ${goalDescription}`);
     if (currentStreak > 0) contextParts.push(`Current streak: ${currentStreak} days`);
     if (userName) contextParts.push(`User's name: ${userName}`);
     contextParts.push(`Time of day: ${timeOfDay}`);
+
+    // Add momentum and emotional state context if available
+    if (userContext) {
+      if (userContext.momentum !== 'neutral') {
+        contextParts.push(`User momentum: ${userContext.momentum}`);
+      }
+      if (userContext.emotional_state !== 'neutral') {
+        contextParts.push(`Emotional state: ${userContext.emotional_state}`);
+      }
+    }
 
     const context = contextParts.join('\n');
 
@@ -157,16 +273,19 @@ ${context}
 
 Generate the intervention message now:`;
 
+    // Build personalized system prompt
+    const systemPrompt = buildPersonalizedSystemPrompt(userContext);
+
     // Thread ID for Opik grouping
     const threadId = goalId ? `goal_${goalId}` : undefined;
 
     if (stream) {
       // Use Vercel AI SDK for streaming
-      console.log('Starting streaming with Gemini...');
+      console.log(`Starting streaming with Gemini (strategy: ${effectiveStrategy}, formula: ${formulaActive})...`);
       const result = streamText({
         model: google('gemini-1.5-flash'),
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
         temperature: 0.7,
@@ -178,7 +297,7 @@ Generate the intervention message now:`;
               userId,
               goalId,
               goalTitle,
-              strategy,
+              strategy: effectiveStrategy,
               message: text,
               threadId,
             });
@@ -192,7 +311,7 @@ Generate the intervention message now:`;
       const result = await generateText({
         model: google('gemini-1.5-flash'),
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
         temperature: 0.7,
@@ -204,7 +323,7 @@ Generate the intervention message now:`;
           userId,
           goalId,
           goalTitle,
-          strategy,
+          strategy: effectiveStrategy,
           message: result.text,
           threadId,
         });
@@ -212,11 +331,14 @@ Generate the intervention message now:`;
 
       return new Response(JSON.stringify({
         message: result.text,
-        strategy,
+        strategy: effectiveStrategy,
+        formulaActive,
         metadata: {
           goalTitle,
           currentStreak,
           timeOfDay,
+          momentum: userContext?.momentum,
+          emotionalState: userContext?.emotional_state,
         },
       }), {
         headers: { 'Content-Type': 'application/json' },

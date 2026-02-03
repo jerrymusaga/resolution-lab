@@ -536,7 +536,7 @@ Respond ONLY with a JSON object in this exact format:
             image_bytes = base64.b64decode(image_base64)
 
             response = self.client.models.generate_content(
-                model="gemini-2.5-flash-preview-04-17",  # Use text model for evaluation
+                model="gemini-2.5-flash",  # Use text model for evaluation
                 contents=[
                     {
                         "role": "user",

@@ -846,10 +846,14 @@ export default function AgentPage() {
               </p>
 
               {streamingMessage && !isStreaming && (
-                <div className="flex justify-center items-center gap-3 mt-4">
-                  <span className="px-3 py-1 bg-gray-100 rounded-full text-sm">
-                    {STRATEGY_ICONS[streamingStrategy]} {streamingStrategy.replace('_', ' ')}
-                  </span>
+                <div className="flex flex-col items-center gap-3 mt-4">
+                  {/* Strategy badge */}
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-full">
+                    <span className="text-lg">{STRATEGY_ICONS[streamingStrategy]}</span>
+                    <span className="text-sm font-semibold text-amber-700">
+                      {STRATEGY_INFO[streamingStrategy as keyof typeof STRATEGY_INFO]?.name || streamingStrategy.replace('_', ' ')}
+                    </span>
+                  </div>
 
                   {/* Voice Play Button */}
                   {voiceSupported && (
@@ -911,10 +915,14 @@ export default function AgentPage() {
                 "{agentResponse.action.message}"
               </p>
 
-              <div className="flex justify-center items-center gap-3 mt-4">
-                <span className="px-3 py-1 bg-gray-100 rounded-full text-sm">
-                  {STRATEGY_ICONS[agentResponse.action.strategy_used]} {agentResponse.plan?.chosen_strategy}
-                </span>
+              <div className="flex flex-col items-center gap-3 mt-4">
+                {/* Strategy badge */}
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-full">
+                  <span className="text-lg">{STRATEGY_ICONS[agentResponse.action.strategy_used]}</span>
+                  <span className="text-sm font-semibold text-emerald-700">
+                    {STRATEGY_INFO[agentResponse.action.strategy_used as keyof typeof STRATEGY_INFO]?.name || agentResponse.plan?.chosen_strategy}
+                  </span>
+                </div>
 
                 {/* Voice Play Button */}
                 {voiceSupported && (

@@ -4,11 +4,21 @@
  * Uses Vercel AI SDK for streaming responses with Google Gemini.
  * Logs traces to Opik via the backend for observability.
  * Now includes deep personalization using user history and patterns.
+ *
+ * Uses separate API key (GOOGLE_STREAMING_API_KEY) to avoid consuming
+ * tokens from the image generation quota.
  */
 
-import { google } from '@ai-sdk/google';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText, generateText } from 'ai';
 import { NextRequest } from 'next/server';
+
+// Create custom Google provider with separate API key for streaming
+// Priority: GOOGLE_STREAMING_API_KEY -> GOOGLE_GENERATIVE_AI_API_KEY
+const streamingApiKey = process.env.GOOGLE_STREAMING_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+const google = createGoogleGenerativeAI({
+  apiKey: streamingApiKey,
+});
 
 // Strategy descriptions for prompt engineering
 const STRATEGY_PROMPTS: Record<string, string> = {
@@ -174,12 +184,12 @@ async function logToOpik(params: {
 
 export async function POST(req: NextRequest) {
   try {
-    // Check if API key is configured
-    if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-      console.error('GOOGLE_GENERATIVE_AI_API_KEY is not configured');
+    // Check if API key is configured (either dedicated streaming key or fallback)
+    if (!process.env.GOOGLE_STREAMING_API_KEY && !process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+      console.error('No Google API key configured for streaming');
       return new Response(JSON.stringify({
         error: 'AI service not configured',
-        details: 'GOOGLE_GENERATIVE_AI_API_KEY environment variable is missing',
+        details: 'Set GOOGLE_STREAMING_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY environment variable',
       }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' },

@@ -405,20 +405,41 @@ class CelebrationImageGenerator:
     Generates personalized celebration images using Gemini Nano Banana.
 
     Integrates with Opik for full observability and evaluation.
+
+    Uses separate API key (GOOGLE_IMAGE_API_KEY) to avoid consuming tokens
+    from the main message generation quota.
     """
 
     def __init__(self, api_key: Optional[str] = None):
-        """Initialize the generator with Google API key."""
-        self.api_key = api_key or os.getenv("GOOGLE_API_KEY")
+        """
+        Initialize the generator with Google API key.
+
+        Priority for API key:
+        1. Passed api_key parameter
+        2. GOOGLE_IMAGE_API_KEY (dedicated image generation key)
+        3. GOOGLE_API_KEY (fallback to shared key)
+        """
+        self.api_key = api_key or os.getenv("GOOGLE_IMAGE_API_KEY") or os.getenv("GOOGLE_API_KEY")
         self.model = "gemini-2.5-flash-image"  # Nano Banana - Gemini's native image generation model
         self.client = None
+
+        # Track which key is being used for logging
+        key_source = "passed parameter"
+        if not api_key:
+            if os.getenv("GOOGLE_IMAGE_API_KEY"):
+                key_source = "GOOGLE_IMAGE_API_KEY"
+            elif os.getenv("GOOGLE_API_KEY"):
+                key_source = "GOOGLE_API_KEY (fallback)"
 
         if GENAI_AVAILABLE and self.api_key:
             try:
                 self.client = genai.Client(api_key=self.api_key)
-                print("Celebration image generator initialized with Nano Banana")
+                print(f"✅ Celebration image generator initialized with Nano Banana (using {key_source})")
             except Exception as e:
-                print(f"Failed to initialize genai client: {e}")
+                print(f"❌ Failed to initialize genai client: {e}")
+        else:
+            if not self.api_key:
+                print("⚠️ Image generation disabled - set GOOGLE_IMAGE_API_KEY or GOOGLE_API_KEY")
 
     def _get_prompt(
         self,

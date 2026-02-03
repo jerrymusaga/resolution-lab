@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent, Button, Input } from '@/compo
 import { cn } from '@/lib/utils';
 import { getFormulaStatus, FormulaStatus, listGoals, recordCheckIn, trackVoicePlay } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { STRATEGY_INFO, Goal } from '@/types';
+import { STRATEGY_INFO, Goal, Outcome } from '@/types';
 import {
   Brain,
   Eye,
@@ -31,7 +31,10 @@ import {
   VolumeX,
   Settings2,
   Square,
-  Bolt
+  Bolt,
+  Download,
+  PartyPopper,
+  Heart
 } from 'lucide-react';
 import { useTextToSpeech, getAutoPlayPreference, setAutoPlayPreference } from '@/hooks/useTextToSpeech';
 import Link from 'next/link';
@@ -79,6 +82,7 @@ export default function AgentPage() {
   const [checkingIn, setCheckingIn] = useState(false);
   const [checkInSuccess, setCheckInSuccess] = useState<boolean | null>(null);
   const [showMicroCommitment, setShowMicroCommitment] = useState(false);
+  const [checkInOutcome, setCheckInOutcome] = useState<Outcome | null>(null);
 
   // Voice state
   const [autoPlayVoice, setAutoPlayVoice] = useState(false);
@@ -269,11 +273,12 @@ export default function AgentPage() {
 
     try {
       setCheckingIn(true);
-      await recordCheckIn(userId, {
+      const outcome = await recordCheckIn(userId, {
         intervention_id: agentResponse.intervention_id,
         completed,
         user_feedback: isMicroCommitment ? 'micro_commitment' : undefined,
       });
+      setCheckInOutcome(outcome);
       setCheckInSuccess(completed);
       setShowMicroCommitment(false);
     } catch (err) {
@@ -1089,17 +1094,69 @@ export default function AgentPage() {
 
             {/* Check-in Success */}
             {checkInSuccess !== null && (
-              <div className="mt-6 text-center">
-                <div className={cn(
-                  "inline-flex items-center gap-2 px-4 py-2 rounded-full",
-                  checkInSuccess ? "bg-white text-green-600" : "bg-white/20 text-white"
-                )}>
-                  <CheckCircle2 className="w-4 h-4" />
-                  {checkInSuccess ? "Great job! Your progress has been recorded." : "No worries! Every day is a new opportunity."}
+              <div className="mt-6">
+                {/* Celebration Image */}
+                {checkInOutcome?.celebration_image && (
+                  <div className="mb-6 flex justify-center">
+                    <div className="relative max-w-sm">
+                      <div className="rounded-2xl overflow-hidden shadow-2xl border-4 border-white/30">
+                        <img
+                          src={`data:image/png;base64,${checkInOutcome.celebration_image}`}
+                          alt={checkInSuccess ? "Celebration" : "Encouragement"}
+                          className="w-full h-auto"
+                        />
+                      </div>
+                      {/* Image info badges */}
+                      <div className="absolute top-3 right-3 flex flex-col gap-1.5 items-end">
+                        {checkInOutcome.celebration_image_grade && (
+                          <div className={cn(
+                            "px-2.5 py-1 rounded-full text-xs font-bold shadow-lg",
+                            checkInOutcome.celebration_image_grade === 'A' ? "bg-green-500 text-white" :
+                            checkInOutcome.celebration_image_grade === 'B' ? "bg-blue-500 text-white" :
+                            checkInOutcome.celebration_image_grade === 'C' ? "bg-yellow-500 text-white" :
+                            "bg-gray-500 text-white"
+                          )}>
+                            AI Grade: {checkInOutcome.celebration_image_grade}
+                          </div>
+                        )}
+                        {checkInOutcome.celebration_image_category && (
+                          <div className="px-2.5 py-1 rounded-full text-xs font-medium bg-black/50 text-white backdrop-blur-sm">
+                            {checkInOutcome.celebration_image_category}
+                          </div>
+                        )}
+                      </div>
+                      {/* Download button */}
+                      <button
+                        onClick={() => {
+                          if (checkInOutcome?.celebration_image) {
+                            const link = document.createElement('a');
+                            link.href = `data:image/png;base64,${checkInOutcome.celebration_image}`;
+                            link.download = `resolution-lab-${checkInSuccess ? 'celebration' : 'encouragement'}-${Date.now()}.png`;
+                            link.click();
+                          }
+                        }}
+                        className="absolute bottom-3 right-3 flex items-center gap-1.5 px-3 py-1.5 bg-white/90 hover:bg-white text-gray-700 rounded-full text-xs font-medium shadow-lg transition-colors"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Success Message */}
+                <div className="text-center">
+                  <div className={cn(
+                    "inline-flex items-center gap-2 px-4 py-2 rounded-full",
+                    checkInSuccess ? "bg-white text-green-600" : "bg-white/20 text-white"
+                  )}>
+                    {checkInSuccess ? <PartyPopper className="w-4 h-4" /> : <Heart className="w-4 h-4" />}
+                    {checkInSuccess ? "Great job! Your progress has been recorded." : "No worries! Every day is a new opportunity."}
+                  </div>
+                  <p className="text-white/80 text-sm mt-2">
+                    This helps us learn what motivates you best
+                  </p>
                 </div>
-                <p className="text-white/80 text-sm mt-2">
-                  This helps us learn what motivates you best
-                </p>
               </div>
             )}
           </div>

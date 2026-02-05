@@ -77,6 +77,10 @@ class UserContext:
         # Previous successful messages (examples)
         self.successful_messages: List[str] = []
 
+        # User's recent feedback/notes about their mindset
+        self.recent_feedback: List[str] = []
+        self.latest_feedback: Optional[str] = None
+
     def to_prompt_context(self) -> str:
         """Convert context to a natural language prompt addition."""
         parts = []
@@ -126,6 +130,11 @@ class UserContext:
         # Goal age
         if self.goal_age_days > 30:
             parts.append(f"They've been working on this goal for {self.goal_age_days} days - acknowledge their dedication.")
+
+        # User's own words about their mindset (most valuable context!)
+        if self.latest_feedback:
+            parts.append(f"USER'S RECENT NOTE (in their own words): \"{self.latest_feedback}\"")
+            parts.append("Acknowledge their situation directly in your message. Show you understand what they're going through.")
 
         return "\n".join(parts) if parts else ""
 
@@ -355,6 +364,17 @@ def build_user_context(
             if inv.get("outcome") == "completed" and inv.get("message"):
                 if len(ctx.successful_messages) < 3:
                     ctx.successful_messages.append(inv["message"])
+
+        # Collect recent user feedback/notes about their mindset
+        for inv in interventions:
+            feedback = inv.get("user_feedback")
+            if feedback and feedback.strip():
+                if ctx.latest_feedback is None:
+                    ctx.latest_feedback = feedback.strip()
+                if len(ctx.recent_feedback) < 5:
+                    ctx.recent_feedback.append(feedback.strip())
+                else:
+                    break
 
         print(f"Built user context: momentum={ctx.momentum}, emotional_state={ctx.emotional_state}, "
               f"best_strategy={ctx.best_strategy} ({ctx.best_strategy_rate:.0%})")

@@ -34,7 +34,6 @@ export default function CheckInModal({
   isLoading = false
 }: CheckInModalProps) {
   const [feedback, setFeedback] = useState('');
-  const [showFeedback, setShowFeedback] = useState(false);
   const [view, setView] = useState<ModalView>('checkin');
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -172,29 +171,24 @@ export default function CheckInModal({
             </div>
           </div>
 
-          {/* Optional feedback */}
-          <div className="mt-4">
-            {!showFeedback ? (
-              <button
-                onClick={() => setShowFeedback(true)}
-                className="w-full flex items-center justify-center space-x-2 text-sm text-gray-500 hover:text-gray-700 py-2"
-              >
-                <MessageSquare className="w-4 h-4" />
-                <span>Add a note (optional)</span>
-              </button>
-            ) : (
-              <div className="space-y-2">
-                <Input
-                  placeholder="How are you feeling about this goal?"
-                  value={feedback}
-                  onChange={(e) => setFeedback(e.target.value)}
-                  className="text-sm"
-                />
-                <p className="text-xs text-gray-400">
-                  Your feedback helps us learn what motivates you best
-                </p>
-              </div>
-            )}
+          {/* Mindset feedback - always visible, more prominent */}
+          <div className="mt-5 pt-4 border-t border-gray-100">
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <MessageSquare className="w-4 h-4 text-primary-500" />
+                <span>How are you feeling?</span>
+                <span className="text-xs font-normal text-gray-400">(optional)</span>
+              </label>
+              <Input
+                placeholder="e.g., Tired today, work was hectic, feeling motivated..."
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                className="text-sm"
+              />
+              <p className="text-xs text-gray-500">
+                Share your mindset — the AI will acknowledge your situation in future messages
+              </p>
+            </div>
           </div>
 
           {/* Loading indicator */}

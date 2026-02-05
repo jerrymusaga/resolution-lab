@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useCompletion } from '@ai-sdk/react';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input } from '@/components/ui';
 import { cn } from '@/lib/utils';
-import { getFormulaStatus, FormulaStatus, listGoals, recordCheckIn, trackVoicePlay } from '@/lib/api';
+import { getFormulaStatus, FormulaStatus, listGoals, recordCheckIn, trackVoicePlay, logStreamingMessage } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { STRATEGY_INFO, Goal, Outcome } from '@/types';
 import {
@@ -83,6 +83,13 @@ export default function AgentPage() {
   const [checkInSuccess, setCheckInSuccess] = useState<boolean | null>(null);
   const [showMicroCommitment, setShowMicroCommitment] = useState(false);
   const [checkInOutcome, setCheckInOutcome] = useState<Outcome | null>(null);
+  const [checkInFeedback, setCheckInFeedback] = useState('');
+
+  // Streaming check-in state
+  const [streamingCheckInSuccess, setStreamingCheckInSuccess] = useState<boolean | null>(null);
+  const [streamingCheckingIn, setStreamingCheckingIn] = useState(false);
+  const [streamingCheckInFeedback, setStreamingCheckInFeedback] = useState('');
+  const [streamingInterventionId, setStreamingInterventionId] = useState<string | null>(null);
 
   // Voice state
   const [autoPlayVoice, setAutoPlayVoice] = useState(false);
@@ -133,6 +140,18 @@ export default function AgentPage() {
       return () => clearTimeout(timer);
     }
   }, [agentResponse?.action?.message, agentResponse?.intervention_id, currentStep, autoPlayVoice, voiceSupported, speak, userId]);
+
+  // Log streaming message to backend when streaming completes (to get intervention_id for check-in)
+  useEffect(() => {
+    if (streamingMessage && !isStreaming && userId && selectedGoal?.id) {
+      // Reset streaming check-in state for new message
+      setStreamingCheckInSuccess(null);
+      setStreamingInterventionId(null);
+      // Log the message and get intervention ID
+      handleStreamingComplete(streamingMessage);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [streamingMessage, isStreaming]);
 
   // Load user's goals on mount (only when authenticated)
   useEffect(() => {
@@ -274,14 +293,20 @@ export default function AgentPage() {
 
     try {
       setCheckingIn(true);
+      // Include user's mindset feedback if provided
+      let feedbackText = checkInFeedback.trim() || undefined;
+      if (isMicroCommitment) {
+        feedbackText = feedbackText ? `micro_commitment: ${feedbackText}` : 'micro_commitment';
+      }
       const outcome = await recordCheckIn(userId, {
         intervention_id: agentResponse.intervention_id,
         completed,
-        user_feedback: isMicroCommitment ? 'micro_commitment' : undefined,
+        user_feedback: feedbackText,
       });
       setCheckInOutcome(outcome);
       setCheckInSuccess(completed);
       setShowMicroCommitment(false);
+      setCheckInFeedback(''); // Clear feedback after submission
     } catch (err) {
       console.error('Check-in failed:', err);
       // Still show success for UX, the data contributes to insights
@@ -300,6 +325,48 @@ export default function AgentPage() {
   const handleMicroCommitmentDecline = () => {
     // Record as not completed
     handleCheckIn(false, true);
+  };
+
+  // Handle streaming check-in (for Quick Stream mode)
+  const handleStreamingCheckIn = async (completed: boolean) => {
+    if (!userId || !streamingInterventionId) return;
+
+    try {
+      setStreamingCheckingIn(true);
+      await recordCheckIn(userId, {
+        intervention_id: streamingInterventionId,
+        completed,
+        user_feedback: streamingCheckInFeedback.trim() || undefined,
+      });
+      setStreamingCheckInSuccess(completed);
+      setStreamingCheckInFeedback('');
+    } catch (err) {
+      console.error('Streaming check-in failed:', err);
+      setStreamingCheckInSuccess(completed);
+    } finally {
+      setStreamingCheckingIn(false);
+    }
+  };
+
+  // Log streaming message and get intervention ID after streaming completes
+  const handleStreamingComplete = async (message: string) => {
+    if (!userId || !selectedGoal?.id || !message) return;
+
+    try {
+      const response = await logStreamingMessage({
+        userId,
+        goalId: selectedGoal.id,
+        goalTitle: selectedGoal.title,
+        strategy: streamingStrategy,
+        message,
+        threadId: `goal_${selectedGoal.id}`,
+      });
+      if (response.data?.intervention_id) {
+        setStreamingInterventionId(response.data.intervention_id);
+      }
+    } catch (err) {
+      console.error('Failed to log streaming message:', err);
+    }
   };
 
   const toggleStep = (step: number) => {
@@ -890,6 +957,76 @@ export default function AgentPage() {
               )}
             </div>
 
+            {/* Streaming Check-in Section */}
+            {streamingMessage && !isStreaming && streamingInterventionId && streamingCheckInSuccess === null && (
+              <div className="mt-6 bg-white/10 backdrop-blur-sm rounded-xl p-6">
+                {/* Mindset feedback input */}
+                <div className="max-w-md mx-auto mb-4">
+                  <label className="flex items-center justify-center gap-2 text-sm text-white/80 mb-2">
+                    <MessageSquare className="w-4 h-4" />
+                    <span>How are you feeling?</span>
+                    <span className="text-white/50">(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={streamingCheckInFeedback}
+                    onChange={(e) => setStreamingCheckInFeedback(e.target.value)}
+                    placeholder="e.g., Tired today, feeling motivated..."
+                    className="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-white/30"
+                  />
+                  <p className="text-xs text-white/60 mt-1 text-center">
+                    The AI will acknowledge your situation in future messages
+                  </p>
+                </div>
+
+                <p className="text-white/90 mb-4 text-center">Did this motivation help you take action?</p>
+                <div className="flex justify-center gap-4">
+                  <Button
+                    onClick={() => handleStreamingCheckIn(true)}
+                    disabled={streamingCheckingIn}
+                    className="bg-white text-green-600 hover:bg-green-50"
+                  >
+                    {streamingCheckingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : <ThumbsUp className="w-4 h-4 mr-2" />}
+                    Yes, I did it!
+                  </Button>
+                  <Button
+                    onClick={() => handleStreamingCheckIn(false)}
+                    disabled={streamingCheckingIn}
+                    variant="outline"
+                    className="border-white/50 text-white hover:bg-white/10"
+                  >
+                    <ThumbsDown className="w-4 h-4 mr-2" />
+                    Not yet
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Streaming Check-in Success */}
+            {streamingCheckInSuccess !== null && (
+              <div className="mt-6 text-center">
+                <div className={cn(
+                  "inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium",
+                  streamingCheckInSuccess ? "bg-green-500/20 text-green-100" : "bg-pink-500/20 text-pink-100"
+                )}>
+                  {streamingCheckInSuccess ? (
+                    <>
+                      <PartyPopper className="w-4 h-4" />
+                      Great job! Your progress has been recorded.
+                    </>
+                  ) : (
+                    <>
+                      <Heart className="w-4 h-4" />
+                      No worries! Every day is a new opportunity.
+                    </>
+                  )}
+                </div>
+                <p className="text-white/60 text-xs mt-2">
+                  This helps us learn what motivates you best
+                </p>
+              </div>
+            )}
+
             {/* Powered by badge */}
             <div className="text-center mt-4">
               <span className="text-xs text-white/70">
@@ -1041,8 +1178,27 @@ export default function AgentPage() {
 
             {/* Check-in Response */}
             {agentResponse?.intervention_id && checkInSuccess === null && !showMicroCommitment && (
-              <div className="mt-6 text-center">
-                <p className="text-white/90 mb-4">Did this motivation help you take action?</p>
+              <div className="mt-6">
+                {/* Mindset feedback input */}
+                <div className="max-w-md mx-auto mb-4">
+                  <label className="flex items-center justify-center gap-2 text-sm text-white/80 mb-2">
+                    <MessageSquare className="w-4 h-4" />
+                    <span>How are you feeling?</span>
+                    <span className="text-white/50">(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={checkInFeedback}
+                    onChange={(e) => setCheckInFeedback(e.target.value)}
+                    placeholder="e.g., Tired today, feeling motivated..."
+                    className="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-white/30"
+                  />
+                  <p className="text-xs text-white/60 mt-1 text-center">
+                    The AI will acknowledge your situation in future messages
+                  </p>
+                </div>
+
+                <p className="text-white/90 mb-4 text-center">Did this motivation help you take action?</p>
                 <div className="flex justify-center gap-4">
                   <Button
                     onClick={() => handleCheckIn(true)}

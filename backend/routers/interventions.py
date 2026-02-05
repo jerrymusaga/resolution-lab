@@ -612,16 +612,19 @@ async def log_streaming_message(request: StreamingLogRequest):
     except Exception as e:
         print(f"❌ Failed to log streaming message to Opik: {e}")
 
-    # Optionally store in database
+    # Optionally store in database and get intervention ID for check-ins
+    intervention_id = None
     if DB_ENABLED and request.goal_id:
         try:
-            db_create_intervention(
+            intervention = db_create_intervention(
                 user_id=request.user_id,
                 strategy=request.strategy,
                 message=request.message,
                 goal_id=request.goal_id,
                 formula_active=False,
             )
+            if intervention:
+                intervention_id = intervention.get("id")
         except Exception as e:
             print(f"⚠️ Failed to store streaming intervention in DB: {e}")
 
@@ -631,6 +634,7 @@ async def log_streaming_message(request: StreamingLogRequest):
         data={
             "evaluation": evaluation,
             "thread_id": request.thread_id or f"goal_{request.goal_id}" if request.goal_id else None,
+            "intervention_id": intervention_id,
         }
     )
 

@@ -21,28 +21,11 @@ export default function HomePage() {
   const { user, loading, signInWithGoogle } = useAuth();
   const router = useRouter();
 
-  // Redirect to dashboard if already logged in
-  useEffect(() => {
-    if (user && !loading) {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-
   // Show loading while checking auth
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-10 h-10 animate-spin text-brand-500" />
-      </div>
-    );
-  }
-
-  // If user is logged in, show loading (will redirect)
-  if (user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-10 h-10 animate-spin text-brand-500" />
-        <p className="ml-3 text-surface-400">Redirecting to dashboard...</p>
       </div>
     );
   }
@@ -76,19 +59,30 @@ export default function HomePage() {
             </p>
 
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button
-                size="lg"
-                className="bg-white text-brand-700 hover:bg-gray-100"
-                onClick={signInWithGoogle}
-              >
-                Get Started Free
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-              <Link href="/login">
-                <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
-                  Sign In
-                </Button>
-              </Link>
+              {user ? (
+                <Link href="/dashboard">
+                  <Button size="lg" className="bg-white text-brand-700 hover:bg-gray-100">
+                    Go to Dashboard
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Button
+                    size="lg"
+                    className="bg-white text-brand-700 hover:bg-gray-100"
+                    onClick={signInWithGoogle}
+                  >
+                    Get Started Free
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                  <Link href="/login">
+                    <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
+                      Sign In
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* Stats */}
@@ -234,14 +228,23 @@ export default function HomePage() {
           <p className="text-xl text-white/80 mb-8">
             Start your personal motivation experiment today. It's free.
           </p>
-          <Button
-            size="lg"
-            className="bg-white text-brand-700 hover:bg-gray-100"
-            onClick={signInWithGoogle}
-          >
-            Start Your Experiment
-            <ArrowRight className="w-5 h-5 ml-2" />
-          </Button>
+          {user ? (
+            <Link href="/dashboard">
+              <Button size="lg" className="bg-white text-brand-700 hover:bg-gray-100">
+                Go to Dashboard
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </Link>
+          ) : (
+            <Button
+              size="lg"
+              className="bg-white text-brand-700 hover:bg-gray-100"
+              onClick={signInWithGoogle}
+            >
+              Start Your Experiment
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </Button>
+          )}
         </div>
       </section>
 

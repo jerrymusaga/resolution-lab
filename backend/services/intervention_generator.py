@@ -250,12 +250,12 @@ Generate the intervention message now:"""
         # Run custom Opik evaluators
         evaluation = None
         if include_evaluation:
-            user_context = {"streak": current_streak} if current_streak > 0 else None
+            eval_context = {"streak": current_streak} if current_streak > 0 else None
             evaluation = sync_message_evaluator.evaluate(
                 message=message,
                 strategy=strategy,
                 goal_title=goal_title,
-                user_context=user_context
+                user_context=eval_context
             )
 
         # Log to Opik trace (metadata + feedback scores)
@@ -337,12 +337,12 @@ Generate the intervention message now:"""
         evaluation = None
         if include_evaluation:
             try:
-                user_context = {"streak": current_streak} if current_streak > 0 else None
+                eval_context = {"streak": current_streak} if current_streak > 0 else None
                 evaluation = sync_message_evaluator.evaluate(
                     message=fallback_message,
                     strategy=strategy,
                     goal_title=goal_title,
-                    user_context=user_context
+                    user_context=eval_context
                 )
             except:
                 pass  # If evaluation fails, continue without it

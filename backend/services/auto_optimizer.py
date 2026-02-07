@@ -16,6 +16,7 @@ import os
 import json
 import asyncio
 import threading
+from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
 from typing import Dict, Optional, List, Any
 from pathlib import Path
@@ -200,16 +201,19 @@ def _run_optimization(strategy: str, user_id: str, interventions: List[Dict]) ->
         return None
 
 
+# Process pool for optimization - separate process has its own main thread,
+# which is required by opik-optimizer's use of Python's signal module
+_process_pool = ProcessPoolExecutor(max_workers=1)
+
+
 async def _background_optimize(strategy: str, user_id: str, interventions: List[Dict]):
-    """Run optimization as async background task."""
+    """Run optimization in a separate process (non-blocking, signal-safe)."""
     state = get_optimization_state()
 
     try:
-        # Run the sync optimization in a thread pool to avoid blocking the event loop,
-        # but use run_in_executor so signal-based code runs properly
         loop = asyncio.get_event_loop()
         result = await loop.run_in_executor(
-            None, _run_optimization, strategy, user_id, interventions
+            _process_pool, _run_optimization, strategy, user_id, interventions
         )
 
         if result:

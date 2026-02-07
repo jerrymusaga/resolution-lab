@@ -200,12 +200,17 @@ def _run_optimization(strategy: str, user_id: str, interventions: List[Dict]) ->
         return None
 
 
-def _background_optimize(strategy: str, user_id: str, interventions: List[Dict]):
-    """Run optimization in background thread."""
+async def _background_optimize(strategy: str, user_id: str, interventions: List[Dict]):
+    """Run optimization as async background task."""
     state = get_optimization_state()
 
     try:
-        result = _run_optimization(strategy, user_id, interventions)
+        # Run the sync optimization in a thread pool to avoid blocking the event loop,
+        # but use run_in_executor so signal-based code runs properly
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None, _run_optimization, strategy, user_id, interventions
+        )
 
         if result:
             state.record_result(strategy, result)
@@ -216,7 +221,7 @@ def _background_optimize(strategy: str, user_id: str, interventions: List[Dict])
             print(f"⚠️ Background optimization for {strategy} did not produce results")
 
     except Exception as e:
-        print(f"❌ Background optimization thread error for {strategy}: {e}")
+        print(f"❌ Background optimization error for {strategy}: {e}")
 
 
 async def check_and_trigger_optimization(
@@ -270,13 +275,10 @@ async def check_and_trigger_optimization(
                 'current_streak': inv.get('current_streak', 0),
             })
 
-        # Run optimization in background thread (non-blocking)
-        thread = threading.Thread(
-            target=_background_optimize,
-            args=(strategy, user_id, intervention_dicts),
-            daemon=True
+        # Run optimization as background async task (non-blocking)
+        asyncio.create_task(
+            _background_optimize(strategy, user_id, intervention_dicts)
         )
-        thread.start()
 
         print(f"🚀 Started background optimization for strategy: {strategy}")
         return True

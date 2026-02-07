@@ -41,7 +41,7 @@ AUTO_OPTIMIZER_AVAILABLE = OPTIMIZER_AVAILABLE
 
 
 # Configuration
-OPTIMIZATION_THRESHOLD = 15  # Trigger optimization after this many new interventions per strategy
+OPTIMIZATION_THRESHOLD = 3  # Trigger optimization after this many new interventions per strategy
 STATE_FILE_PATH = Path(__file__).parent.parent / "data" / "optimization_state.json"
 
 

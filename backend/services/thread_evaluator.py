@@ -246,10 +246,10 @@ class ThreadEvaluator:
                     return str(trace_output)
                 return str(trace_output) if trace_output else ""
 
-            # Run thread evaluation - filter for inactive threads with matching thread_id
+            # Run thread evaluation - filter for inactive threads with matching ID
             results = evaluate_threads(
                 project_name=project,
-                filter_string=f'thread_id = "{thread_id}" AND status = "inactive"',
+                filter_string=f'id = "{thread_id}" AND status = "inactive"',
                 eval_project_name=f"{project}_thread_evaluation",
                 metrics=[coherence_metric, frustration_metric],
                 trace_input_transform=extract_input,

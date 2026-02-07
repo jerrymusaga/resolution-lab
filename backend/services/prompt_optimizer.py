@@ -2,7 +2,6 @@
 Resolution Lab - Prompt Optimization with Opik Agent Optimizer
 
 Uses Opik's optimization algorithms to automatically improve motivation message prompts.
-This demonstrates advanced LLM optimization for hackathon judges.
 
 Features:
 - MetaPromptOptimizer: LLM-powered prompt refinement

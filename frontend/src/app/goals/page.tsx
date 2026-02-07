@@ -157,11 +157,11 @@ function GoalsContent() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-surface-900 flex items-center gap-2">
-            <CheckCircle2 className="w-7 h-7 text-brand-600" />
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <CheckCircle2 className="w-7 h-7 text-brand-400" />
             Your Goals
           </h1>
-          <p className="text-surface-500 mt-1">Manage and track all your goals</p>
+          <p className="text-surface-400 mt-1">Manage and track all your goals</p>
         </div>
         <Link href="/goals/new">
           <Button className="mt-4 sm:mt-0 bg-brand-600 hover:bg-brand-700 shadow-soft-sm">
@@ -190,8 +190,8 @@ function GoalsContent() {
             className={cn(
               'px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 whitespace-nowrap',
               filter === status
-                ? 'bg-brand-100 text-brand-700 shadow-soft-xs'
-                : 'bg-surface-100 text-surface-600 hover:bg-surface-200'
+                ? 'bg-brand-500/15 text-brand-400 shadow-soft-xs'
+                : 'bg-surface-700 text-surface-300 hover:bg-surface-600'
             )}
           >
             {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -204,18 +204,18 @@ function GoalsContent() {
       {loading ? (
         <div className="grid md:grid-cols-2 gap-6">
           {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-64 bg-surface-200 rounded-2xl animate-pulse" />
+            <div key={i} className="h-64 bg-surface-700 rounded-2xl animate-pulse" />
           ))}
         </div>
       ) : filteredGoals.length === 0 ? (
-        <Card variant="bordered" className="text-center py-16 bg-surface-50/50">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface-100 mb-4">
+        <Card variant="bordered" className="text-center py-16 bg-surface-800/50">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface-700 mb-4">
             <Target className="w-8 h-8 text-surface-400" />
           </div>
-          <h3 className="text-lg font-semibold text-surface-900 mb-2">
+          <h3 className="text-lg font-semibold text-white mb-2">
             {filter === 'all' ? 'No goals yet' : `No ${filter} goals`}
           </h3>
-          <p className="text-surface-500 mb-6 max-w-sm mx-auto">
+          <p className="text-surface-400 mb-6 max-w-sm mx-auto">
             {filter === 'all'
               ? 'Create your first goal to start your motivation experiment'
               : `You don't have any ${filter} goals at the moment`
@@ -250,11 +250,11 @@ function GoalsContent() {
 
       {/* Error message */}
       {checkInError && (
-        <div className="fixed top-4 right-4 z-50 bg-danger-50 border border-danger-200 text-danger-800 px-4 py-3 rounded-xl shadow-soft-lg flex items-center gap-3 animate-fade-in">
+        <div className="fixed top-4 right-4 z-50 bg-danger-500/10 border border-danger-500/20 text-danger-400 px-4 py-3 rounded-xl shadow-soft-lg flex items-center gap-3 animate-fade-in">
           <span>{checkInError}</span>
           <button
             onClick={() => setCheckInError(null)}
-            className="text-danger-600 hover:text-danger-800 font-bold transition-colors"
+            className="text-danger-400 hover:text-danger-400 font-bold transition-colors"
           >
             ×
           </button>
@@ -266,11 +266,11 @@ function GoalsContent() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
           <Card variant="elevated" className="p-8 text-center max-w-sm mx-4 shadow-soft-2xl">
             <div className="relative w-16 h-16 mx-auto mb-4">
-              <div className="w-16 h-16 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin" />
-              <Brain className="w-6 h-6 text-brand-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+              <div className="w-16 h-16 border-4 border-brand-500/20 border-t-brand-500 rounded-full animate-spin" />
+              <Brain className="w-6 h-6 text-brand-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
             </div>
-            <p className="text-surface-900 font-semibold">Generating your check-in...</p>
-            <p className="text-surface-500 text-sm mt-1">Finding the best motivation for you</p>
+            <p className="text-white font-semibold">Generating your check-in...</p>
+            <p className="text-surface-400 text-sm mt-1">Finding the best motivation for you</p>
           </Card>
         </div>
       )}

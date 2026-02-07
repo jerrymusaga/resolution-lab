@@ -188,10 +188,10 @@ function DashboardContent() {
       <div className="page-container">
         <div className="min-h-[60vh] flex flex-col items-center justify-center">
           <div className="relative">
-            <div className="w-20 h-20 rounded-full border-4 border-brand-200 border-t-brand-600 animate-spin" />
-            <FlaskConical className="w-8 h-8 text-brand-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+            <div className="w-20 h-20 rounded-full border-4 border-brand-500/20 border-t-brand-500 animate-spin" />
+            <FlaskConical className="w-8 h-8 text-brand-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
           </div>
-          <p className="mt-6 text-surface-600 animate-pulse">Loading your dashboard...</p>
+          <p className="mt-6 text-surface-300 animate-pulse">Loading your dashboard...</p>
         </div>
       </div>
     );
@@ -201,11 +201,11 @@ function DashboardContent() {
     <div className="page-container bg-mesh min-h-screen">
       {/* Error message */}
       {error && (
-        <div className="mb-6 bg-danger-50 border border-danger-200 rounded-2xl p-4 flex items-start space-x-3 shadow-soft-sm">
+        <div className="mb-6 bg-danger-500/10 border border-danger-500/20 rounded-2xl p-4 flex items-start space-x-3 shadow-soft-sm">
           <AlertCircle className="w-5 h-5 text-danger-500 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-danger-800 font-medium">Connection Error</p>
-            <p className="text-danger-600 text-sm mt-1">{error}</p>
+            <p className="text-danger-400 font-medium">Connection Error</p>
+            <p className="text-danger-400 text-sm mt-1">{error}</p>
           </div>
         </div>
       )}
@@ -233,7 +233,7 @@ function DashboardContent() {
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link href="/goals/new">
-                  <Button size="lg" className="bg-white text-brand-700 hover:bg-white/90 shadow-soft-lg">
+                  <Button size="lg" className="bg-white text-brand-400 hover:bg-white/90 shadow-soft-lg">
                     <Plus className="w-5 h-5 mr-2" />
                     Create Your First Goal
                   </Button>
@@ -259,11 +259,11 @@ function DashboardContent() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-surface-900 flex items-center gap-2">
-            <BarChart3 className="w-7 h-7 text-brand-600" />
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <BarChart3 className="w-7 h-7 text-brand-400" />
             Dashboard
           </h1>
-          <p className="text-surface-500 mt-1">Track your goals and discover what motivates you</p>
+          <p className="text-surface-400 mt-1">Track your goals and discover what motivates you</p>
         </div>
         <Link href="/goals/new">
           <Button className="mt-4 sm:mt-0 bg-brand-600 hover:bg-brand-700 shadow-soft-sm">
@@ -305,7 +305,7 @@ function DashboardContent() {
                 </div>
 
                 <Link href="/insights">
-                  <Button className="bg-white text-accent-700 hover:bg-white/90 shadow-soft-md whitespace-nowrap">
+                  <Button className="bg-white text-accent-400 hover:bg-white/90 shadow-soft-md whitespace-nowrap">
                     View Full Insights
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
@@ -319,47 +319,47 @@ function DashboardContent() {
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {/* Active Goals */}
-        <Card variant="bordered" className="bg-gradient-to-br from-brand-50 to-brand-100/50 border-brand-200/50 hover:shadow-soft-md transition-all duration-200">
+        <Card variant="bordered" className="bg-gradient-to-br from-brand-500/10 to-brand-500/5 border-brand-500/20 hover:shadow-soft-md transition-all duration-200">
           <CardContent className="py-5">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-brand-100 flex items-center justify-center shadow-soft-xs">
-                <Target className="w-6 h-6 text-brand-600" />
+              <div className="w-12 h-12 rounded-xl bg-brand-500/15 flex items-center justify-center shadow-soft-xs">
+                <Target className="w-6 h-6 text-brand-400" />
               </div>
               <div>
-                <p className="text-3xl font-bold text-surface-900">{activeGoals.length}</p>
-                <p className="text-sm text-surface-600">Active Goals</p>
+                <p className="text-3xl font-bold text-white">{activeGoals.length}</p>
+                <p className="text-sm text-surface-300">Active Goals</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Experiments Run */}
-        <Card variant="bordered" className="bg-gradient-to-br from-purple-50 to-violet-100/50 border-purple-200/50 hover:shadow-soft-md transition-all duration-200">
+        <Card variant="bordered" className="bg-gradient-to-br from-purple-500/10 to-violet-500/5 border-purple-500/20 hover:shadow-soft-md transition-all duration-200">
           <CardContent className="py-5">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center shadow-soft-xs">
-                <FlaskConical className="w-6 h-6 text-purple-600" />
+              <div className="w-12 h-12 rounded-xl bg-purple-500/15 flex items-center justify-center shadow-soft-xs">
+                <FlaskConical className="w-6 h-6 text-purple-400" />
               </div>
               <div>
-                <p className="text-3xl font-bold text-surface-900">{summary?.data_points || 0}</p>
-                <p className="text-sm text-surface-600">Experiments</p>
+                <p className="text-3xl font-bold text-white">{summary?.data_points || 0}</p>
+                <p className="text-sm text-surface-300">Experiments</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Strategies Tested */}
-        <Card variant="bordered" className="bg-gradient-to-br from-warning-50 to-orange-100/50 border-warning-200/50 hover:shadow-soft-md transition-all duration-200">
+        <Card variant="bordered" className="bg-gradient-to-br from-warning-500/10 to-orange-500/5 border-warning-500/20 hover:shadow-soft-md transition-all duration-200">
           <CardContent className="py-5">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-warning-100 flex items-center justify-center shadow-soft-xs">
-                <Brain className="w-6 h-6 text-warning-600" />
+              <div className="w-12 h-12 rounded-xl bg-warning-500/15 flex items-center justify-center shadow-soft-xs">
+                <Brain className="w-6 h-6 text-warning-400" />
               </div>
               <div>
-                <p className="text-3xl font-bold text-surface-900">
-                  {summary?.strategies_tested || 0}<span className="text-lg text-surface-400">/8</span>
+                <p className="text-3xl font-bold text-white">
+                  {summary?.strategies_tested || 0}<span className="text-lg text-surface-500">/8</span>
                 </p>
-                <p className="text-sm text-surface-600">Strategies</p>
+                <p className="text-sm text-surface-300">Strategies</p>
               </div>
             </div>
           </CardContent>
@@ -369,29 +369,29 @@ function DashboardContent() {
         <Card variant="bordered" className={cn(
           "hover:shadow-soft-md transition-all duration-200",
           summary?.experiment_phase === 'optimizing'
-            ? 'bg-gradient-to-br from-accent-50 to-accent-100/50 border-accent-200/50'
-            : 'bg-gradient-to-br from-cyan-50 to-sky-100/50 border-cyan-200/50'
+            ? 'bg-gradient-to-br from-accent-500/10 to-accent-500/5 border-accent-500/20'
+            : 'bg-gradient-to-br from-cyan-500/10 to-sky-500/5 border-cyan-500/20'
         )}>
           <CardContent className="py-5">
             <div className="flex items-center gap-4">
               <div className={cn(
                 "w-12 h-12 rounded-xl flex items-center justify-center shadow-soft-xs",
-                summary?.experiment_phase === 'optimizing' ? 'bg-accent-100' : 'bg-cyan-100'
+                summary?.experiment_phase === 'optimizing' ? 'bg-accent-500/15' : 'bg-cyan-500/15'
               )}>
                 {summary?.experiment_phase === 'optimizing' ? (
-                  <Rocket className="w-6 h-6 text-accent-600" />
+                  <Rocket className="w-6 h-6 text-accent-400" />
                 ) : (
-                  <FlaskConical className="w-6 h-6 text-cyan-600" />
+                  <FlaskConical className="w-6 h-6 text-cyan-400" />
                 )}
               </div>
               <div>
                 <p className={cn(
                   "text-lg font-bold",
-                  summary?.experiment_phase === 'optimizing' ? 'text-accent-700' : 'text-cyan-700'
+                  summary?.experiment_phase === 'optimizing' ? 'text-accent-400' : 'text-cyan-400'
                 )}>
                   {summary?.experiment_phase === 'optimizing' ? 'Optimizing' : 'Exploring'}
                 </p>
-                <p className="text-sm text-surface-600">Current Phase</p>
+                <p className="text-sm text-surface-300">Current Phase</p>
               </div>
             </div>
           </CardContent>
@@ -407,37 +407,37 @@ function DashboardContent() {
 
       {/* Progress to Discovery - Only show when not yet discovered */}
       {!hasDiscovery && (summary?.data_points || 0) > 0 && (
-        <Card variant="bordered" className="mb-8 bg-gradient-to-r from-brand-50 via-purple-50 to-accent-50 border-brand-200/50 shadow-soft-sm">
+        <Card variant="bordered" className="mb-8 bg-gradient-to-r from-brand-500/10 via-purple-500/10 to-accent-500/10 border-brand-500/20 shadow-soft-sm">
           <CardContent className="py-6">
             <div className="flex flex-col sm:flex-row sm:items-center gap-6">
               <div className="flex items-center gap-4 flex-1">
-                <div className="w-14 h-14 rounded-xl bg-white shadow-soft-sm flex items-center justify-center flex-shrink-0">
-                  <Zap className="w-7 h-7 text-brand-600" />
+                <div className="w-14 h-14 rounded-xl bg-surface-800 shadow-soft-sm flex items-center justify-center flex-shrink-0">
+                  <Zap className="w-7 h-7 text-brand-400" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-surface-900 mb-1">Discovering Your Formula...</h3>
-                  <p className="text-sm text-surface-600 mb-3">
+                  <h3 className="font-semibold text-white mb-1">Discovering Your Formula...</h3>
+                  <p className="text-sm text-surface-300 mb-3">
                     {20 - (summary?.data_points || 0) > 0
                       ? `${20 - (summary?.data_points || 0)} more check-ins until we find your optimal strategy`
                       : 'Almost there! Keep going to unlock insights'
                     }
                   </p>
                   <div className="relative">
-                    <div className="h-3 bg-white rounded-full overflow-hidden shadow-inner-soft">
+                    <div className="h-3 bg-surface-800 rounded-full overflow-hidden shadow-inner">
                       <div
                         className="h-full bg-gradient-to-r from-brand-500 via-purple-500 to-accent-500 rounded-full transition-all duration-500"
                         style={{ width: `${progressPercent}%` }}
                       />
                     </div>
                     <div className="flex justify-between mt-1">
-                      <span className="text-xs text-surface-500">{summary?.data_points || 0} experiments</span>
-                      <span className="text-xs text-surface-500">20 for discovery</span>
+                      <span className="text-xs text-surface-400">{summary?.data_points || 0} experiments</span>
+                      <span className="text-xs text-surface-400">20 for discovery</span>
                     </div>
                   </div>
                 </div>
               </div>
               <Link href="/insights" className="flex-shrink-0">
-                <Button variant="outline" size="sm" className="border-brand-200 text-brand-700 hover:bg-brand-50">
+                <Button variant="outline" size="sm" className="border-brand-500/30 text-brand-400 hover:bg-brand-500/10">
                   Preview Insights
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
@@ -450,23 +450,23 @@ function DashboardContent() {
       {/* Goals Section */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-surface-900 flex items-center gap-2">
-            <Target className="w-5 h-5 text-brand-600" />
+          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+            <Target className="w-5 h-5 text-brand-400" />
             Your Goals
           </h2>
-          <Link href="/goals" className="text-sm text-brand-600 hover:text-brand-700 flex items-center gap-1 transition-colors">
+          <Link href="/goals" className="text-sm text-brand-400 hover:text-brand-400 flex items-center gap-1 transition-colors">
             View all
             <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
 
         {activeGoals.length === 0 ? (
-          <Card variant="bordered" className="text-center py-16 bg-surface-50/50 border-surface-200">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface-100 mb-4">
+          <Card variant="bordered" className="text-center py-16 bg-surface-900/50 border-white/[0.06]">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface-700 mb-4">
               <Target className="w-8 h-8 text-surface-400" />
             </div>
-            <h3 className="text-xl font-semibold text-surface-900 mb-2">No active goals yet</h3>
-            <p className="text-surface-500 mb-6 max-w-sm mx-auto">
+            <h3 className="text-xl font-semibold text-white mb-2">No active goals yet</h3>
+            <p className="text-surface-400 mb-6 max-w-sm mx-auto">
               Create your first goal to start experimenting and discover what motivates you
             </p>
             <Link href="/goals/new">
@@ -499,54 +499,54 @@ function DashboardContent() {
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         {/* Try Simulation */}
         <Link href="/experiment" className="block">
-          <Card variant="bordered" className="h-full hover:shadow-soft-md hover:border-brand-200 transition-all duration-200 cursor-pointer group">
+          <Card variant="bordered" className="h-full hover:shadow-soft-md hover:border-brand-500/30 transition-all duration-200 cursor-pointer group">
             <CardContent className="py-5 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-100 to-violet-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-200 shadow-soft-xs">
-                <FlaskConical className="w-6 h-6 text-purple-600" />
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/15 to-violet-500/15 flex items-center justify-center group-hover:scale-110 transition-transform duration-200 shadow-soft-xs">
+                <FlaskConical className="w-6 h-6 text-purple-400" />
               </div>
               <div>
-                <h3 className="font-semibold text-surface-900 group-hover:text-brand-600 transition-colors">
+                <h3 className="font-semibold text-white group-hover:text-brand-400 transition-colors">
                   Try Simulation
                 </h3>
-                <p className="text-sm text-surface-500">See how experiments work</p>
+                <p className="text-sm text-surface-400">See how experiments work</p>
               </div>
-              <ChevronRight className="w-5 h-5 text-surface-300 ml-auto group-hover:text-brand-500 group-hover:translate-x-1 transition-all duration-200" />
+              <ChevronRight className="w-5 h-5 text-surface-500 ml-auto group-hover:text-brand-500 group-hover:translate-x-1 transition-all duration-200" />
             </CardContent>
           </Card>
         </Link>
 
         {/* View Insights */}
         <Link href="/insights" className="block">
-          <Card variant="bordered" className="h-full hover:shadow-soft-md hover:border-brand-200 transition-all duration-200 cursor-pointer group">
+          <Card variant="bordered" className="h-full hover:shadow-soft-md hover:border-brand-500/30 transition-all duration-200 cursor-pointer group">
             <CardContent className="py-5 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent-100 to-teal-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-200 shadow-soft-xs">
-                <TrendingUp className="w-6 h-6 text-accent-600" />
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent-500/15 to-teal-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-200 shadow-soft-xs">
+                <TrendingUp className="w-6 h-6 text-accent-400" />
               </div>
               <div>
-                <h3 className="font-semibold text-surface-900 group-hover:text-brand-600 transition-colors">
+                <h3 className="font-semibold text-white group-hover:text-brand-400 transition-colors">
                   View Insights
                 </h3>
-                <p className="text-sm text-surface-500">See your experiment results</p>
+                <p className="text-sm text-surface-400">See your experiment results</p>
               </div>
-              <ChevronRight className="w-5 h-5 text-surface-300 ml-auto group-hover:text-brand-500 group-hover:translate-x-1 transition-all duration-200" />
+              <ChevronRight className="w-5 h-5 text-surface-500 ml-auto group-hover:text-brand-500 group-hover:translate-x-1 transition-all duration-200" />
             </CardContent>
           </Card>
         </Link>
 
         {/* AI Agent Demo */}
         <Link href="/agent" className="block sm:col-span-2 lg:col-span-1">
-          <Card variant="bordered" className="h-full hover:shadow-soft-md hover:border-brand-200 transition-all duration-200 cursor-pointer group">
+          <Card variant="bordered" className="h-full hover:shadow-soft-md hover:border-brand-500/30 transition-all duration-200 cursor-pointer group">
             <CardContent className="py-5 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-100 to-indigo-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-200 shadow-soft-xs">
-                <Brain className="w-6 h-6 text-brand-600" />
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-500/15 to-indigo-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-200 shadow-soft-xs">
+                <Brain className="w-6 h-6 text-brand-400" />
               </div>
               <div>
-                <h3 className="font-semibold text-surface-900 group-hover:text-brand-600 transition-colors">
+                <h3 className="font-semibold text-white group-hover:text-brand-400 transition-colors">
                   AI Coach
                 </h3>
-                <p className="text-sm text-surface-500">Watch the 6-step cognitive loop</p>
+                <p className="text-sm text-surface-400">Watch the 6-step cognitive loop</p>
               </div>
-              <ChevronRight className="w-5 h-5 text-surface-300 ml-auto group-hover:text-brand-500 group-hover:translate-x-1 transition-all duration-200" />
+              <ChevronRight className="w-5 h-5 text-surface-500 ml-auto group-hover:text-brand-500 group-hover:translate-x-1 transition-all duration-200" />
             </CardContent>
           </Card>
         </Link>
@@ -554,15 +554,15 @@ function DashboardContent() {
 
       {/* Experiment CTA - Only for users with no data and can check in */}
       {(summary?.data_points || 0) === 0 && activeGoals.length > 0 && activeGoals.some(g => g.can_check_in) && (
-        <Card variant="bordered" className="bg-gradient-to-br from-warning-50 to-orange-50 border-warning-200/50 shadow-soft-sm">
+        <Card variant="bordered" className="bg-gradient-to-br from-warning-500/10 to-orange-500/10 border-warning-500/20 shadow-soft-sm">
           <CardContent className="py-8 text-center">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-warning-100 mb-4 shadow-soft-xs">
-              <Clock className="w-7 h-7 text-warning-600" />
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-warning-500/15 mb-4 shadow-soft-xs">
+              <Clock className="w-7 h-7 text-warning-400" />
             </div>
-            <h3 className="text-lg font-semibold text-surface-900 mb-2">
+            <h3 className="text-lg font-semibold text-white mb-2">
               Ready for Your First Check-in?
             </h3>
-            <p className="text-surface-600 mb-4 max-w-md mx-auto">
+            <p className="text-surface-300 mb-4 max-w-md mx-auto">
               Each check-in is an experiment. We'll try different motivation strategies and track what works best for you.
             </p>
             <Button
@@ -597,11 +597,11 @@ function DashboardContent() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
           <Card variant="elevated" className="p-8 text-center max-w-sm mx-4 shadow-soft-2xl">
             <div className="relative w-16 h-16 mx-auto mb-4">
-              <div className="w-16 h-16 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin" />
-              <Brain className="w-6 h-6 text-brand-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+              <div className="w-16 h-16 border-4 border-brand-500/20 border-t-brand-500 rounded-full animate-spin" />
+              <Brain className="w-6 h-6 text-brand-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
             </div>
-            <h3 className="font-semibold text-surface-900 mb-1">AI is thinking...</h3>
-            <p className="text-surface-500 text-sm">Crafting a personalized message just for you</p>
+            <h3 className="font-semibold text-white mb-1">AI is thinking...</h3>
+            <p className="text-surface-400 text-sm">Crafting a personalized message just for you</p>
           </Card>
         </div>
       )}

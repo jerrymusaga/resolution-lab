@@ -49,11 +49,11 @@ export default function Progress({
     <div className={cn('w-full', className)}>
       {(showLabel || label) && (
         <div className="flex justify-between items-center mb-1">
-          {label && <span className="text-sm font-medium text-gray-700">{label}</span>}
-          {showLabel && <span className="text-sm text-gray-500">{clampedValue.toFixed(0)}%</span>}
+          {label && <span className="text-sm font-medium text-surface-200">{label}</span>}
+          {showLabel && <span className="text-sm text-surface-300">{clampedValue.toFixed(0)}%</span>}
         </div>
       )}
-      <div className={cn('w-full bg-gray-200 rounded-full overflow-hidden', sizes[size])}>
+      <div className={cn('w-full bg-surface-700 rounded-full overflow-hidden', sizes[size])}>
         <div
           className={cn(
             'h-full rounded-full transition-all duration-500 ease-out',

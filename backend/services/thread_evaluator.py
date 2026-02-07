@@ -5,8 +5,6 @@ Manages Opik thread lifecycle and evaluation:
 - Closing threads to mark them as inactive
 - Evaluating inactive threads with feedback scores
 - Built-in metrics: Conversation Coherence, User Frustration
-
-This demonstrates advanced Opik thread features.
 """
 
 import os

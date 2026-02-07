@@ -20,7 +20,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="font-sans antialiased">
         <AuthProvider>
-          <div className="min-h-screen bg-gray-50">
+          <div className="min-h-screen bg-surface-950">
             <Header />
             <main>{children}</main>
           </div>

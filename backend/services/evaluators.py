@@ -1,10 +1,7 @@
 """
 Resolution Lab - Custom Opik Evaluators
 
-Advanced evaluation metrics for assessing motivation message quality.
-
-KEY DIFFERENTIATOR: Shows production-ready evaluation patterns
-that go beyond basic tracing.
+Evaluation metrics for assessing motivation message quality.
 """
 
 import opik

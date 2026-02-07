@@ -419,7 +419,7 @@ class CelebrationImageGenerator:
         2. GOOGLE_IMAGE_API_KEY (dedicated image generation key)
         3. GOOGLE_API_KEY (fallback to shared key)
         """
-        self.api_key = api_key or os.getenv("GOOGLE_IMAGE_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        self.api_key = api_key or os.getenv("GOOGLE_IMAGE_API_KEY")
         self.model = "gemini-2.5-flash-image"  # Nano Banana - Gemini's native image generation model
         self.client = None
 

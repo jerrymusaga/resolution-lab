@@ -4,11 +4,6 @@ Resolution Lab - AI Coach Agent
 An autonomous agent that observes, thinks, plans, acts, and learns.
 Every step is traced in Opik for full observability.
 
-This is the KEY DIFFERENTIATOR for the hackathon - it shows:
-1. True agentic behavior (not just an LLM wrapper)
-2. Deep Opik integration with nested traces
-3. Use of Opik Experiments for A/B testing
-4. LLM-as-judge evaluation
 """
 
 import opik

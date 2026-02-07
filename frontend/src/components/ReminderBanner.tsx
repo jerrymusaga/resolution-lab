@@ -83,25 +83,25 @@ export default function ReminderBanner({
     <div className="mb-6 animate-in slide-in-from-top duration-300">
       <div
         className={cn(
-          'bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl overflow-hidden',
-          'shadow-sm hover:shadow-md transition-shadow'
+          'bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl overflow-hidden',
+          'shadow-soft-sm hover:shadow-soft-md transition-shadow'
         )}
       >
         {/* Main banner */}
         <div className="p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-amber-100 rounded-full">
-              <Bell className="w-5 h-5 text-amber-600" />
+            <div className="p-2 bg-amber-500/15 rounded-full">
+              <Bell className="w-5 h-5 text-amber-400" />
             </div>
             <div>
-              <p className="font-medium text-gray-900">
+              <p className="font-medium text-white">
                 {count === 1 ? (
-                  <>Time to check in on <span className="text-amber-700">{firstGoal.title}</span></>
+                  <>Time to check in on <span className="text-amber-400">{firstGoal.title}</span></>
                 ) : (
                   <>{count} goals waiting for your check-in</>
                 )}
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-surface-300">
                 {count === 1
                   ? "Let's see how you're doing today!"
                   : 'Stay on track with your daily progress'
@@ -114,14 +114,14 @@ export default function ReminderBanner({
             {count === 1 ? (
               <button
                 onClick={() => handleCheckIn(firstGoal.id)}
-                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium transition-colors text-sm"
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black rounded-lg font-medium transition-colors text-sm"
               >
                 Check In Now
               </button>
             ) : (
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium transition-colors text-sm flex items-center gap-1"
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black rounded-lg font-medium transition-colors text-sm flex items-center gap-1"
               >
                 View All
                 <ChevronRight className={cn('w-4 h-4 transition-transform', isExpanded && 'rotate-90')} />
@@ -129,29 +129,29 @@ export default function ReminderBanner({
             )}
             <button
               onClick={handleDismiss}
-              className="p-2 hover:bg-amber-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-white/[0.06] rounded-lg transition-colors"
               aria-label="Dismiss reminder"
             >
-              <X className="w-4 h-4 text-gray-400" />
+              <X className="w-4 h-4 text-surface-400" />
             </button>
           </div>
         </div>
 
         {/* Expanded list for multiple goals */}
         {isExpanded && count > 1 && (
-          <div className="border-t border-amber-200 bg-white/50">
+          <div className="border-t border-amber-500/20 bg-surface-800/50">
             {goalsNeedingCheckIn.map((goal, index) => (
               <div
                 key={goal.id}
                 className={cn(
-                  'flex items-center justify-between p-3 hover:bg-amber-50/50 transition-colors',
-                  index !== goalsNeedingCheckIn.length - 1 && 'border-b border-amber-100'
+                  'flex items-center justify-between p-3 hover:bg-white/[0.04] transition-colors',
+                  index !== goalsNeedingCheckIn.length - 1 && 'border-b border-white/[0.04]'
                 )}
               >
-                <span className="text-gray-700">{goal.title}</span>
+                <span className="text-surface-200">{goal.title}</span>
                 <button
                   onClick={() => handleCheckIn(goal.id)}
-                  className="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-700 rounded-md text-sm font-medium transition-colors"
+                  className="px-3 py-1.5 bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 rounded-md text-sm font-medium transition-colors"
                 >
                   Check In
                 </button>

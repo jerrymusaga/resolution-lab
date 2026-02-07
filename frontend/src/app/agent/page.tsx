@@ -496,19 +496,19 @@ export default function AgentPage() {
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white mb-6 shadow-lg">
             <Brain className="w-10 h-10" />
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">AI Motivation Coach</h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">AI Motivation Coach</h1>
+          <p className="text-lg text-surface-300 max-w-2xl mx-auto">
             Get personalized motivation tailored to what works best for you
           </p>
         </div>
 
         <Card variant="bordered" className="max-w-md mx-auto">
           <CardContent className="pt-8 pb-8 text-center">
-            <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center mx-auto mb-4">
-              <LogIn className="w-8 h-8 text-indigo-600" />
+            <div className="w-16 h-16 rounded-full bg-indigo-500/15 flex items-center justify-center mx-auto mb-4">
+              <LogIn className="w-8 h-8 text-indigo-400" />
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Sign in to continue</h2>
-            <p className="text-gray-600 mb-6">
+            <h2 className="text-xl font-semibold text-white mb-2">Sign in to continue</h2>
+            <p className="text-surface-300 mb-6">
               Sign in to get personalized motivation messages and track your progress over time. Your responses help the AI learn what motivates you best.
             </p>
             <Link href="/login">
@@ -532,10 +532,10 @@ export default function AgentPage() {
         </div>
         <div className="mb-3">
           <span className="text-2xl mr-2">{emoji}</span>
-          <span className="text-xl text-gray-500">{greeting}, {user?.full_name?.split(' ')[0] || 'there'}!</span>
+          <span className="text-xl text-surface-400">{greeting}, {user?.full_name?.split(' ')[0] || 'there'}!</span>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">AI Motivation Coach</h1>
-        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">AI Motivation Coach</h1>
+        <p className="text-lg text-surface-300 max-w-2xl mx-auto">
           {greetingMessage}. Get personalized motivation tailored to what works best for you.
         </p>
         {streakMessage && (
@@ -627,16 +627,16 @@ export default function AgentPage() {
 
       {/* Formula Status Banner */}
       {formulaStatus?.formula_applied && formulaStatus.preferred_strategy && (
-        <Card variant="bordered" className="mb-4 bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-200">
+        <Card variant="bordered" className="mb-4 bg-gradient-to-r from-emerald-500/10 to-green-500/10 border-emerald-500/20">
           <CardContent className="py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-emerald-100 rounded-full">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                <div className="p-2 bg-emerald-500/15 rounded-full">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                 </div>
                 <div>
-                  <p className="font-semibold text-emerald-800">Your Motivation Formula is Active</p>
-                  <p className="text-sm text-emerald-600">
+                  <p className="font-semibold text-emerald-400">Your Motivation Formula is Active</p>
+                  <p className="text-sm text-emerald-400">
                     Using{' '}
                     <span className="font-bold">
                       {STRATEGY_ICONS[formulaStatus.preferred_strategy]}{' '}
@@ -648,7 +648,7 @@ export default function AgentPage() {
               </div>
               <Link
                 href="/insights"
-                className="text-sm text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
+                className="text-sm text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
               >
                 <Sparkles className="w-4 h-4" />
                 View Insights
@@ -660,16 +660,16 @@ export default function AgentPage() {
 
       {/* No Formula Banner - Encourage to experiment */}
       {formulaStatus && !formulaStatus.formula_applied && formulaStatus.ready_to_apply && (
-        <Card variant="bordered" className="mb-4 bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200">
+        <Card variant="bordered" className="mb-4 bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border-amber-500/20">
           <CardContent className="py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-amber-100 rounded-full">
-                  <Sparkles className="w-5 h-5 text-amber-600" />
+                <div className="p-2 bg-amber-500/15 rounded-full">
+                  <Sparkles className="w-5 h-5 text-amber-400" />
                 </div>
                 <div>
-                  <p className="font-semibold text-amber-800">Your Motivation Formula is Ready!</p>
-                  <p className="text-sm text-amber-600">
+                  <p className="font-semibold text-amber-400">Your Motivation Formula is Ready!</p>
+                  <p className="text-sm text-amber-400">
                     We found that{' '}
                     <span className="font-bold">
                       {STRATEGY_ICONS[formulaStatus.best_strategy || '']}{' '}
@@ -693,9 +693,9 @@ export default function AgentPage() {
 
       {/* Goal Selection Section */}
       <Card variant="bordered" className="mb-8 overflow-hidden">
-        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 px-6 py-4 border-b border-indigo-100">
-          <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-            <Target className="w-5 h-5 text-indigo-600" />
+        <div className="bg-gradient-to-r from-indigo-500/10 to-purple-500/10 px-6 py-4 border-b border-indigo-500/20">
+          <h2 className="font-semibold text-white flex items-center gap-2">
+            <Target className="w-5 h-5 text-indigo-400" />
             What do you need motivation for?
           </h2>
         </div>
@@ -718,25 +718,25 @@ export default function AgentPage() {
                     className={cn(
                       "p-4 rounded-xl border-2 text-left transition-all",
                       selectedGoal?.id === goal.id
-                        ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-500/20"
-                        : "border-gray-200 hover:border-indigo-300 hover:bg-gray-50"
+                        ? "border-indigo-500 bg-indigo-500/10 ring-2 ring-indigo-500/20"
+                        : "border-white/[0.06] hover:border-indigo-500/30 hover:bg-surface-700"
                     )}
                   >
                     <div className="flex items-start gap-3">
                       <div className={cn(
                         "w-10 h-10 rounded-lg flex items-center justify-center",
-                        selectedGoal?.id === goal.id ? "bg-indigo-500 text-white" : "bg-gray-100 text-gray-500"
+                        selectedGoal?.id === goal.id ? "bg-indigo-500 text-white" : "bg-surface-700 text-surface-400"
                       )}>
                         <Target className="w-5 h-5" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className={cn(
                           "font-semibold truncate",
-                          selectedGoal?.id === goal.id ? "text-indigo-900" : "text-gray-900"
+                          selectedGoal?.id === goal.id ? "text-indigo-300" : "text-white"
                         )}>
                           {goal.title}
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-surface-400">
                           {goal.current_streak || 0} day streak
                         </p>
                       </div>
@@ -750,10 +750,10 @@ export default function AgentPage() {
 
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200" />
+                  <div className="w-full border-t border-white/[0.06]" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">or enter a custom goal</span>
+                  <span className="px-2 bg-surface-800 text-surface-400">or enter a custom goal</span>
                 </div>
               </div>
 
@@ -770,7 +770,7 @@ export default function AgentPage() {
           ) : (
             <div className="space-y-4">
               <div className="text-center py-4">
-                <p className="text-gray-500 mb-4">You don't have any active goals yet</p>
+                <p className="text-surface-400 mb-4">You don't have any active goals yet</p>
                 <Link href="/goals/new">
                   <Button variant="outline">
                     <Target className="w-4 h-4 mr-2" />
@@ -781,10 +781,10 @@ export default function AgentPage() {
 
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200" />
+                  <div className="w-full border-t border-white/[0.06]" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">or try with a custom goal</span>
+                  <span className="px-2 bg-surface-800 text-surface-400">or try with a custom goal</span>
                 </div>
               </div>
 
@@ -798,14 +798,14 @@ export default function AgentPage() {
 
           {/* Mode Toggle */}
           <div className="mt-6 mb-4">
-            <div className="flex items-center justify-center gap-2 p-1 bg-gray-100 rounded-lg max-w-md mx-auto">
+            <div className="flex items-center justify-center gap-2 p-1 bg-surface-700 rounded-lg max-w-md mx-auto">
               <button
                 onClick={() => setUseStreamingMode(false)}
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all",
                   !useStreamingMode
-                    ? "bg-white shadow text-indigo-700"
-                    : "text-gray-600 hover:text-gray-900"
+                    ? "bg-surface-600 shadow text-indigo-400"
+                    : "text-surface-400 hover:text-white"
                 )}
               >
                 <Brain className="w-4 h-4" />
@@ -816,15 +816,15 @@ export default function AgentPage() {
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all",
                   useStreamingMode
-                    ? "bg-white shadow text-amber-700"
-                    : "text-gray-600 hover:text-gray-900"
+                    ? "bg-surface-600 shadow text-amber-400"
+                    : "text-surface-400 hover:text-white"
                 )}
               >
                 <Bolt className="w-4 h-4" />
                 Quick Stream
               </button>
             </div>
-            <p className="text-center text-xs text-gray-500 mt-2">
+            <p className="text-center text-xs text-surface-400 mt-2">
               {useStreamingMode
                 ? "Instant streaming response powered by Vercel AI SDK"
                 : "Full 6-step agent reasoning with detailed insights"}
@@ -834,11 +834,11 @@ export default function AgentPage() {
           {/* Strategy Selection (only for streaming mode) */}
           {useStreamingMode && (
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Select Strategy</label>
+              <label className="block text-sm font-medium text-surface-200 mb-2">Select Strategy</label>
               <select
                 value={streamingStrategy}
                 onChange={(e) => setStreamingStrategy(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-gray-900"
+                className="w-full px-3 py-2 border border-white/[0.08] rounded-lg bg-surface-900 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-surface-100"
               >
                 <option value="gentle_reminder">Gentle Reminder</option>
                 <option value="accountability">Accountability</option>
@@ -884,10 +884,10 @@ export default function AgentPage() {
 
       {/* Error */}
       {(error || streamingError) && (
-        <Card variant="bordered" className="mb-6 border-red-200 bg-red-50">
+        <Card variant="bordered" className="mb-6 border-red-500/20 bg-red-500/10">
           <CardContent className="flex items-center space-x-3 pt-6">
             <AlertCircle className="w-5 h-5 text-red-500" />
-            <p className="text-red-700">{error || streamingError?.message}</p>
+            <p className="text-red-400">{error || streamingError?.message}</p>
           </CardContent>
         </Card>
       )}
@@ -903,10 +903,10 @@ export default function AgentPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl p-6 shadow-lg">
-              <p className="text-xl text-gray-900 font-medium leading-relaxed text-center min-h-[60px]">
+            <div className="bg-surface-800 rounded-2xl p-6 shadow-lg">
+              <p className="text-xl text-white font-medium leading-relaxed text-center min-h-[60px]">
                 {streamingMessage ? `"${streamingMessage}"` : (
-                  <span className="flex items-center justify-center gap-2 text-gray-400">
+                  <span className="flex items-center justify-center gap-2 text-surface-500">
                     <Loader2 className="w-5 h-5 animate-spin" />
                     Generating your motivation...
                   </span>
@@ -916,9 +916,9 @@ export default function AgentPage() {
               {streamingMessage && !isStreaming && (
                 <div className="flex flex-col items-center gap-3 mt-4">
                   {/* Strategy badge */}
-                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-full">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-full">
                     <span className="text-lg">{STRATEGY_ICONS[streamingStrategy]}</span>
-                    <span className="text-sm font-semibold text-amber-700">
+                    <span className="text-sm font-semibold text-amber-400">
                       {STRATEGY_INFO[streamingStrategy as keyof typeof STRATEGY_INFO]?.name || streamingStrategy.replace('_', ' ')}
                     </span>
                   </div>
@@ -936,8 +936,8 @@ export default function AgentPage() {
                       className={cn(
                         "flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium transition-all",
                         isSpeaking
-                          ? "bg-red-100 text-red-700 hover:bg-red-200"
-                          : "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                          ? "bg-red-500/15 text-red-400 hover:bg-red-500/25"
+                          : "bg-amber-500/15 text-amber-400 hover:bg-amber-500/25"
                       )}
                     >
                       {isSpeaking ? (
@@ -1048,16 +1048,16 @@ export default function AgentPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl p-6 shadow-lg">
-              <p className="text-xl text-gray-900 font-medium leading-relaxed text-center">
+            <div className="bg-surface-800 rounded-2xl p-6 shadow-lg">
+              <p className="text-xl text-white font-medium leading-relaxed text-center">
                 "{agentResponse.action.message}"
               </p>
 
               <div className="flex flex-col items-center gap-3 mt-4">
                 {/* Strategy badge */}
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-full">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
                   <span className="text-lg">{STRATEGY_ICONS[agentResponse.action.strategy_used]}</span>
-                  <span className="text-sm font-semibold text-emerald-700">
+                  <span className="text-sm font-semibold text-emerald-400">
                     {STRATEGY_INFO[agentResponse.action.strategy_used as keyof typeof STRATEGY_INFO]?.name || agentResponse.plan?.chosen_strategy}
                   </span>
                 </div>
@@ -1080,8 +1080,8 @@ export default function AgentPage() {
                       className={cn(
                         "flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium transition-all",
                         isSpeaking
-                          ? "bg-red-100 text-red-700 hover:bg-red-200"
-                          : "bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
+                          ? "bg-red-500/15 text-red-400 hover:bg-red-500/25"
+                          : "bg-indigo-500/15 text-indigo-400 hover:bg-indigo-500/25"
                       )}
                       title={isSpeaking ? "Stop" : "Play voice"}
                     >
@@ -1101,7 +1101,7 @@ export default function AgentPage() {
                       onClick={() => setShowVoiceSettings(!showVoiceSettings)}
                       className={cn(
                         "p-1.5 rounded-full transition-colors",
-                        showVoiceSettings ? "bg-gray-200 text-gray-700" : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                        showVoiceSettings ? "bg-surface-600 text-surface-200" : "text-surface-500 hover:bg-surface-700 hover:text-surface-300"
                       )}
                       title="Voice settings"
                     >
@@ -1113,26 +1113,26 @@ export default function AgentPage() {
 
               {/* Voice Settings Panel */}
               {showVoiceSettings && voiceSupported && (
-                <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                <div className="mt-4 p-4 bg-surface-700 rounded-xl border border-white/[0.06]">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-medium text-gray-700">Voice Settings</span>
+                    <span className="text-sm font-medium text-surface-200">Voice Settings</span>
                     <button
                       onClick={() => setShowVoiceSettings(false)}
-                      className="text-gray-400 hover:text-gray-600"
+                      className="text-surface-500 hover:text-surface-300"
                     >
                       <ChevronUp className="w-4 h-4" />
                     </button>
                   </div>
 
                   {/* Auto-play toggle */}
-                  <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-200">
+                  <div className="flex items-center justify-between mb-3 pb-3 border-b border-white/[0.06]">
                     <div className="flex items-center gap-2">
                       {autoPlayVoice ? (
-                        <Volume2 className="w-4 h-4 text-indigo-600" />
+                        <Volume2 className="w-4 h-4 text-indigo-400" />
                       ) : (
-                        <VolumeX className="w-4 h-4 text-gray-400" />
+                        <VolumeX className="w-4 h-4 text-surface-500" />
                       )}
-                      <span className="text-sm text-gray-600">Auto-play voice</span>
+                      <span className="text-sm text-surface-300">Auto-play voice</span>
                     </div>
                     <button
                       onClick={() => {
@@ -1142,7 +1142,7 @@ export default function AgentPage() {
                       }}
                       className={cn(
                         "relative w-11 h-6 rounded-full transition-colors",
-                        autoPlayVoice ? "bg-indigo-600" : "bg-gray-300"
+                        autoPlayVoice ? "bg-indigo-600" : "bg-surface-500"
                       )}
                     >
                       <span
@@ -1156,14 +1156,14 @@ export default function AgentPage() {
 
                   {/* Voice selection */}
                   <div>
-                    <label className="text-sm text-gray-600 mb-2 block">Voice</label>
+                    <label className="text-sm text-surface-300 mb-2 block">Voice</label>
                     <select
                       value={selectedVoice?.name || ''}
                       onChange={(e) => {
                         const voice = voices.find(v => v.name === e.target.value);
                         if (voice) setSelectedVoice(voice);
                       }}
-                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full px-3 py-2 text-sm border border-white/[0.08] rounded-lg bg-surface-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     >
                       {voices.filter(v => v.lang.startsWith('en')).map((voice) => (
                         <option key={voice.name} value={voice.name}>
@@ -1331,10 +1331,10 @@ export default function AgentPage() {
       {/* Agent Workflow - Detailed Steps (Collapsed by default after response) */}
       {(currentStep > 0 || agentResponse) && (
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
             <Brain className="w-5 h-5 text-primary-600" />
             How the AI Reasoned
-            <span className="text-sm font-normal text-gray-500">(click to expand)</span>
+            <span className="text-sm font-normal text-surface-400">(click to expand)</span>
           </h2>
 
           {steps.map((step) => (
@@ -1343,15 +1343,15 @@ export default function AgentPage() {
               variant="bordered"
               className={cn(
                 'transition-all duration-300 overflow-hidden',
-                step.isActive && 'ring-2 ring-offset-2 shadow-lg',
+                step.isActive && 'ring-2 ring-offset-surface-900 ring-offset-2 shadow-lg',
                 step.isActive && step.borderColor,
-                step.isComplete && 'bg-gray-50/50'
+                step.isComplete && 'bg-surface-800/50'
               )}
             >
               <div
                 className={cn(
                   "flex items-center justify-between p-4 cursor-pointer transition-colors",
-                  step.data && "hover:bg-gray-50"
+                  step.data && "hover:bg-surface-700"
                 )}
                 onClick={() => step.data && toggleStep(step.step)}
               >
@@ -1362,7 +1362,7 @@ export default function AgentPage() {
                       'w-12 h-12 rounded-xl flex items-center justify-center text-white transition-all shadow-md',
                       step.isComplete ? step.bgColor :
                       step.isActive ? `${step.bgColor} animate-pulse shadow-lg` :
-                      'bg-gray-300'
+                      'bg-surface-600'
                     )}>
                       {step.isActive && loading ? (
                         <Loader2 className="w-6 h-6 animate-spin" />
@@ -1381,11 +1381,11 @@ export default function AgentPage() {
                   <div>
                     <h3 className={cn(
                       'font-bold text-lg flex items-center gap-2',
-                      step.isComplete || step.isActive ? 'text-gray-900' : 'text-gray-400'
+                      step.isComplete || step.isActive ? 'text-white' : 'text-surface-500'
                     )}>
                       <span className={cn(
                         "text-xs font-medium px-2 py-0.5 rounded-full",
-                        step.isComplete || step.isActive ? `${step.bgColor} text-white` : "bg-gray-200 text-gray-500"
+                        step.isComplete || step.isActive ? `${step.bgColor} text-white` : "bg-surface-600 text-surface-400"
                       )}>
                         {step.step}
                       </span>
@@ -1393,7 +1393,7 @@ export default function AgentPage() {
                     </h3>
                     <p className={cn(
                       "text-sm",
-                      step.isComplete || step.isActive ? 'text-gray-600' : 'text-gray-400'
+                      step.isComplete || step.isActive ? 'text-surface-300' : 'text-surface-500'
                     )}>
                       {step.description}
                     </p>
@@ -1415,30 +1415,30 @@ export default function AgentPage() {
               {/* Expanded content */}
               {step.data && expandedSteps.has(step.step) && (
                 <div className="px-4 pb-4 pt-0 ml-16">
-                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-5 text-sm border border-gray-200">
+                  <div className="bg-gradient-to-br from-surface-800 to-surface-700 rounded-xl p-5 text-sm border border-white/[0.06]">
                     {/* THINK step */}
                     {step.step === 2 && step.data.observation && (
                       <div className="space-y-4">
-                        <div className="bg-white rounded-lg p-4 border border-gray-100">
-                          <span className="font-semibold text-purple-700 flex items-center gap-2 mb-2">
+                        <div className="bg-surface-700 rounded-lg p-4 border border-white/[0.06]">
+                          <span className="font-semibold text-purple-400 flex items-center gap-2 mb-2">
                             <Eye className="w-4 h-4" />
                             Observation
                           </span>
-                          <p className="text-gray-700">{step.data.observation}</p>
+                          <p className="text-surface-200">{step.data.observation}</p>
                         </div>
-                        <div className="bg-white rounded-lg p-4 border border-gray-100">
-                          <span className="font-semibold text-purple-700 flex items-center gap-2 mb-2">
+                        <div className="bg-surface-700 rounded-lg p-4 border border-white/[0.06]">
+                          <span className="font-semibold text-purple-400 flex items-center gap-2 mb-2">
                             <Brain className="w-4 h-4" />
                             Analysis
                           </span>
-                          <p className="text-gray-700">{step.data.analysis}</p>
+                          <p className="text-surface-200">{step.data.analysis}</p>
                         </div>
-                        <div className="bg-white rounded-lg p-4 border border-gray-100">
-                          <span className="font-semibold text-purple-700 flex items-center gap-2 mb-2">
+                        <div className="bg-surface-700 rounded-lg p-4 border border-white/[0.06]">
+                          <span className="font-semibold text-purple-400 flex items-center gap-2 mb-2">
                             <Lightbulb className="w-4 h-4" />
                             Hypothesis
                           </span>
-                          <p className="text-gray-700">{step.data.hypothesis}</p>
+                          <p className="text-surface-200">{step.data.hypothesis}</p>
                         </div>
                       </div>
                     )}
@@ -1446,15 +1446,15 @@ export default function AgentPage() {
                     {/* PLAN step */}
                     {step.step === 3 && step.data.chosen_strategy && (
                       <div className="space-y-4">
-                        <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg p-4 border border-orange-200">
-                          <span className="font-semibold text-orange-700 mb-2 block">Chosen Strategy</span>
+                        <div className="bg-gradient-to-r from-orange-500/10 to-amber-500/10 rounded-lg p-4 border border-orange-500/20">
+                          <span className="font-semibold text-orange-400 mb-2 block">Chosen Strategy</span>
                           <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-full font-bold shadow-md">
                             {STRATEGY_ICONS[step.data.chosen_strategy]} {step.data.chosen_strategy}
                           </span>
                         </div>
-                        <div className="bg-white rounded-lg p-4 border border-gray-100">
-                          <span className="font-semibold text-orange-700 mb-2 block">Reasoning</span>
-                          <p className="text-gray-700">{step.data.reasoning}</p>
+                        <div className="bg-surface-700 rounded-lg p-4 border border-white/[0.06]">
+                          <span className="font-semibold text-orange-400 mb-2 block">Reasoning</span>
+                          <p className="text-surface-200">{step.data.reasoning}</p>
                         </div>
                       </div>
                     )}
@@ -1462,8 +1462,8 @@ export default function AgentPage() {
                     {/* ACT step */}
                     {step.step === 4 && step.data.message && (
                       <div className="space-y-4">
-                        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border-2 border-green-200">
-                          <p className="text-green-900 text-lg font-medium leading-relaxed">"{step.data.message}"</p>
+                        <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 rounded-xl p-6 border-2 border-green-500/20">
+                          <p className="text-green-300 text-lg font-medium leading-relaxed">"{step.data.message}"</p>
                         </div>
                       </div>
                     )}
@@ -1479,18 +1479,18 @@ export default function AgentPage() {
                             { label: 'Overall', value: step.data.overall_score, highlight: true },
                           ].map((metric) => (
                             <div key={metric.label} className={cn(
-                              "bg-white rounded-lg p-4 border",
-                              metric.highlight ? "border-emerald-200 bg-emerald-50" : "border-gray-100"
+                              "bg-surface-700 rounded-lg p-4 border",
+                              metric.highlight ? "border-emerald-500/20 bg-emerald-500/10" : "border-white/[0.06]"
                             )}>
-                              <span className="text-sm font-medium text-gray-600 block mb-2">{metric.label}</span>
+                              <span className="text-sm font-medium text-surface-300 block mb-2">{metric.label}</span>
                               <div className="flex items-center space-x-2">
-                                <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
+                                <div className="flex-1 bg-surface-600 rounded-full h-2 overflow-hidden">
                                   <div
                                     className={cn("h-2 rounded-full", metric.highlight ? "bg-emerald-500" : "bg-pink-500")}
                                     style={{ width: `${(metric.value || 0) * 100}%` }}
                                   />
                                 </div>
-                                <span className="text-sm font-bold text-gray-700">{((metric.value || 0) * 100).toFixed(0)}%</span>
+                                <span className="text-sm font-bold text-surface-200">{((metric.value || 0) * 100).toFixed(0)}%</span>
                               </div>
                             </div>
                           ))}
@@ -1500,7 +1500,7 @@ export default function AgentPage() {
 
                     {/* LEARN step */}
                     {step.step === 6 && step.data.logged && (
-                      <div className="flex items-center space-x-3 text-teal-700 bg-teal-50 rounded-lg p-4 border border-teal-200">
+                      <div className="flex items-center space-x-3 text-teal-400 bg-teal-500/10 rounded-lg p-4 border border-teal-500/20">
                         <CheckCircle2 className="w-6 h-6" />
                         <span className="font-medium">Your response will help improve future recommendations</span>
                       </div>
@@ -1508,8 +1508,8 @@ export default function AgentPage() {
 
                     {/* OBSERVE step placeholder */}
                     {step.step === 1 && step.data.label && (
-                      <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                        <p className="text-blue-700">{step.data.content}</p>
+                      <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/20">
+                        <p className="text-blue-400">{step.data.content}</p>
                       </div>
                     )}
                   </div>
@@ -1522,33 +1522,33 @@ export default function AgentPage() {
 
       {/* Initial State - How it works */}
       {!agentResponse && !loading && currentStep === 0 && (
-        <Card variant="bordered" className="mt-8 bg-gradient-to-br from-slate-50 to-gray-50">
+        <Card variant="bordered" className="mt-8 bg-gradient-to-br from-surface-800 to-surface-900">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Brain className="w-5 h-5 text-purple-600" />
+              <Brain className="w-5 h-5 text-purple-400" />
               How Your AI Coach Works
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-600 text-sm mb-6">
+            <p className="text-surface-300 text-sm mb-6">
               Your AI coach uses a 6-step reasoning process to create motivation that's personalized to what works for you:
             </p>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {steps.map((step) => (
-                <div key={step.step} className="flex items-start space-x-3 p-3 bg-white rounded-lg border border-gray-100">
+                <div key={step.step} className="flex items-start space-x-3 p-3 bg-surface-700 rounded-lg border border-white/[0.06]">
                   <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-white flex-shrink-0", step.bgColor)}>
                     {step.icon}
                   </div>
                   <div>
-                    <span className="font-semibold text-gray-900 text-sm">{step.name}</span>
-                    <p className="text-xs text-gray-500 mt-0.5">{step.description}</p>
+                    <span className="font-semibold text-white text-sm">{step.name}</span>
+                    <p className="text-xs text-surface-400 mt-0.5">{step.description}</p>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="mt-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
-              <p className="text-sm text-indigo-700">
+            <div className="mt-6 p-4 bg-indigo-500/10 rounded-lg border border-indigo-500/20">
+              <p className="text-sm text-indigo-400">
                 <strong>Tip:</strong> The more you use the coach and respond to check-ins, the better it learns what motivates you.
                 Check your <Link href="/insights" className="underline font-medium">Insights</Link> to see your motivation patterns.
               </p>

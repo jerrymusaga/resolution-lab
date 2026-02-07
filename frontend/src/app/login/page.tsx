@@ -18,23 +18,23 @@ export default function LoginPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-surface-950">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4">
-      <Card className="w-full max-w-md shadow-xl border-0">
+    <div className="min-h-screen flex items-center justify-center bg-surface-950 p-4">
+      <Card className="w-full max-w-md shadow-2xl border border-white/[0.06]">
         <CardContent className="p-8">
           {/* Logo */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-purple-600 text-white mb-4 shadow-lg">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-500 to-purple-600 text-white mb-4 shadow-glow-brand">
               <FlaskConical className="w-8 h-8" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Resolution Lab</h1>
-            <p className="text-gray-500 mt-2">
+            <h1 className="text-2xl font-bold text-white">Resolution Lab</h1>
+            <p className="text-surface-400 mt-2">
               Discover your personal motivation formula
             </p>
           </div>
@@ -46,8 +46,8 @@ export default function LoginPage() {
               'Find what works best for YOU',
               'Track your progress over time',
             ].map((feature, i) => (
-              <div key={i} className="flex items-center gap-3 text-sm text-gray-600">
-                <Sparkles className="w-4 h-4 text-primary-500 flex-shrink-0" />
+              <div key={i} className="flex items-center gap-3 text-sm text-surface-300">
+                <Sparkles className="w-4 h-4 text-brand-400 flex-shrink-0" />
                 <span>{feature}</span>
               </div>
             ))}
@@ -56,7 +56,7 @@ export default function LoginPage() {
           {/* Sign in button */}
           <Button
             onClick={signInWithGoogle}
-            className="w-full py-6 text-base font-medium bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all"
+            className="w-full py-6 text-base font-medium bg-white text-gray-700 border border-white/20 hover:bg-gray-100 transition-all"
           >
             <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
               <path
@@ -79,7 +79,7 @@ export default function LoginPage() {
             Continue with Google
           </Button>
 
-          <p className="text-xs text-center text-gray-400 mt-6">
+          <p className="text-xs text-center text-surface-500 mt-6">
             By signing in, you agree to our Terms of Service and Privacy Policy
           </p>
         </CardContent>

@@ -191,10 +191,10 @@ function InsightsContent() {
       <div className="page-container">
         <div className="min-h-[60vh] flex flex-col items-center justify-center">
           <div className="relative">
-            <div className="w-24 h-24 rounded-full border-4 border-brand-200 border-t-brand-600 animate-spin" />
-            <Brain className="w-10 h-10 text-brand-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+            <div className="w-24 h-24 rounded-full border-4 border-brand-500/20 border-t-brand-500 animate-spin" />
+            <Brain className="w-10 h-10 text-brand-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
           </div>
-          <p className="mt-6 text-lg text-surface-600 animate-pulse">Analyzing your motivation patterns...</p>
+          <p className="mt-6 text-lg text-surface-300 animate-pulse">Analyzing your motivation patterns...</p>
         </div>
       </div>
     );
@@ -205,18 +205,18 @@ function InsightsContent() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-surface-900 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
             <Lightbulb className="w-7 h-7 text-warning-500" />
             Your Insights
           </h1>
-          <p className="text-surface-500 mt-1">
+          <p className="text-surface-400 mt-1">
             See which motivation strategies work best for you
           </p>
         </div>
         <Button
           variant="outline"
           onClick={() => loadInsights(userId)}
-          className="mt-4 sm:mt-0 border-brand-200 text-brand-700 hover:bg-brand-50"
+          className="mt-4 sm:mt-0 border-brand-500/30 text-brand-400 hover:bg-brand-500/10"
         >
           <RefreshCw className="w-4 h-4 mr-2" />
           Refresh
@@ -224,34 +224,34 @@ function InsightsContent() {
       </div>
 
       {/* How It Works - Collapsible info banner */}
-      <Card variant="bordered" className="mb-6 bg-gradient-to-r from-brand-50 to-brand-100/50 border-brand-200">
+      <Card variant="bordered" className="mb-6 bg-gradient-to-r from-brand-500/10 to-brand-500/5 border-brand-500/20">
         <CardContent className="py-4">
           <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center">
-              <Info className="w-5 h-5 text-brand-600" />
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-brand-500/15 flex items-center justify-center">
+              <Info className="w-5 h-5 text-brand-400" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-surface-900 mb-2">How This Works</h3>
+              <h3 className="font-semibold text-white mb-2">How This Works</h3>
               <div className="grid sm:grid-cols-3 gap-4 text-sm">
                 <div className="flex items-start gap-2">
-                  <div className="w-6 h-6 rounded-full bg-brand-200 text-brand-700 flex items-center justify-center text-xs font-bold flex-shrink-0">1</div>
+                  <div className="w-6 h-6 rounded-full bg-brand-500/20 text-brand-400 flex items-center justify-center text-xs font-bold flex-shrink-0">1</div>
                   <div>
-                    <p className="font-medium text-surface-800">We Experiment</p>
-                    <p className="text-surface-600">Each check-in tests a different motivation strategy</p>
+                    <p className="font-medium text-white">We Experiment</p>
+                    <p className="text-surface-300">Each check-in tests a different motivation strategy</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
-                  <div className="w-6 h-6 rounded-full bg-brand-200 text-brand-700 flex items-center justify-center text-xs font-bold flex-shrink-0">2</div>
+                  <div className="w-6 h-6 rounded-full bg-brand-500/20 text-brand-400 flex items-center justify-center text-xs font-bold flex-shrink-0">2</div>
                   <div>
-                    <p className="font-medium text-surface-800">We Learn</p>
-                    <p className="text-surface-600">Your responses reveal what motivates you most</p>
+                    <p className="font-medium text-white">We Learn</p>
+                    <p className="text-surface-300">Your responses reveal what motivates you most</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
-                  <div className="w-6 h-6 rounded-full bg-brand-200 text-brand-700 flex items-center justify-center text-xs font-bold flex-shrink-0">3</div>
+                  <div className="w-6 h-6 rounded-full bg-brand-500/20 text-brand-400 flex items-center justify-center text-xs font-bold flex-shrink-0">3</div>
                   <div>
-                    <p className="font-medium text-surface-800">You Apply</p>
-                    <p className="text-surface-600">Lock in your best strategy per goal from the Goals page</p>
+                    <p className="font-medium text-white">You Apply</p>
+                    <p className="text-surface-300">Lock in your best strategy per goal from the Goals page</p>
                   </div>
                 </div>
               </div>
@@ -262,10 +262,10 @@ function InsightsContent() {
 
       {/* Error */}
       {error && (
-        <Card variant="bordered" className="mb-6 border-danger-200 bg-danger-50">
+        <Card variant="bordered" className="mb-6 border-danger-500/20 bg-danger-500/10">
           <CardContent className="flex items-center space-x-3">
             <AlertCircle className="w-5 h-5 text-danger-500" />
-            <p className="text-danger-700">{error}</p>
+            <p className="text-danger-400">{error}</p>
           </CardContent>
         </Card>
       )}
@@ -302,7 +302,7 @@ function InsightsContent() {
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Link href="/goals">
-                  <Button className="bg-white text-brand-700 hover:bg-white/90 shadow-soft-md">
+                  <Button className="bg-white text-brand-400 hover:bg-white/90 shadow-soft-md">
                     <Target className="w-4 h-4 mr-2" />
                     Do a Check-in
                   </Button>
@@ -346,13 +346,13 @@ function InsightsContent() {
             </div>
 
             {/* Main content - The comparison */}
-            <CardContent className="p-6 sm:p-10 bg-gradient-to-b from-surface-50 to-white">
+            <CardContent className="p-6 sm:p-10 bg-gradient-to-b from-surface-800 to-surface-800">
               {/* Best Strategy - THE HERO */}
               <div className={cn(
                 "transition-all duration-500 delay-200",
                 revealStep >= 1 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
               )}>
-                <div className="relative bg-gradient-to-br from-accent-50 to-accent-100/50 rounded-2xl p-6 sm:p-8 border-2 border-accent-200 mb-6">
+                <div className="relative bg-gradient-to-br from-accent-500/10 to-accent-500/5 rounded-2xl p-6 sm:p-8 border-2 border-accent-500/20 mb-6">
                   {/* Trophy badge */}
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-warning-400 to-warning-500 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-soft-lg flex items-center gap-2">
                     <Award className="w-4 h-4" />
@@ -364,25 +364,25 @@ function InsightsContent() {
                       {bestStrategy && STRATEGY_ICONS[bestStrategy.key]}
                     </div>
 
-                    <h3 className="text-2xl sm:text-3xl font-bold text-surface-900 mb-2">
+                    <h3 className="text-2xl sm:text-3xl font-bold text-white mb-2">
                       {bestStrategy?.info?.name}
                     </h3>
-                    <p className="text-surface-600 mb-6 max-w-md mx-auto">
+                    <p className="text-surface-300 mb-6 max-w-md mx-auto">
                       {bestStrategy?.info?.description}
                     </p>
 
                     {/* Big success number */}
-                    <div className="inline-block bg-white rounded-xl px-8 py-4 shadow-soft-sm border border-accent-100">
-                      <div className="text-5xl sm:text-6xl font-bold text-accent-600">
+                    <div className="inline-block bg-surface-800 rounded-xl px-8 py-4 shadow-soft-sm border border-accent-500/20">
+                      <div className="text-5xl sm:text-6xl font-bold text-accent-400">
                         {formatPercent(bestStrategy?.stats?.completion_rate || 0)}
                       </div>
-                      <div className="text-sm text-surface-500 mt-1">Success Rate</div>
+                      <div className="text-sm text-surface-400 mt-1">Success Rate</div>
                     </div>
 
                     {/* Example message */}
-                    <div className="mt-6 bg-white/80 rounded-lg p-4 border border-accent-100 max-w-md mx-auto">
-                      <p className="text-sm text-surface-500 mb-1">Example message:</p>
-                      <p className="text-surface-700 italic">"{bestStrategy?.info?.example}"</p>
+                    <div className="mt-6 bg-surface-700/80 rounded-lg p-4 border border-accent-500/20 max-w-md mx-auto">
+                      <p className="text-sm text-surface-400 mb-1">Example message:</p>
+                      <p className="text-surface-200 italic">"{bestStrategy?.info?.example}"</p>
                     </div>
                   </div>
                 </div>
@@ -409,19 +409,19 @@ function InsightsContent() {
                 "transition-all duration-500 delay-400",
                 revealStep >= 3 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
               )}>
-                <div className="bg-surface-50 rounded-xl p-5 border border-surface-200">
+                <div className="bg-surface-900 rounded-xl p-5 border border-white/[0.06]">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-full bg-surface-200 flex items-center justify-center text-surface-500 flex-shrink-0">
+                    <div className="w-14 h-14 rounded-full bg-surface-600 flex items-center justify-center text-surface-400 flex-shrink-0">
                       {worstStrategy && STRATEGY_ICONS[worstStrategy.key]}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-medium text-surface-400 uppercase tracking-wider">Least Effective</span>
                       </div>
-                      <h4 className="text-lg font-semibold text-surface-700 truncate">
+                      <h4 className="text-lg font-semibold text-surface-200 truncate">
                         {worstStrategy?.info?.name}
                       </h4>
-                      <p className="text-sm text-surface-500 truncate">
+                      <p className="text-sm text-surface-400 truncate">
                         {worstStrategy?.info?.description}
                       </p>
                     </div>
@@ -440,40 +440,40 @@ function InsightsContent() {
                 "mt-8 transition-all duration-500 delay-500",
                 revealStep >= 4 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
               )}>
-                <div className="bg-gradient-to-r from-warning-50 to-warning-100/50 rounded-xl p-6 border border-warning-200">
+                <div className="bg-gradient-to-r from-warning-500/10 to-warning-500/5 rounded-xl p-6 border border-warning-500/20">
                   <div className="flex gap-4">
                     <div className="flex-shrink-0">
-                      <div className="w-12 h-12 rounded-full bg-warning-100 flex items-center justify-center">
-                        <Lightbulb className="w-6 h-6 text-warning-600" />
+                      <div className="w-12 h-12 rounded-full bg-warning-500/15 flex items-center justify-center">
+                        <Lightbulb className="w-6 h-6 text-warning-400" />
                       </div>
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-bold text-surface-900">What This Means For You</h4>
+                        <h4 className="font-bold text-white">What This Means For You</h4>
                         {/* Evaluation Badge */}
                         {recommendationEval && (
                           <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500">AI Insight Quality</span>
+                            <span className="text-xs text-surface-400">AI Insight Quality</span>
                             <span className={cn(
                               "text-sm font-bold px-2 py-0.5 rounded-full",
-                              recommendationEval.grade === 'A' ? "bg-emerald-100 text-emerald-700" :
-                              recommendationEval.grade === 'B' ? "bg-blue-100 text-blue-700" :
-                              recommendationEval.grade === 'C' ? "bg-amber-100 text-amber-700" :
-                              recommendationEval.grade === 'D' ? "bg-orange-100 text-orange-700" :
-                              "bg-red-100 text-red-700"
+                              recommendationEval.grade === 'A' ? "bg-emerald-500/15 text-emerald-400" :
+                              recommendationEval.grade === 'B' ? "bg-blue-500/15 text-blue-400" :
+                              recommendationEval.grade === 'C' ? "bg-amber-500/15 text-amber-400" :
+                              recommendationEval.grade === 'D' ? "bg-orange-500/15 text-orange-400" :
+                              "bg-red-500/15 text-red-400"
                             )}>
                               {recommendationEval.grade}
                             </span>
                           </div>
                         )}
                       </div>
-                      <p className="text-gray-700 leading-relaxed">
+                      <p className="text-surface-200 leading-relaxed">
                         {recommendation || `You respond ${improvementPercent}% better to ${bestStrategy?.info?.name?.toLowerCase()} than ${worstStrategy?.info?.name?.toLowerCase()}. When you need motivation, messages that ${bestStrategy?.info?.description?.toLowerCase()} will be most effective for you.`}
                       </p>
                       {/* Evaluation breakdown */}
                       {recommendationEval?.breakdown && (
-                        <div className="mt-4 pt-4 border-t border-amber-200">
-                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                        <div className="mt-4 pt-4 border-t border-amber-500/20">
+                          <p className="text-xs font-medium text-surface-400 uppercase tracking-wide mb-2">
                             Custom Opik Evaluator Scores
                           </p>
                           <div className="grid grid-cols-4 gap-2">
@@ -484,10 +484,10 @@ function InsightsContent() {
                               { label: 'Clarity', value: recommendationEval.breakdown.clarity },
                             ].map((metric) => (
                               <div key={metric.label} className="text-center">
-                                <div className="text-lg font-bold text-amber-700">
+                                <div className="text-lg font-bold text-amber-400">
                                   {(metric.value * 100).toFixed(0)}%
                                 </div>
-                                <div className="text-xs text-gray-500">{metric.label}</div>
+                                <div className="text-xs text-surface-400">{metric.label}</div>
                               </div>
                             ))}
                           </div>
@@ -504,17 +504,17 @@ function InsightsContent() {
 
       {/* Next Steps - Guide users to apply formulas */}
       {hasDiscovery && (
-        <Card variant="bordered" className="mb-8 bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200">
+        <Card variant="bordered" className="mb-8 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 border-purple-500/20">
           <CardContent className="py-5">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-                  <Rocket className="w-5 h-5 text-purple-600" />
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-500/15 flex items-center justify-center">
+                  <Rocket className="w-5 h-5 text-purple-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">Ready to Apply Your Formula?</h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Go to your Goals page and click <span className="font-medium text-purple-600">"Apply Formula"</span> on any goal card to lock in its best strategy.
+                  <h3 className="font-semibold text-white">Ready to Apply Your Formula?</h3>
+                  <p className="text-sm text-surface-300 mt-1">
+                    Go to your Goals page and click <span className="font-medium text-purple-400">"Apply Formula"</span> on any goal card to lock in its best strategy.
                     Each goal can have its own personalized formula!
                   </p>
                 </div>
@@ -528,11 +528,11 @@ function InsightsContent() {
               </Link>
             </div>
             {/* Subtle AI Coach tip */}
-            <div className="mt-4 pt-4 border-t border-purple-200 flex items-center gap-2 text-sm text-gray-500">
+            <div className="mt-4 pt-4 border-t border-purple-500/20 flex items-center gap-2 text-sm text-surface-400">
               <Brain className="w-4 h-4 text-purple-400" />
               <span>
                 Want to see how the AI thinks?{' '}
-                <Link href="/agent" className="text-purple-600 hover:text-purple-700 font-medium hover:underline">
+                <Link href="/agent" className="text-purple-400 hover:text-purple-400 font-medium hover:underline">
                   Try the AI Coach
                 </Link>
                 {' '}to watch the full reasoning process.
@@ -544,48 +544,48 @@ function InsightsContent() {
 
       {/* Summary Stats - Cleaner design */}
       <div className="mb-4">
-        <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+        <h2 className="text-lg font-semibold text-white flex items-center gap-2">
           <BarChart3 className="w-5 h-5 text-blue-500" />
           Your Progress
         </h2>
-        <p className="text-sm text-gray-500">Track your experimentation journey</p>
+        <p className="text-sm text-surface-400">Track your experimentation journey</p>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Card variant="bordered" className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100">
+        <Card variant="bordered" className="bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border-blue-500/20">
           <CardContent className="text-center py-5">
             <FlaskConical className="w-6 h-6 text-blue-500 mx-auto mb-2" />
-            <p className="text-3xl font-bold text-gray-900">
+            <p className="text-3xl font-bold text-white">
               {insights?.data_points_collected || 0}
             </p>
-            <p className="text-sm text-gray-600">Experiments Run</p>
+            <p className="text-sm text-surface-300">Experiments Run</p>
           </CardContent>
         </Card>
 
-        <Card variant="bordered" className="bg-gradient-to-br from-purple-50 to-violet-50 border-purple-100">
+        <Card variant="bordered" className="bg-gradient-to-br from-purple-500/10 to-violet-500/10 border-purple-500/20">
           <CardContent className="text-center py-5">
             <Brain className="w-6 h-6 text-purple-500 mx-auto mb-2" />
-            <p className="text-3xl font-bold text-gray-900">
-              {insights?.strategies_tested || 0}<span className="text-lg text-gray-400">/8</span>
+            <p className="text-3xl font-bold text-white">
+              {insights?.strategies_tested || 0}<span className="text-lg text-surface-400">/8</span>
             </p>
-            <p className="text-sm text-gray-600">Strategies Tested</p>
+            <p className="text-sm text-surface-300">Strategies Tested</p>
           </CardContent>
         </Card>
 
-        <Card variant="bordered" className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-100">
+        <Card variant="bordered" className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
           <CardContent className="text-center py-5">
             <TrendingUp className="w-6 h-6 text-green-500 mx-auto mb-2" />
-            <p className="text-3xl font-bold text-gray-900">
+            <p className="text-3xl font-bold text-white">
               {formatPercent(insights?.overall_completion_rate || 0)}
             </p>
-            <p className="text-sm text-gray-600">Overall Success</p>
+            <p className="text-sm text-surface-300">Overall Success</p>
           </CardContent>
         </Card>
 
         <Card variant="bordered" className={cn(
           "border-2",
           insights?.experiment_phase === 'optimizing'
-            ? 'bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200'
-            : 'bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200'
+            ? 'bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border-emerald-500/20'
+            : 'bg-gradient-to-br from-amber-500/10 to-yellow-500/10 border-amber-500/20'
         )}>
           <CardContent className="text-center py-5">
             {insights?.experiment_phase === 'optimizing' ? (
@@ -595,11 +595,11 @@ function InsightsContent() {
             )}
             <p className={cn(
               "text-lg font-bold",
-              insights?.experiment_phase === 'optimizing' ? 'text-emerald-600' : 'text-amber-600'
+              insights?.experiment_phase === 'optimizing' ? 'text-emerald-400' : 'text-amber-400'
             )}>
               {insights?.experiment_phase === 'optimizing' ? 'Optimizing' : 'Exploring'}
             </p>
-            <p className="text-sm text-gray-600">Current Phase</p>
+            <p className="text-sm text-surface-300">Current Phase</p>
           </CardContent>
         </Card>
       </div>
@@ -608,11 +608,11 @@ function InsightsContent() {
       {patterns && patterns.totalInterventions > 0 && (
         <div className="mb-8">
           <div className="mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
               <Calendar className="w-5 h-5 text-purple-500" />
               Your Patterns
             </h2>
-            <p className="text-sm text-gray-500">Discover when and how you perform best</p>
+            <p className="text-sm text-surface-400">Discover when and how you perform best</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
@@ -624,7 +624,7 @@ function InsightsContent() {
                   {patterns.momentum === 'falling' && <TrendingDown className="w-5 h-5 text-red-500" />}
                   {patterns.momentum === 'stable' && <Minus className="w-5 h-5 text-blue-500" />}
                   {patterns.momentum === 'comeback' && <RotateCcw className="w-5 h-5 text-purple-500" />}
-                  {patterns.momentum === 'neutral' && <Minus className="w-5 h-5 text-gray-400" />}
+                  {patterns.momentum === 'neutral' && <Minus className="w-5 h-5 text-surface-400" />}
                   Current Momentum
                 </CardTitle>
               </CardHeader>
@@ -632,35 +632,35 @@ function InsightsContent() {
                 {/* Momentum indicator */}
                 <div className={cn(
                   "rounded-lg p-4 mb-4",
-                  patterns.momentum === 'rising' && "bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200",
-                  patterns.momentum === 'falling' && "bg-gradient-to-r from-red-50 to-orange-50 border border-red-200",
-                  patterns.momentum === 'stable' && "bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200",
-                  patterns.momentum === 'comeback' && "bg-gradient-to-r from-purple-50 to-violet-50 border border-purple-200",
-                  patterns.momentum === 'neutral' && "bg-gray-50 border border-gray-200",
+                  patterns.momentum === 'rising' && "bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20",
+                  patterns.momentum === 'falling' && "bg-gradient-to-r from-red-500/10 to-orange-500/10 border border-red-500/20",
+                  patterns.momentum === 'stable' && "bg-gradient-to-r from-blue-500/10 to-indigo-500/10 border border-blue-500/20",
+                  patterns.momentum === 'comeback' && "bg-gradient-to-r from-purple-500/10 to-violet-500/10 border border-purple-500/20",
+                  patterns.momentum === 'neutral' && "bg-surface-900 border border-white/[0.06]",
                 )}>
                   <div className="flex items-center gap-3">
                     <div className={cn(
                       "w-12 h-12 rounded-full flex items-center justify-center",
-                      patterns.momentum === 'rising' && "bg-emerald-100",
-                      patterns.momentum === 'falling' && "bg-red-100",
-                      patterns.momentum === 'stable' && "bg-blue-100",
-                      patterns.momentum === 'comeback' && "bg-purple-100",
-                      patterns.momentum === 'neutral' && "bg-gray-100",
+                      patterns.momentum === 'rising' && "bg-emerald-500/15",
+                      patterns.momentum === 'falling' && "bg-red-500/15",
+                      patterns.momentum === 'stable' && "bg-blue-500/15",
+                      patterns.momentum === 'comeback' && "bg-purple-500/15",
+                      patterns.momentum === 'neutral' && "bg-surface-700",
                     )}>
                       {patterns.emotionalState === 'on_fire' && <Flame className="w-6 h-6 text-orange-500" />}
                       {patterns.emotionalState === 'building_momentum' && <Rocket className="w-6 h-6 text-blue-500" />}
                       {patterns.emotionalState === 'struggling' && <Heart className="w-6 h-6 text-red-500" />}
                       {patterns.emotionalState === 'comeback' && <Sparkles className="w-6 h-6 text-purple-500" />}
-                      {patterns.emotionalState === 'neutral' && <Target className="w-6 h-6 text-gray-500" />}
+                      {patterns.emotionalState === 'neutral' && <Target className="w-6 h-6 text-surface-400" />}
                     </div>
                     <div className="flex-1">
                       <p className={cn(
                         "font-semibold capitalize",
-                        patterns.momentum === 'rising' && "text-emerald-700",
-                        patterns.momentum === 'falling' && "text-red-700",
-                        patterns.momentum === 'stable' && "text-blue-700",
-                        patterns.momentum === 'comeback' && "text-purple-700",
-                        patterns.momentum === 'neutral' && "text-gray-700",
+                        patterns.momentum === 'rising' && "text-emerald-400",
+                        patterns.momentum === 'falling' && "text-red-400",
+                        patterns.momentum === 'stable' && "text-blue-400",
+                        patterns.momentum === 'comeback' && "text-purple-400",
+                        patterns.momentum === 'neutral' && "text-surface-200",
                       )}>
                         {patterns.momentum === 'rising' && "Rising 🔥"}
                         {patterns.momentum === 'falling' && "Needs Attention"}
@@ -668,28 +668,28 @@ function InsightsContent() {
                         {patterns.momentum === 'comeback' && "Making a Comeback!"}
                         {patterns.momentum === 'neutral' && "Getting Started"}
                       </p>
-                      <p className="text-sm text-gray-600 mt-1">{patterns.momentumDescription}</p>
+                      <p className="text-sm text-surface-300 mt-1">{patterns.momentumDescription}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Recent Activity Stats */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-emerald-50 rounded-lg p-3 text-center">
-                    <p className="text-2xl font-bold text-emerald-600">{patterns.recentCompletions}</p>
-                    <p className="text-xs text-gray-500">Completed (7 days)</p>
+                  <div className="bg-emerald-500/10 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-emerald-400">{patterns.recentCompletions}</p>
+                    <p className="text-xs text-surface-400">Completed (7 days)</p>
                   </div>
-                  <div className="bg-red-50 rounded-lg p-3 text-center">
+                  <div className="bg-red-500/10 rounded-lg p-3 text-center">
                     <p className="text-2xl font-bold text-red-500">{patterns.recentMisses}</p>
-                    <p className="text-xs text-gray-500">Missed (7 days)</p>
+                    <p className="text-xs text-surface-400">Missed (7 days)</p>
                   </div>
                 </div>
 
                 {/* Consecutive misses warning */}
                 {patterns.consecutiveMisses >= 2 && (
-                  <div className="mt-3 bg-amber-50 rounded-lg p-3 flex items-center gap-2 border border-amber-200">
-                    <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                    <p className="text-sm text-amber-700">
+                  <div className="mt-3 bg-amber-500/10 rounded-lg p-3 flex items-center gap-2 border border-amber-500/20">
+                    <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                    <p className="text-sm text-amber-400">
                       {patterns.consecutiveMisses} consecutive misses. Let's get back on track!
                     </p>
                   </div>
@@ -714,13 +714,13 @@ function InsightsContent() {
                         <div key={day.day} className="flex items-center gap-2">
                           <span className={cn(
                             "w-10 text-xs font-medium",
-                            day.isBest && "text-emerald-600",
+                            day.isBest && "text-emerald-400",
                             day.isWorst && "text-red-500",
-                            !day.isBest && !day.isWorst && "text-gray-500"
+                            !day.isBest && !day.isWorst && "text-surface-400"
                           )}>
                             {day.shortDay}
                           </span>
-                          <div className="flex-1 h-6 bg-gray-100 rounded-full overflow-hidden relative">
+                          <div className="flex-1 h-6 bg-surface-700 rounded-full overflow-hidden relative">
                             <div
                               className={cn(
                                 "h-full rounded-full transition-all duration-500",
@@ -730,7 +730,7 @@ function InsightsContent() {
                               )}
                               style={{ width: `${Math.max(day.completionRate, 5)}%` }}
                             />
-                            <span className="absolute inset-0 flex items-center justify-end pr-2 text-xs font-medium text-gray-700">
+                            <span className="absolute inset-0 flex items-center justify-end pr-2 text-xs font-medium text-surface-200">
                               {day.completionRate.toFixed(0)}%
                             </span>
                           </div>
@@ -740,13 +740,13 @@ function InsightsContent() {
                     </div>
 
                     {/* Best/Worst day summary */}
-                    <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 gap-4">
+                    <div className="mt-4 pt-4 border-t border-white/[0.06] grid grid-cols-2 gap-4">
                       {patterns.bestDayOfWeek && (
                         <div className="flex items-center gap-2">
                           <Sun className="w-4 h-4 text-emerald-500" />
                           <div>
-                            <p className="text-xs text-gray-500">Best Day</p>
-                            <p className="text-sm font-semibold text-emerald-600">{patterns.bestDayOfWeek}s</p>
+                            <p className="text-xs text-surface-400">Best Day</p>
+                            <p className="text-sm font-semibold text-emerald-400">{patterns.bestDayOfWeek}s</p>
                           </div>
                         </div>
                       )}
@@ -754,7 +754,7 @@ function InsightsContent() {
                         <div className="flex items-center gap-2">
                           <Moon className="w-4 h-4 text-red-400" />
                           <div>
-                            <p className="text-xs text-gray-500">Hardest Day</p>
+                            <p className="text-xs text-surface-400">Hardest Day</p>
                             <p className="text-sm font-semibold text-red-500">{patterns.worstDayOfWeek}s</p>
                           </div>
                         </div>
@@ -763,9 +763,9 @@ function InsightsContent() {
 
                     {/* Weekend vs Weekday insight */}
                     {patterns.weekendVsWeekday && patterns.weekendVsWeekday !== 'same' && (
-                      <div className="mt-3 bg-indigo-50 rounded-lg p-3 flex items-center gap-2">
+                      <div className="mt-3 bg-indigo-500/10 rounded-lg p-3 flex items-center gap-2">
                         <Info className="w-4 h-4 text-indigo-500 flex-shrink-0" />
-                        <p className="text-sm text-indigo-700">
+                        <p className="text-sm text-indigo-400">
                           {patterns.weekendVsWeekday === 'better_weekends'
                             ? "You perform better on weekends. Consider scheduling important goals then!"
                             : "You perform better on weekdays. Weekends might need extra motivation."}
@@ -774,7 +774,7 @@ function InsightsContent() {
                     )}
                   </>
                 ) : (
-                  <div className="text-center py-6 text-gray-500">
+                  <div className="text-center py-6 text-surface-400">
                     <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">Keep checking in to reveal your daily patterns!</p>
                   </div>
@@ -794,7 +794,7 @@ function InsightsContent() {
                 <TrendingUp className="w-5 h-5 text-emerald-500" />
                 Strategy Performance
               </CardTitle>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-surface-400 mt-1">
                 Compare how each motivation strategy performs for you
               </p>
             </div>
@@ -803,22 +803,22 @@ function InsightsContent() {
             <div className="grid lg:grid-cols-2 gap-8">
               {/* Bar Chart */}
               <div>
-                <h4 className="text-sm font-medium text-gray-500 mb-4 text-center">Completion Rate by Strategy</h4>
+                <h4 className="text-sm font-medium text-surface-400 mb-4 text-center">Completion Rate by Strategy</h4>
                 <div className="h-72">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 30 }}>
-                      <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f0f0f0" />
+                      <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#2a2a35" />
                       <XAxis
                         type="number"
                         domain={[0, 100]}
                         tickFormatter={(v) => `${v}%`}
-                        tick={{ fill: '#6b7280', fontSize: 12 }}
+                        tick={{ fill: '#9ca3af', fontSize: 12 }}
                       />
                       <YAxis
                         type="category"
                         dataKey="name"
                         width={70}
-                        tick={{ fill: '#6b7280', fontSize: 12 }}
+                        tick={{ fill: '#9ca3af', fontSize: 12 }}
                       />
                       <Tooltip
                         content={({ active, payload }) => {
@@ -826,18 +826,18 @@ function InsightsContent() {
                             const data = payload[0].payload;
                             const isBest = data.strategy === insights?.best_strategy;
                             return (
-                              <div className="bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-lg border border-gray-200">
-                                <p className="font-semibold text-gray-900 flex items-center gap-2">
+                              <div className="bg-surface-800/95 backdrop-blur-sm p-4 rounded-lg shadow-lg border border-white/[0.06]">
+                                <p className="font-semibold text-white flex items-center gap-2">
                                   {data.fullName}
                                   {isBest && <Award className="w-4 h-4 text-yellow-500" />}
                                 </p>
                                 <div className="mt-2 space-y-1">
                                   <p className="text-sm">
-                                    <span className="text-gray-500">Success Rate: </span>
-                                    <span className="font-bold text-emerald-600">{data.completionRate.toFixed(1)}%</span>
+                                    <span className="text-surface-400">Success Rate: </span>
+                                    <span className="font-bold text-emerald-400">{data.completionRate.toFixed(1)}%</span>
                                   </p>
                                   <p className="text-sm">
-                                    <span className="text-gray-500">Sample Size: </span>
+                                    <span className="text-surface-400">Sample Size: </span>
                                     <span className="font-medium">{data.samples} experiments</span>
                                   </p>
                                 </div>
@@ -867,14 +867,14 @@ function InsightsContent() {
 
               {/* Radar Chart */}
               <div>
-                <h4 className="text-sm font-medium text-gray-500 mb-4 text-center">Your Motivation Profile</h4>
+                <h4 className="text-sm font-medium text-surface-400 mb-4 text-center">Your Motivation Profile</h4>
                 <div className="h-72">
                   <ResponsiveContainer width="100%" height="100%">
                     <RadarChart data={radarData}>
-                      <PolarGrid stroke="#e5e7eb" />
+                      <PolarGrid stroke="#2a2a35" />
                       <PolarAngleAxis
                         dataKey="strategy"
-                        tick={{ fill: '#6b7280', fontSize: 11 }}
+                        tick={{ fill: '#9ca3af', fontSize: 11 }}
                       />
                       <Radar
                         name="Completion Rate"
@@ -889,9 +889,9 @@ function InsightsContent() {
                           if (active && payload && payload.length) {
                             const data = payload[0].payload;
                             return (
-                              <div className="bg-white/95 backdrop-blur-sm p-3 rounded-lg shadow-lg border border-gray-200">
-                                <p className="font-semibold text-gray-900">{data.fullName}</p>
-                                <p className="text-sm text-emerald-600 font-bold">{data.value.toFixed(1)}% success</p>
+                              <div className="bg-surface-800/95 backdrop-blur-sm p-3 rounded-lg shadow-lg border border-white/[0.06]">
+                                <p className="font-semibold text-white">{data.fullName}</p>
+                                <p className="text-sm text-emerald-400 font-bold">{data.value.toFixed(1)}% success</p>
                               </div>
                             );
                           }
@@ -911,11 +911,11 @@ function InsightsContent() {
       {insights && insights.strategy_stats.length > 0 && (
         <div>
           <div className="mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
               <Award className="w-5 h-5 text-yellow-500" />
               All Strategies Ranked
             </h2>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-surface-400">
               Your personal ranking based on completion rates. Higher = works better for you.
             </p>
           </div>
@@ -931,8 +931,8 @@ function InsightsContent() {
                   variant="bordered"
                   className={cn(
                     'relative overflow-hidden transition-all duration-200 hover:shadow-md',
-                    isBest && 'ring-2 ring-emerald-400 bg-emerald-50/50',
-                    isWorst && 'bg-gray-50/50 opacity-75'
+                    isBest && 'ring-2 ring-emerald-500/40 bg-emerald-500/5',
+                    isWorst && 'bg-surface-800/50 opacity-75'
                   )}
                 >
                   {/* Rank badge */}
@@ -941,7 +941,7 @@ function InsightsContent() {
                     index === 0 ? 'bg-gradient-to-br from-yellow-400 to-amber-500 text-white shadow' :
                     index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-white' :
                     index === 2 ? 'bg-gradient-to-br from-orange-300 to-orange-400 text-white' :
-                    'bg-gray-100 text-gray-500'
+                    'bg-surface-700 text-surface-400'
                   )}>
                     {index + 1}
                   </div>
@@ -950,28 +950,28 @@ function InsightsContent() {
                     <div className="flex items-center gap-3 mb-3">
                       <div className={cn(
                         'w-10 h-10 rounded-lg flex items-center justify-center',
-                        isBest ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-500'
+                        isBest ? 'bg-emerald-500/15 text-emerald-400' : 'bg-surface-700 text-surface-400'
                       )}>
                         {STRATEGY_ICONS[stat.strategy]}
                       </div>
                       <div className="min-w-0">
-                        <h3 className="font-semibold text-gray-900 text-sm truncate">
+                        <h3 className="font-semibold text-white text-sm truncate">
                           {info?.name || stat.strategy}
                         </h3>
                         {isBest && (
-                          <span className="text-xs text-emerald-600 font-medium">Your best</span>
+                          <span className="text-xs text-emerald-400 font-medium">Your best</span>
                         )}
                       </div>
                     </div>
 
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-xs text-gray-500">Success</span>
+                        <span className="text-xs text-surface-400">Success</span>
                         <span className={cn(
                           'text-lg font-bold',
-                          stat.completion_rate >= 0.7 ? 'text-emerald-600' :
-                          stat.completion_rate >= 0.4 ? 'text-amber-600' :
-                          'text-gray-400'
+                          stat.completion_rate >= 0.7 ? 'text-emerald-400' :
+                          stat.completion_rate >= 0.4 ? 'text-amber-400' :
+                          'text-surface-400'
                         )}>
                           {formatPercent(stat.completion_rate)}
                         </span>
@@ -982,7 +982,7 @@ function InsightsContent() {
                         size="sm"
                         color={isBest ? 'success' : 'primary'}
                       />
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-surface-400">
                         {stat.successful_completions}/{stat.total_interventions} experiments
                       </p>
                     </div>
@@ -998,11 +998,11 @@ function InsightsContent() {
       {/* No data yet */}
       {(!insights || insights.strategy_stats.length === 0) && !error && !loading && (
         <Card variant="bordered" className="text-center py-16">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
-            <BarChart3 className="w-8 h-8 text-gray-400" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-surface-700 mb-4">
+            <BarChart3 className="w-8 h-8 text-surface-400" />
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">No Insights Yet</h3>
-          <p className="text-gray-500 mb-6 max-w-md mx-auto">
+          <h3 className="text-xl font-semibold text-white mb-2">No Insights Yet</h3>
+          <p className="text-surface-400 mb-6 max-w-md mx-auto">
             Start checking in on your goals to discover your personal motivation formula
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">

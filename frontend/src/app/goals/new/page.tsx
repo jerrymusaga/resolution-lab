@@ -83,7 +83,7 @@ function NewGoalContent() {
       {/* Back button */}
       <button
         onClick={() => router.back()}
-        className="flex items-center text-gray-600 hover:text-gray-900 mb-6"
+        className="flex items-center text-surface-400 hover:text-white mb-6 transition-colors"
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
@@ -92,12 +92,12 @@ function NewGoalContent() {
       <Card variant="elevated">
         <CardHeader>
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-              <Target className="w-5 h-5 text-primary-600" />
+            <div className="w-10 h-10 bg-brand-500/15 rounded-lg flex items-center justify-center">
+              <Target className="w-5 h-5 text-brand-400" />
             </div>
             <div>
               <CardTitle>Create New Goal</CardTitle>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-surface-400 mt-1">
                 We'll run experiments to find what motivates you
               </p>
             </div>
@@ -115,10 +115,10 @@ function NewGoalContent() {
                 onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                 error={error && !formData.title ? error : undefined}
               />
-              
+
               {/* Suggestions */}
               <div className="mt-3">
-                <p className="text-xs text-gray-500 mb-2 flex items-center">
+                <p className="text-xs text-surface-400 mb-2 flex items-center">
                   <Sparkles className="w-3 h-3 mr-1" />
                   Quick suggestions
                 </p>
@@ -131,8 +131,8 @@ function NewGoalContent() {
                       className={cn(
                         'px-3 py-1.5 text-xs rounded-full border transition-colors',
                         formData.title === suggestion
-                          ? 'bg-primary-100 border-primary-300 text-primary-700'
-                          : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                          ? 'bg-brand-500/15 border-brand-500/30 text-brand-400'
+                          : 'bg-surface-700 border-white/[0.06] text-surface-300 hover:bg-surface-600'
                       )}
                     >
                       {suggestion}
@@ -144,21 +144,21 @@ function NewGoalContent() {
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-surface-200 mb-1">
                 Description (optional)
               </label>
               <textarea
                 placeholder="Add more details about your goal..."
                 value={formData.description || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 focus:outline-none transition-colors"
+                className="w-full px-4 py-2 rounded-lg border border-white/[0.08] bg-surface-900 text-surface-100 placeholder-surface-400 focus:border-brand-500/50 focus:ring-2 focus:ring-brand-500/20 focus:outline-none transition-colors"
                 rows={3}
               />
             </div>
 
             {/* Frequency */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-surface-200 mb-2">
                 <Repeat className="w-4 h-4 inline mr-1" />
                 How often?
               </label>
@@ -171,12 +171,12 @@ function NewGoalContent() {
                     className={cn(
                       'p-3 rounded-lg border-2 text-center transition-colors',
                       formData.frequency === option.value
-                        ? 'border-primary-500 bg-primary-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-brand-500/50 bg-brand-500/10'
+                        : 'border-white/[0.06] hover:border-white/[0.12]'
                     )}
                   >
-                    <p className="font-medium text-gray-900">{option.label}</p>
-                    <p className="text-xs text-gray-500">{option.description}</p>
+                    <p className="font-medium text-white">{option.label}</p>
+                    <p className="text-xs text-surface-400">{option.description}</p>
                   </button>
                 ))}
               </div>
@@ -184,7 +184,7 @@ function NewGoalContent() {
 
             {/* Target Count */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-surface-200 mb-1">
                 <Calendar className="w-4 h-4 inline mr-1" />
                 Times per {formData.frequency === 'daily' ? 'day' : formData.frequency === 'weekly' ? 'week' : 'period'}
               </label>
@@ -199,15 +199,15 @@ function NewGoalContent() {
 
             {/* Error message */}
             {error && formData.title && (
-              <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg text-sm">
+              <div className="bg-danger-500/10 text-danger-400 px-4 py-3 rounded-lg text-sm border border-danger-500/20">
                 {error}
               </div>
             )}
 
             {/* Info box */}
-            <div className="bg-primary-50 rounded-lg p-4">
-              <h4 className="font-medium text-primary-900 mb-2">How it works</h4>
-              <ul className="text-sm text-primary-700 space-y-1">
+            <div className="bg-brand-500/10 rounded-lg p-4 border border-brand-500/20">
+              <h4 className="font-medium text-brand-400 mb-2">How it works</h4>
+              <ul className="text-sm text-surface-300 space-y-1">
                 <li>• We'll send you different types of motivation messages</li>
                 <li>• You tell us if you completed your goal (yes/no)</li>
                 <li>• Over time, we learn what works best for YOU</li>

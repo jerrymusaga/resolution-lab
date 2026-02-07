@@ -18,7 +18,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-surface-200 mb-1"
           >
             {label}
           </label>
@@ -28,21 +28,21 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           id={inputId}
           className={cn(
             'w-full px-4 py-2 rounded-lg border transition-colors duration-200',
-            'bg-white text-gray-900 placeholder-gray-400',
+            'bg-surface-900 text-surface-100 placeholder-surface-400',
             'focus:outline-none focus:ring-2 focus:ring-offset-0',
             error
-              ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
-              : 'border-gray-300 focus:border-primary-500 focus:ring-primary-200',
-            'disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed',
+              ? 'border-danger-500/40 focus:border-danger-500 focus:ring-danger-500/20'
+              : 'border-white/[0.08] focus:border-brand-500/50 focus:ring-brand-500/20',
+            'disabled:bg-surface-800 disabled:text-surface-400 disabled:cursor-not-allowed',
             className
           )}
           {...props}
         />
         {error && (
-          <p className="mt-1 text-sm text-red-600">{error}</p>
+          <p className="mt-1 text-sm text-danger-400">{error}</p>
         )}
         {helperText && !error && (
-          <p className="mt-1 text-sm text-gray-500">{helperText}</p>
+          <p className="mt-1 text-sm text-surface-300">{helperText}</p>
         )}
       </div>
     );

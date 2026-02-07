@@ -32,7 +32,7 @@ export default function HomePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-10 h-10 animate-spin text-primary-600" />
+        <Loader2 className="w-10 h-10 animate-spin text-brand-500" />
       </div>
     );
   }
@@ -41,8 +41,8 @@ export default function HomePage() {
   if (user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-10 h-10 animate-spin text-primary-600" />
-        <p className="ml-3 text-gray-600">Redirecting to dashboard...</p>
+        <Loader2 className="w-10 h-10 animate-spin text-brand-500" />
+        <p className="ml-3 text-surface-400">Redirecting to dashboard...</p>
       </div>
     );
   }
@@ -50,10 +50,10 @@ export default function HomePage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary-600 via-primary-700 to-purple-800 text-white">
+      <section className="relative overflow-hidden bg-gradient-to-br from-brand-600 via-brand-700 to-purple-800 text-white">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
         <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500 rounded-full filter blur-3xl opacity-20 animate-pulse-slow" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-primary-400 rounded-full filter blur-3xl opacity-20 animate-pulse-slow" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-brand-400 rounded-full filter blur-3xl opacity-20 animate-pulse-slow" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
           <div className="text-center">
@@ -70,7 +70,7 @@ export default function HomePage() {
               </span>
             </h1>
 
-            <p className="mt-6 text-xl text-primary-100 max-w-2xl mx-auto">
+            <p className="mt-6 text-xl text-white/80 max-w-2xl mx-auto">
               Stop guessing. Start experimenting. Resolution Lab runs real behavioral
               experiments to find YOUR personal motivation formula.
             </p>
@@ -78,7 +78,7 @@ export default function HomePage() {
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button
                 size="lg"
-                className="bg-white text-primary-700 hover:bg-gray-100"
+                className="bg-white text-brand-700 hover:bg-gray-100"
                 onClick={signInWithGoogle}
               >
                 Get Started Free
@@ -95,15 +95,15 @@ export default function HomePage() {
             <div className="mt-16 grid grid-cols-3 gap-8 max-w-2xl mx-auto">
               <div>
                 <div className="text-3xl font-bold">8</div>
-                <div className="text-sm text-primary-200">Motivation Strategies</div>
+                <div className="text-sm text-white/70">Motivation Strategies</div>
               </div>
               <div>
                 <div className="text-3xl font-bold">AI</div>
-                <div className="text-sm text-primary-200">Personalized Messages</div>
+                <div className="text-sm text-white/70">Personalized Messages</div>
               </div>
               <div>
                 <div className="text-3xl font-bold">Real</div>
-                <div className="text-sm text-primary-200">Experiment Data</div>
+                <div className="text-sm text-white/70">Experiment Data</div>
               </div>
             </div>
           </div>
@@ -111,11 +111,11 @@ export default function HomePage() {
       </section>
 
       {/* Problem Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-surface-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900">The Problem with Generic Advice</h2>
-            <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+            <h2 className="text-3xl font-bold text-white">The Problem with Generic Advice</h2>
+            <p className="mt-4 text-lg text-surface-300 max-w-2xl mx-auto">
               "Just set reminders" doesn't work for everyone. What motivates your friend
               might actually demotivate you.
             </p>
@@ -123,103 +123,103 @@ export default function HomePage() {
 
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center p-6">
-              <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-red-500/15 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <span className="text-3xl">😴</span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Gentle Reminders</h3>
-              <p className="text-gray-600">Work for some people, fade into background noise for others</p>
+              <h3 className="text-lg font-semibold text-white mb-2">Gentle Reminders</h3>
+              <p className="text-surface-300">Work for some people, fade into background noise for others</p>
             </div>
             <div className="text-center p-6">
-              <div className="w-16 h-16 bg-yellow-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-yellow-500/15 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <span className="text-3xl">😰</span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Streak Pressure</h3>
-              <p className="text-gray-600">Motivates gamers, stresses out perfectionists</p>
+              <h3 className="text-lg font-semibold text-white mb-2">Streak Pressure</h3>
+              <p className="text-surface-300">Motivates gamers, stresses out perfectionists</p>
             </div>
             <div className="text-center p-6">
-              <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-blue-500/15 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <span className="text-3xl">🤷</span>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Social Comparison</h3>
-              <p className="text-gray-600">Inspires competitors, demoralizes others</p>
+              <h3 className="text-lg font-semibold text-white mb-2">Social Comparison</h3>
+              <p className="text-surface-300">Inspires competitors, demoralizes others</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Solution Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-surface-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center space-x-2 bg-primary-100 text-primary-700 px-4 py-2 rounded-full text-sm mb-4">
+            <div className="inline-flex items-center space-x-2 bg-brand-500/15 text-brand-400 px-4 py-2 rounded-full text-sm mb-4">
               <Sparkles className="w-4 h-4" />
               <span>Our Solution</span>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900">Run Experiments on Yourself</h2>
-            <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+            <h2 className="text-3xl font-bold text-white">Run Experiments on Yourself</h2>
+            <p className="mt-4 text-lg text-surface-300 max-w-2xl mx-auto">
               Like A/B testing, but for your motivation. We systematically test different
               strategies and show you the data.
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mb-4">
-                <Target className="w-6 h-6 text-primary-600" />
+            <div className="bg-surface-700 rounded-xl p-6 border border-white/[0.06]">
+              <div className="w-12 h-12 bg-brand-500/15 rounded-lg flex items-center justify-center mb-4">
+                <Target className="w-6 h-6 text-brand-400" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Set Your Goals</h3>
-              <p className="text-gray-600 text-sm">Define what you want to achieve - exercise, reading, meditation, anything.</p>
+              <h3 className="text-lg font-semibold text-white mb-2">Set Your Goals</h3>
+              <p className="text-surface-300 text-sm">Define what you want to achieve - exercise, reading, meditation, anything.</p>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-                <Brain className="w-6 h-6 text-purple-600" />
+            <div className="bg-surface-700 rounded-xl p-6 border border-white/[0.06]">
+              <div className="w-12 h-12 bg-purple-500/15 rounded-lg flex items-center justify-center mb-4">
+                <Brain className="w-6 h-6 text-purple-400" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">AI Tests Strategies</h3>
-              <p className="text-gray-600 text-sm">Our AI tries 8 different motivation styles using personalized messages.</p>
+              <h3 className="text-lg font-semibold text-white mb-2">AI Tests Strategies</h3>
+              <p className="text-surface-300 text-sm">Our AI tries 8 different motivation styles using personalized messages.</p>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-                <CheckCircle2 className="w-6 h-6 text-green-600" />
+            <div className="bg-surface-700 rounded-xl p-6 border border-white/[0.06]">
+              <div className="w-12 h-12 bg-green-500/15 rounded-lg flex items-center justify-center mb-4">
+                <CheckCircle2 className="w-6 h-6 text-green-400" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">You Check In</h3>
-              <p className="text-gray-600 text-sm">Simple yes/no responses. We track what works and what doesn't.</p>
+              <h3 className="text-lg font-semibold text-white mb-2">You Check In</h3>
+              <p className="text-surface-300 text-sm">Simple yes/no responses. We track what works and what doesn't.</p>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
-                <BarChart3 className="w-6 h-6 text-orange-600" />
+            <div className="bg-surface-700 rounded-xl p-6 border border-white/[0.06]">
+              <div className="w-12 h-12 bg-orange-500/15 rounded-lg flex items-center justify-center mb-4">
+                <BarChart3 className="w-6 h-6 text-orange-400" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">See Your Data</h3>
-              <p className="text-gray-600 text-sm">View your personal experiment results. "Accountability works 73% for you."</p>
+              <h3 className="text-lg font-semibold text-white mb-2">See Your Data</h3>
+              <p className="text-surface-300 text-sm">View your personal experiment results. "Accountability works 73% for you."</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Strategies Preview */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-surface-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900">8 Motivation Strategies We Test</h2>
-            <p className="mt-4 text-lg text-gray-600">Each based on behavioral science research</p>
+            <h2 className="text-3xl font-bold text-white">8 Motivation Strategies We Test</h2>
+            <p className="mt-4 text-lg text-surface-300">Each based on behavioral science research</p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { name: 'Gentle Reminder', emoji: '🌟', color: 'bg-blue-50' },
-              { name: 'Direct Accountability', emoji: '✅', color: 'bg-green-50' },
-              { name: 'Streak Gamification', emoji: '🔥', color: 'bg-orange-50' },
-              { name: 'Social Proof', emoji: '👥', color: 'bg-purple-50' },
-              { name: 'Loss Framing', emoji: '⚠️', color: 'bg-red-50' },
-              { name: 'Reward Preview', emoji: '🎁', color: 'bg-yellow-50' },
-              { name: 'Identity-Based', emoji: '💪', color: 'bg-indigo-50' },
-              { name: 'Micro-Commitment', emoji: '🎯', color: 'bg-teal-50' },
+              { name: 'Gentle Reminder', emoji: '🌟', color: 'bg-blue-500/10 border-blue-500/20' },
+              { name: 'Direct Accountability', emoji: '✅', color: 'bg-green-500/10 border-green-500/20' },
+              { name: 'Streak Gamification', emoji: '🔥', color: 'bg-orange-500/10 border-orange-500/20' },
+              { name: 'Social Proof', emoji: '👥', color: 'bg-purple-500/10 border-purple-500/20' },
+              { name: 'Loss Framing', emoji: '⚠️', color: 'bg-red-500/10 border-red-500/20' },
+              { name: 'Reward Preview', emoji: '🎁', color: 'bg-yellow-500/10 border-yellow-500/20' },
+              { name: 'Identity-Based', emoji: '💪', color: 'bg-indigo-500/10 border-indigo-500/20' },
+              { name: 'Micro-Commitment', emoji: '🎯', color: 'bg-teal-500/10 border-teal-500/20' },
             ].map((strategy) => (
-              <div key={strategy.name} className={`${strategy.color} rounded-lg p-4 text-center`}>
+              <div key={strategy.name} className={`${strategy.color} border rounded-lg p-4 text-center`}>
                 <span className="text-2xl">{strategy.emoji}</span>
-                <p className="mt-2 font-medium text-gray-900">{strategy.name}</p>
+                <p className="mt-2 font-medium text-white">{strategy.name}</p>
               </div>
             ))}
           </div>
@@ -227,16 +227,16 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+      <section className="py-20 bg-gradient-to-br from-brand-600 via-brand-700 to-purple-800 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <Zap className="w-12 h-12 text-yellow-400 mx-auto mb-6" />
           <h2 className="text-3xl font-bold mb-4">Ready to Find Your Formula?</h2>
-          <p className="text-xl text-gray-300 mb-8">
+          <p className="text-xl text-white/80 mb-8">
             Start your personal motivation experiment today. It's free.
           </p>
           <Button
             size="lg"
-            className="bg-primary-500 hover:bg-primary-600"
+            className="bg-white text-brand-700 hover:bg-gray-100"
             onClick={signInWithGoogle}
           >
             Start Your Experiment
@@ -246,11 +246,11 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-12">
+      <footer className="bg-surface-950 text-surface-400 py-12 border-t border-white/[0.06]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-2 mb-4 md:mb-0">
-              <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-brand-500 to-purple-600 rounded-lg flex items-center justify-center">
                 <FlaskConical className="w-5 h-5 text-white" />
               </div>
               <span className="text-white font-bold">ResolutionLab</span>

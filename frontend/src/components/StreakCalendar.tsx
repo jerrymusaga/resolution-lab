@@ -127,10 +127,10 @@ export default function StreakCalendar({ userId, days = 35 }: StreakCalendarProp
       <Card variant="bordered">
         <CardContent className="py-8">
           <div className="animate-pulse space-y-3">
-            <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+            <div className="h-4 bg-surface-700 rounded w-1/3"></div>
             <div className="grid grid-cols-7 gap-1">
               {Array.from({ length: 35 }).map((_, i) => (
-                <div key={i} className="w-6 h-6 bg-gray-200 rounded"></div>
+                <div key={i} className="w-6 h-6 bg-surface-700 rounded"></div>
               ))}
             </div>
           </div>
@@ -143,25 +143,25 @@ export default function StreakCalendar({ userId, days = 35 }: StreakCalendarProp
     <Card variant="bordered">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center text-lg">
-          <Calendar className="w-5 h-5 mr-2 text-indigo-600" />
+          <Calendar className="w-5 h-5 mr-2 text-brand-400" />
           Check-in Streak
         </CardTitle>
       </CardHeader>
       <CardContent>
         {/* Streak Stats */}
         <div className="flex gap-4 mb-4">
-          <div className="flex items-center gap-2 px-3 py-2 bg-orange-50 rounded-lg">
-            <Flame className="w-5 h-5 text-orange-500" />
+          <div className="flex items-center gap-2 px-3 py-2 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+            <Flame className="w-5 h-5 text-orange-400" />
             <div>
-              <p className="text-2xl font-bold text-orange-600">{currentStreak}</p>
-              <p className="text-xs text-gray-500">Current</p>
+              <p className="text-2xl font-bold text-orange-400">{currentStreak}</p>
+              <p className="text-xs text-surface-400">Current</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 rounded-lg">
-            <TrendingUp className="w-5 h-5 text-indigo-500" />
+          <div className="flex items-center gap-2 px-3 py-2 bg-brand-500/10 border border-brand-500/20 rounded-lg">
+            <TrendingUp className="w-5 h-5 text-brand-400" />
             <div>
-              <p className="text-2xl font-bold text-indigo-600">{longestStreak}</p>
-              <p className="text-xs text-gray-500">Longest</p>
+              <p className="text-2xl font-bold text-brand-400">{longestStreak}</p>
+              <p className="text-xs text-surface-400">Longest</p>
             </div>
           </div>
         </div>
@@ -171,7 +171,7 @@ export default function StreakCalendar({ userId, days = 35 }: StreakCalendarProp
           {/* Day labels */}
           <div className="grid grid-cols-7 gap-1 mb-1">
             {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-              <div key={i} className="w-6 h-4 text-center text-xs text-gray-400">
+              <div key={i} className="w-6 h-4 text-center text-xs text-surface-400">
                 {day}
               </div>
             ))}
@@ -193,10 +193,10 @@ export default function StreakCalendar({ userId, days = 35 }: StreakCalendarProp
                     key={dayIndex}
                     className={cn(
                       'w-6 h-6 rounded transition-all',
-                      status === 'completed' && 'bg-green-500',
-                      status === 'missed' && 'bg-red-300',
-                      status === 'none' && 'bg-gray-100',
-                      isToday && 'ring-2 ring-indigo-500 ring-offset-1'
+                      status === 'completed' && 'bg-success-500',
+                      status === 'missed' && 'bg-danger-500/50',
+                      status === 'none' && 'bg-surface-700',
+                      isToday && 'ring-2 ring-brand-500 ring-offset-1 ring-offset-surface-800'
                     )}
                     title={`${day.date}${status === 'completed' ? ' - Completed!' : status === 'missed' ? ' - Missed' : ''}`}
                   />
@@ -207,23 +207,23 @@ export default function StreakCalendar({ userId, days = 35 }: StreakCalendarProp
         </div>
 
         {/* Legend */}
-        <div className="flex items-center gap-4 mt-4 text-xs text-gray-500">
+        <div className="flex items-center gap-4 mt-4 text-xs text-surface-400">
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-green-500 rounded"></div>
+            <div className="w-3 h-3 bg-success-500 rounded"></div>
             <span>Completed</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-red-300 rounded"></div>
+            <div className="w-3 h-3 bg-danger-500/50 rounded"></div>
             <span>Missed</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-gray-100 rounded border border-gray-200"></div>
+            <div className="w-3 h-3 bg-surface-700 rounded border border-white/[0.06]"></div>
             <span>No check-in</span>
           </div>
         </div>
 
         {calendarData.length === 0 && (
-          <p className="text-center text-gray-500 text-sm mt-4">
+          <p className="text-center text-surface-400 text-sm mt-4">
             Start checking in to build your streak!
           </p>
         )}

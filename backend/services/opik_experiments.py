@@ -3,8 +3,6 @@ Resolution Lab - Opik Experiments Integration
 
 Uses Opik's Experiment feature to A/B test different prompt templates
 and track which ones perform best.
-
-This is a KEY DIFFERENTIATOR - shows advanced Opik usage beyond basic tracing.
 """
 
 from opik import track, Opik

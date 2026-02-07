@@ -36,6 +36,9 @@ try:
 except (ImportError, Exception) as e:
     print(f"⚠️ Auto-optimizer: prompt_optimizer not available: {e}")
 
+# Alias expected by routers
+AUTO_OPTIMIZER_AVAILABLE = OPTIMIZER_AVAILABLE
+
 
 # Configuration
 OPTIMIZATION_THRESHOLD = 15  # Trigger optimization after this many new interventions per strategy

@@ -13,7 +13,7 @@ from typing import Optional, List, Dict, Any
 from dataclasses import dataclass
 import opik
 from opik import track
-from config import settings
+from config import get_settings
 
 # Check if evaluation metrics are available
 THREAD_EVAL_AVAILABLE = False
@@ -212,8 +212,9 @@ class ThreadEvaluator:
 
         try:
             # Initialize evaluation metrics with configured LLM (not OpenAI default)
-            coherence_metric = ConversationalCoherenceMetric(model=settings.llm_model)
-            frustration_metric = UserFrustrationMetric(model=settings.llm_model)
+            llm_model = get_settings().llm_model
+            coherence_metric = ConversationalCoherenceMetric(model=llm_model)
+            frustration_metric = UserFrustrationMetric(model=llm_model)
 
             # Transform functions to extract meaningful text from trace data
             # Coach agent traces have structured input/output - we need to extract text

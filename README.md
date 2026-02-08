@@ -1,496 +1,455 @@
-# 🧪 Resolution Lab
+# Resolution Lab
 
-> **Discover Your Personal Motivation Formula Through AI-Powered Behavioral Experiments**
+> **An AI motivation coach that experiments on itself to get better at motivating YOU.**
 
-[![Built for Comet Hackathon](https://img.shields.io/badge/Built%20for-Comet%20AI%20Agents%20Hackathon-blue)](https://comet.com)
+[![Built for Comet Hackathon](https://img.shields.io/badge/Comet%20AI%20Agents-Hackathon%202025-blue)](https://comet.com)
 [![Powered by Opik](https://img.shields.io/badge/Powered%20by-Opik-purple)](https://comet.com/opik)
+[![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.128-009688)](https://fastapi.tiangolo.com)
 
 ---
 
-## 🎯 The Problem
+## The Problem
 
-**Generic motivation advice doesn't work.**
+Generic motivation advice doesn't work. "Just set reminders" works for some people but gets ignored by others. "Track your streaks" motivates gamers but stresses perfectionists. What motivates your friend might actually *demotivate* you.
 
-- "Just set reminders" → Works for some, ignored by others
-- "Track your streaks" → Motivates gamers, stresses perfectionists  
-- "Think about your goals" → Inspires some, overwhelms others
+**There is no universal motivation formula** — but there might be a *personal* one.
 
-**Everyone is different.** What motivates your friend might actually *demotivate* you.
+## The Solution
 
----
+Resolution Lab is an AI-powered behavioral science platform that runs **real experiments** on each user to discover their unique motivation formula.
 
-## 💡 Our Solution
+Instead of guessing what works, the system:
 
-**Resolution Lab runs real behavioral experiments on YOU** to discover your personal motivation formula.
+1. **Tests 8 evidence-based motivation strategies** using AI-generated personalized messages
+2. **Measures real outcomes** — did the user actually follow through?
+3. **Learns and adapts** using a multi-armed bandit algorithm (epsilon-greedy)
+4. **Continuously improves its own prompts** using Opik's auto-optimization pipeline
+5. **Evaluates conversation quality** with LLM-as-Judge metrics tracked in Opik threads
 
-Instead of guessing, we:
-1. **Test 8 different motivation strategies** using AI-generated personalized messages
-2. **Track what actually works** through simple yes/no check-ins
-3. **Learn and adapt** using a multi-armed bandit algorithm
-4. **Show you the data** - your personal experiment results, not just generic advice
+Every interaction generates data. Every data point makes the next interaction better.
 
 ---
 
-## 🏗️ Architecture
+## How It Works
 
-### System Overview
+### The 8 Motivation Strategies
+
+Each strategy is rooted in behavioral psychology:
+
+| # | Strategy | Approach | Example |
+|---|----------|----------|---------|
+| 1 | **Gentle Reminder** | Warm, friendly nudges | "Hey! Just checking in on your goal today..." |
+| 2 | **Direct Accountability** | Yes/no commitment framing | "Did you do it today? Be honest with yourself." |
+| 3 | **Streak Gamification** | Progress chains and rewards | "Day 12 streak! Don't break the chain!" |
+| 4 | **Social Comparison** | Peer benchmarking | "73% of users with similar goals completed today" |
+| 5 | **Loss Aversion** | What you stand to lose | "Skip today and you lose your 5-day momentum..." |
+| 6 | **Reward Preview** | Future benefit visualization | "Imagine how strong you'll feel in 30 days!" |
+| 7 | **Identity Reinforcement** | Becoming-based framing | "You're becoming someone who prioritizes health" |
+| 8 | **Micro-Commitment** | Lower the barrier | "Can you commit to just 2 minutes?" |
+
+### The Multi-Armed Bandit
+
+The system uses an **epsilon-greedy multi-armed bandit** to balance exploration vs. exploitation:
+
+- **20% of the time**: Explore — try a random strategy to gather data
+- **80% of the time**: Exploit — use the strategy with the highest observed success rate
+- Each strategy needs **3+ data points** before the system trusts its effectiveness score
+- Per-user state: your bandit learns *your* patterns, not global averages
+
+When the system identifies a clear winner, users can **lock in their personal formula** (90% best strategy / 10% continued exploration).
+
+### The AI Coach Agent — 6-Step Cognitive Loop
+
+The full agent mode runs an autonomous reasoning loop, where **every step is traced in Opik** with parent-child relationships:
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           RESOLUTION LAB                                 │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  ┌─────────────┐     ┌──────────────┐     ┌─────────────────────────┐  │
-│  │   Next.js   │────▶│   FastAPI    │────▶│      AI Coach Agent     │  │
-│  │   Frontend  │◀────│   Backend    │◀────│  (Autonomous Reasoning) │  │
-│  └─────────────┘     └──────────────┘     └─────────────────────────┘  │
-│        │                    │                         │                 │
-│        │                    ▼                         ▼                 │
-│        │             ┌──────────────┐         ┌─────────────┐          │
-│        │             │   Supabase   │         │   Gemini    │          │
-│        │             │   Database   │         │   1.5 Flash │          │
-│        │             └──────────────┘         └─────────────┘          │
-│        │                                             │                  │
-│        │                    └────────────┬───────────┘                  │
-│        │                                 ▼                              │
-│        │                    ┌─────────────────────────┐                 │
-│        └───────────────────▶│         OPIK            │                 │
-│           (View Traces)     │  (Full Observability)   │                 │
-│                             └─────────────────────────┘                 │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
+OBSERVE → THINK → PLAN → ACT → EVALUATE → LEARN
 ```
 
-### AI Coach Agent - 6-Step Cognitive Loop
+| Step | What Happens | Opik Trace |
+|------|-------------|------------|
+| **Observe** | Gather user history, streak data, emotional state, experiment results | `agent_observe` |
+| **Think** | Chain-of-thought reasoning about motivation patterns | `agent_think` |
+| **Plan** | Multi-armed bandit selects strategy; agent plans personalization | `agent_plan` |
+| **Act** | Generate personalized motivation message via LLM | `agent_act` |
+| **Evaluate** | Custom evaluators score message quality (strategy alignment, effectiveness, personalization, tone) | `agent_evaluate` |
+| **Learn** | Record outcome, update bandit state, trigger optimization if threshold reached | `agent_learn` |
 
-```
-    ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
-    │ OBSERVE  │───▶│  THINK   │───▶│   PLAN   │───▶│   ACT    │
-    │          │    │          │    │          │    │          │
-    │ Gather   │    │ Chain-of │    │ Multi-   │    │ Generate │
-    │ Context  │    │ Thought  │    │ Armed    │    │ Message  │
-    │          │    │ Reasoning│    │ Bandit   │    │          │
-    └──────────┘    └──────────┘    └──────────┘    └──────────┘
-                                                          │
-                                                          ▼
-                                    ┌──────────┐    ┌──────────┐
-                                    │  LEARN   │◀───│ EVALUATE │
-                                    │          │    │          │
-                                    │ Update   │    │ LLM-as-  │
-                                    │ Model    │    │ Judge    │
-                                    └──────────┘    └──────────┘
-                                    
-              ⬆️ Every step is traced in Opik with nested parent-child traces
-```
-
-### Multi-Armed Bandit - 8 Motivation Strategies
-
-| Strategy | Description | Example |
-|----------|-------------|---------|
-| 🌟 Gentle Reminder | Warm, friendly nudges | "Hey! Just checking in..." |
-| ✅ Accountability | Direct yes/no check-ins | "Did you do it today?" |
-| 🔥 Streak Gamification | Progress and streaks | "Day 12 streak! Don't break it!" |
-| 👥 Social Comparison | What others are doing | "73% of users completed today" |
-| ⚠️ Loss Aversion | What you might lose | "You'll lose your progress..." |
-| 🎁 Reward Preview | Future benefits | "Imagine how you'll feel!" |
-| 💪 Identity Reinforcement | Who you're becoming | "You're someone who exercises" |
-| 🎯 Micro-Commitment | Small first steps | "Just 5 minutes?" |
-
-Algorithm: **ε-greedy** (20% exploration, 80% exploitation)
+There's also a **Quick Stream mode** using the Vercel AI SDK (`useCompletion`) for instant, streamed motivation messages — same learning pipeline, faster delivery.
 
 ---
 
-## ✨ Engagement Features
+## Opik Integration — Deep & Production-Grade
 
-### 🔊 Voice Motivation (Text-to-Speech)
-Listen to your motivation messages! Uses the Browser Web Speech API for free, instant voice playback.
+This project demonstrates **comprehensive Opik integration** across tracing, evaluation, threads, feedback scores, and automatic prompt optimization.
 
-- **Listen Button**: Click to hear any motivation message spoken aloud
-- **Auto-play**: Enable to automatically hear messages when they arrive
-- **Voice Selection**: Choose from available English voices
-- **Analytics**: Voice usage tracked in Opik for engagement analysis
+### 1. Full Tracing Pipeline
 
-### 📅 Streak Calendar
-Visual calendar showing your check-in history over the past 35 days.
-
-- **Color-coded days**: Green (completed), Red (missed), Gray (no activity)
-- **Streak tracking**: Current and longest streak calculations
-- **Dashboard integration**: See your consistency at a glance
-
-### 🎯 Micro-Commitment Fallback
-When you click "Not yet", the system offers a gentler option:
+Every LLM call is automatically traced via `litellm.callbacks = ["opik"]`. On top of that, 15+ functions are decorated with `@opik.track()` for fine-grained observability:
 
 ```
-"How about just 2 minutes?"
-Sometimes starting is the hardest part. Can you commit to just 2 minutes?
-That's all it takes to build momentum.
-
-[I'll try 2 minutes!] [Not today]
-```
-
-### ⏰ Time-Based Greetings
-Personalized greetings based on time of day:
-
-| Time | Greeting | Message |
-|------|----------|---------|
-| 🌅 Morning | "Good morning, [Name]!" | "Start your day with purpose" |
-| ☀️ Afternoon | "Good afternoon, [Name]!" | "Keep the momentum going" |
-| 🌆 Evening | "Good evening, [Name]!" | "Finish strong today" |
-| 🌙 Night | "Working late, [Name]!" | "Every step counts" |
-
-### 🔥 Per-Goal Streak Highlights
-Goals with 3+ day streaks get prominent visual highlights:
-
-- **3-6 day streaks**: Orange highlight with flame icon
-- **7+ day streaks**: Gradient highlight with "On fire!" badge
-
-### 🔔 In-App Reminders (Opik Traced)
-Smart notification banners remind users when goals need attention:
-
-- **Priority-based**: Goals without recent check-ins shown first
-- **Full Opik tracing**: Every view, click, and dismiss is tracked
-- **Engagement scoring**: `reminder_engagement`, `reminder_response_time`, `reminder_urgency`
-- **Non-intrusive**: Dismissible banner that respects user flow
-
-### 🧪 Per-Goal Formula
-**Each goal can have its own "motivation formula"** - the strategy that works best for that specific goal:
-
-```
-GOAL: "Exercise 30 min"          GOAL: "Read 20 pages"
-├── Best Strategy: streak_gamification   ├── Best Strategy: gentle_reminder
-├── Completion Rate: 82%                 ├── Completion Rate: 76%
-└── [Apply Formula ✓]                    └── [Apply Formula ✓]
-```
-
-- **Goal-specific optimization**: Exercise might need gamification, reading might need gentle nudges
-- **90/10 split when applied**: 90% uses preferred strategy, 10% still explores
-- **Easy reset**: Clear formula to return to experimentation mode
-
-### 🎨 Nano Banana Celebration Images
-**AI-generated personalized celebration images** when users complete check-ins, powered by Google's Gemini `gemini-2.5-flash-image` (Nano Banana).
-
-```
-USER CHECKS IN "Exercise 30 min" ✓
-         │
-         ▼
-┌─────────────────────────────────────────┐
-│     GOAL CATEGORY DETECTION             │
-│     "Exercise" → FITNESS category       │
-│     Confidence: 0.95                    │
-└─────────────────────────────────────────┘
-         │
-         ▼
-┌─────────────────────────────────────────┐
-│     PERSONALIZED VISUAL ELEMENTS        │
-│     • Imagery: dumbbells, finish line   │
-│     • Colors: energetic orange, blue    │
-│     • Style: watercolor painting        │
-│     • Background: mountain landscape    │
-└─────────────────────────────────────────┘
-         │
-         ▼
-┌─────────────────────────────────────────┐
-│     NANO BANANA GENERATES IMAGE         │
-│     Unique celebration image with       │
-│     fitness-themed visuals!             │
-└─────────────────────────────────────────┘
-```
-
-**12 Goal Categories** with unique visual styles:
-| Category | Visual Theme | Colors |
-|----------|--------------|--------|
-| 🏃 Fitness | Running figures, dumbbells, mountains | Orange, red, blue |
-| 📚 Reading | Books, cozy nooks, floating letters | Amber, burgundy, green |
-| 🧠 Learning | Lightbulbs, graduation caps, puzzles | Yellow, royal blue |
-| 🧘 Meditation | Lotus flowers, zen stones, mandalas | Lavender, serene blue |
-| 🥗 Nutrition | Fresh vegetables, fruit bowls | Fresh green, orange |
-| 🎨 Creativity | Paint splashes, musical notes | Rainbow, magenta |
-| 📋 Productivity | Checkmarks, rising graphs, rockets | Navy, success green |
-| 👥 Social | Connected hearts, handshakes | Coral, friendly orange |
-| 💰 Finance | Piggy banks, money trees, coins | Gold, money green |
-| 😴 Sleep | Crescent moon, peaceful clouds | Midnight blue, lavender |
-| 🎮 Hobby | Game controllers, garden plants | Teal, playful yellow |
-| ⭐ General | Trophies, confetti, fireworks | Gold, royal purple |
-
-**Streak Milestone Images**: Epic celebrations at 3, 7, 14, 30, 50, and 100-day streaks!
-
-### 🤖 Auto Prompt Optimization (Opik Agent Optimizer)
-**Automatic prompt improvement** using Opik's optimization algorithms. The system learns from user interactions and automatically improves motivation message prompts.
-
-```
-HOW IT WORKS
-─────────────────────────────────────────────────────────────────────────
-
-                    USER CHECK-INS
-                         │
-                         ▼
-┌─────────────────────────────────────────┐
-│         INTERVENTION COUNTER            │
-│   Strategy: "gentle_reminder"           │
-│   Count: 14/15 → 15/15 ✓ THRESHOLD!     │
-└─────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────┐
-│    BACKGROUND OPTIMIZATION TRIGGERED    │
-│    (Non-blocking, runs in thread)       │
-│                                         │
-│    Algorithm: MetaPromptOptimizer       │
-│    • LLM critiques current prompt       │
-│    • Iteratively refines for better     │
-│      completion rates                   │
-└─────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────┐
-│         RESULTS LOGGED TO OPIK          │
-│    • Original score: 0.65               │
-│    • Optimized score: 0.78              │
-│    • Improvement: +20%                  │
-│    • New prompt saved & used            │
-└─────────────────────────────────────────┘
-```
-
-**Three Optimization Algorithms:**
-| Algorithm | Description | Best For |
-|-----------|-------------|----------|
-| MetaPromptOptimizer | LLM critiques and iteratively refines prompts | General prompt improvement |
-| FewShotBayesianOptimizer | Finds optimal examples to include in prompts | Example selection |
-| EvolutionaryOptimizer | Genetic algorithm (mutation/crossover) evolution | Novel prompt discovery |
-
-**Configuration:**
-- **Threshold**: Triggers after 15 new interventions per strategy
-- **Storage**: Persistent state in `backend/data/optimization_state.json`
-- **API Endpoints**:
-  - `GET /api/agent/optimization/auto-status` - View optimization status
-  - `POST /api/agent/optimization/reset-counts` - Reset for testing
-
----
-
-## 🔍 Opik Integration (Deep)
-
-Resolution Lab showcases **production-grade Opik integration** with threads, traces, feedback scores, and automated evaluation.
-
-### 🧵 Thread Evaluation - The Star Feature
-
-**Every goal is a conversation thread in Opik.** When users check in on their goals, all interactions are grouped into a thread, enabling:
-
-```
-THREAD ARCHITECTURE
-─────────────────────────────────────────────────────────────────────────
-                         GOAL: "Exercise 30 min"
-                              thread_id: goal_abc123
-                                    │
-        ┌───────────────┬───────────┼───────────┬───────────────┐
-        ▼               ▼           ▼           ▼               ▼
-   [Check-in 1]    [Check-in 2] [Check-in 3] [Check-in 4]   [Check-in 5]
-   Strategy: A     Strategy: B  Strategy: A  Strategy: C    Strategy: A
-   Outcome: ✓      Outcome: ✗   Outcome: ✓   Outcome: ✓     Outcome: ✓
-        │               │           │           │               │
-        └───────────────┴───────────┴───────────┴───────────────┘
-                                    │
-                                    ▼
-                         🔄 AUTO-EVALUATION TRIGGER
-                           (Every 5 check-ins)
-                                    │
-                    ┌───────────────┴───────────────┐
-                    ▼                               ▼
-        ConversationalCoherence           UserFrustrationMetric
-              Metric                      (Detects struggling users)
-                    │                               │
-                    └───────────────┬───────────────┘
-                                    ▼
-                         FEEDBACK SCORES → Opik Thread View
-                         • Coherence: 0.85
-                         • Frustration: 0.12
-```
-
-**Key Innovation:** After every 5 check-ins, the system automatically:
-1. Closes the thread (marks as inactive)
-2. Runs `evaluate_threads()` with custom metrics
-3. Attaches feedback scores visible in Opik's Thread view
-4. Reopens for continued tracking
-
-```python
-# Auto-triggered every 5 check-ins (interventions.py:82)
-if checkin_count % 5 == 0:
-    evaluator.evaluate_goal_thread(goal_id=goal_id, close_first=True)
-```
-
-### 📊 Full Tracing Architecture
-
-```
-TRACING
-├── LiteLLM Callback ──────── All LLM calls auto-traced
-├── @opik.track (15+) ─────── Decorated functions
-├── Nested traces ─────────── Parent-child relationships
-└── Thread grouping ───────── goal_id as thread_id
-
-THREAD FEATURES (⭐ HACKATHON HIGHLIGHT)
-├── Thread Creation ─────────── Each goal = 1 thread
-├── Thread Lifecycle ────────── Active → Inactive → Evaluated
-├── Thread Evaluation ───────── evaluate_threads() with custom metrics
-├── Feedback Scores ─────────── ConversationalCoherence, UserFrustration
-└── Auto-Trigger ────────────── Every 5 check-ins
-
-AGENT TRACES (Nested)
-└── agent_full_loop (parent)
+Agent Traces (Nested Parent-Child)
+└── agent_full_loop (parent trace)
     ├── agent_observe
     ├── agent_think
     ├── agent_plan
     ├── agent_act
-    ├── agent_evaluate ← Uses custom evaluators!
-    └── agent_learn
-
-A/B EXPERIMENTS
-├── prompt_experiment_select
-├── prompt_experiment_record
-└── prompt_experiment_report
-
-CUSTOM OPIK EVALUATORS
-├── StrategyAlignmentEvaluator ─── Message matches intended strategy
-├── MotivationEffectivenessEvaluator ─── Likely to motivate action
-├── PersonalizationEvaluator ───── Feels tailored, not generic
-├── ToneConsistencyEvaluator ───── Tone matches strategy style
-├── InsightQualityEvaluator ────── Insight is actionable & data-grounded
-├── ComprehensiveMessageEvaluator ─ Combines all with A-F grades
-└── CelebrationImageEvaluator ──── Image quality assessment
-
-FEEDBACK SCORES
-├── reminder_engagement ────── In-app reminder interaction score
-├── reminder_response_time ─── Time to action (seconds)
-├── reminder_urgency ───────── Urgency level (1-5)
-├── thread evaluation scores ─ Coherence, frustration metrics
-└── optimization_improvement ─ Prompt improvement percentage
-
-LLM-AS-JUDGE
-├── analyze_user_sentiment
-├── judge_goal_completion
-└── agent_evaluate (hybrid: custom evaluators + LLM judge)
-
-AUTO OPTIMIZATION (Opik Agent Optimizer)
-├── auto_optimize_strategy ──── Background optimization run
-├── optimize_strategy_prompt ─── MetaPrompt optimization
-├── optimize_with_few_shot ───── Bayesian few-shot selection
-└── evolve_prompts ───────────── Evolutionary optimization
-
-NANO BANANA IMAGE GENERATION
-├── generate_checkin_image ───── Main image generation
-├── evaluate_celebration_image ─ Image quality evaluation
-└── Goal category detection ──── Fitness, reading, etc.
-
-ENGAGEMENT ANALYTICS
-├── api_voice_play ─────────── Track voice playback events
-├── api_record_checkin ─────── Track micro-commitment usage
-└── track_reminder_interaction ─ In-app notification analytics
+    ├── agent_evaluate    ← runs custom evaluators
+    └── agent_learn       ← updates bandit + triggers optimization
 ```
 
-### Custom Opik Evaluators - App-Wide Quality Assessment
+### 2. Thread Evaluation — Conversation-Level Quality
 
-Every AI-generated output is now evaluated by custom Opik evaluators:
+**Every goal becomes an Opik thread.** All check-ins for a goal are grouped under the same `thread_id`, enabling conversation-level analysis:
 
-| Evaluator | What it Measures | Used In |
-|-----------|------------------|---------|
-| Strategy Alignment | Does message match intended strategy keywords/tone? | Agent, Experiment |
-| Motivation Effectiveness | Will this actually motivate action? | Agent, Experiment |
-| Personalization | Is it tailored or generic? | Agent, Experiment |
-| Tone Consistency | Does tone match strategy expectations? | Agent, Experiment |
-| Insight Quality | Is the insight actionable & data-grounded? | Insights page |
+```
+Goal: "Drink 8 glasses of water daily"     thread_id: goal_abc123
+│
+├── Check-in 1: Strategy=gentle_reminder     Outcome: completed
+├── Check-in 2: Strategy=streak_gamification Outcome: completed
+├── Check-in 3: Strategy=loss_aversion       Outcome: missed
+├── Check-in 4: Strategy=gentle_reminder     Outcome: completed
+├── Check-in 5: Strategy=identity            Outcome: completed
+│
+└── AUTO-EVALUATION TRIGGERED (every 5 check-ins)
+    ├── ConversationalCoherenceMetric → 0.85
+    └── UserFrustrationMetric         → 0.12
+    → Feedback scores attached to thread in Opik
+```
 
-**Hybrid Evaluation (Agent)**: Custom evaluators (40%) + LLM-as-Judge (60%) = Overall score with letter grades (A-F)
+After every 5 check-ins, the system automatically:
+1. Closes the Opik thread (marks inactive)
+2. Runs `evaluate_threads()` with LLM-as-Judge metrics
+3. Attaches feedback scores visible in Opik's Thread view
+4. Reopens the thread for continued tracking
+
+### 3. Custom Opik Evaluators
+
+Every AI-generated message is scored by custom evaluators:
+
+| Evaluator | What It Measures |
+|-----------|-----------------|
+| **Strategy Alignment** | Does the message match the intended strategy's keywords and tone? |
+| **Motivation Effectiveness** | Is this message likely to drive the user to action? |
+| **Personalization** | Does it feel tailored to this specific user, or generic? |
+| **Tone Consistency** | Does the emotional tone match what the strategy demands? |
+| **Insight Quality** | Are generated insights actionable and data-grounded? |
+| **Celebration Image** | Quality assessment of AI-generated celebration images |
+
+**Hybrid scoring**: Custom evaluators (40%) + LLM-as-Judge (60%) = Overall letter grade (A–F)
+
+### 4. Auto Prompt Optimization (Opik Agent Optimizer)
+
+The system **automatically improves its own prompts** using `opik-optimizer`:
+
+```
+User checks in → Intervention counter increments
+                  │
+                  ├── Count < 3  → Continue collecting data
+                  │
+                  └── Count >= 3 → BACKGROUND OPTIMIZATION TRIGGERED
+                                   │
+                                   ├── Algorithm: MetaPromptOptimizer
+                                   │   (LLM critiques current prompt,
+                                   │    iteratively refines for better
+                                   │    completion rates)
+                                   │
+                                   ├── Runs in ProcessPoolExecutor
+                                   │   (separate process, non-blocking)
+                                   │
+                                   └── Results logged to Opik
+                                       • Original score → Optimized score
+                                       • New prompt saved and used going forward
+```
+
+Three optimization algorithms available:
+
+| Algorithm | Method |
+|-----------|--------|
+| **MetaPromptOptimizer** | LLM self-critique and iterative refinement |
+| **FewShotBayesianOptimizer** | Bayesian search for optimal few-shot examples |
+| **EvolutionaryOptimizer** | Genetic mutation/crossover for novel prompt discovery |
+
+### 5. Feedback Scores & Experiments
+
+- **Intervention-level**: strategy alignment, effectiveness, personalization, tone (per message)
+- **Thread-level**: conversational coherence, user frustration (per goal)
+- **Engagement-level**: reminder interactions, response time, voice usage
+- **Optimization-level**: prompt improvement percentage, before/after scores
+- **A/B Experiments**: `prompt_experiment_select`, `prompt_experiment_record`, `prompt_experiment_report`
 
 ---
 
-## 🚀 Quick Start
+## Architecture
 
-### 1. Backend Setup
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                          RESOLUTION LAB                                │
+├────────────────────────────────────────────────────────────────────────┤
+│                                                                        │
+│  ┌──────────────┐     ┌──────────────┐     ┌────────────────────────┐ │
+│  │   Next.js    │────▶│   FastAPI    │────▶│    AI Coach Agent      │ │
+│  │   Frontend   │◀────│   Backend    │◀────│  (6-Step Cognitive     │ │
+│  │  (Vercel)    │     │  (Railway)   │     │   Loop + Streaming)    │ │
+│  └──────────────┘     └──────────────┘     └────────────────────────┘ │
+│         │                    │                        │                │
+│         │                    ▼                        ▼                │
+│         │            ┌──────────────┐        ┌──────────────┐         │
+│         │            │   Supabase   │        │   Gemini     │         │
+│         │            │  (Postgres   │        │   (LiteLLM)  │         │
+│         │            │   + Auth)    │        └──────────────┘         │
+│         │            └──────────────┘                │                │
+│         │                                            ▼                │
+│         │                              ┌──────────────────────┐       │
+│         └─────────────────────────────▶│        OPIK          │       │
+│                  (View Traces)         │  Traces · Threads ·  │       │
+│                                        │  Evaluators · Scores │       │
+│                                        │  Auto-Optimization   │       │
+│                                        └──────────────────────┘       │
+│                                                                        │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+### Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | Next.js 14, React 18, TypeScript, TailwindCSS, Vercel AI SDK |
+| **Backend** | FastAPI, Python, LiteLLM, asyncio |
+| **LLM** | Google Gemini (via LiteLLM with Opik callback) |
+| **Database** | Supabase (PostgreSQL + Row-Level Security + Auth) |
+| **Auth** | Supabase Auth with Google OAuth |
+| **Observability** | Opik — tracing, threads, evaluators, feedback scores |
+| **Optimization** | opik-optimizer (MetaPrompt, FewShot Bayesian, Evolutionary) |
+| **Image Generation** | Gemini 2.5 Flash (celebration images on check-in) |
+| **Hosting** | Vercel (frontend) + Railway (backend) |
+
+---
+
+## Features
+
+### Core Loop
+- **Goal creation** — set personal goals with descriptions and target dates
+- **Strategy testing** — multi-armed bandit selects and tests motivation strategies per check-in
+- **Check-in flow** — simple yes/no + optional feedback after each motivation message
+- **Formula discovery** — after enough data, the system reveals your personal motivation formula
+- **Per-goal formulas** — different goals can have different winning strategies
+
+### AI Coach
+- **Full Agent mode** — 6-step cognitive loop with visible reasoning at each step
+- **Quick Stream mode** — instant streamed messages via Vercel AI SDK
+- **Voice playback** — text-to-speech using Web Speech API with voice selection
+- **Micro-commitment fallback** — if user says "not yet", offers a smaller commitment
+
+### Engagement
+- **Streak calendar** — 35-day visual check-in history
+- **Streak highlights** — goals with 3+ day streaks get visual badges
+- **Celebration images** — AI-generated personalized images on check-in (12 goal categories)
+- **In-app reminders** — smart notification banners for goals needing attention
+- **Time-based greetings** — personalized by time of day
+
+### Observability (Opik)
+- **Automatic LLM tracing** — every Gemini call captured via LiteLLM callback
+- **Nested agent traces** — parent-child relationships across 6 cognitive steps
+- **Thread evaluation** — auto-triggered every 5 check-ins with coherence + frustration metrics
+- **Custom evaluators** — 6 evaluators scoring every AI output with letter grades
+- **Auto prompt optimization** — background optimization after 3 interventions per strategy
+- **Feedback scores** — engagement, coherence, frustration, optimization improvement
+
+---
+
+## Prerequisites
+
+- **Python 3.10+**
+- **Node.js 18+**
+- A [Supabase](https://supabase.com) project (free tier works)
+- A [Google AI Studio](https://aistudio.google.com/apikey) API key (for Gemini)
+- A [Comet/Opik](https://www.comet.com/account-settings/apiKeys) API key
+
+## Quick Start
+
+### 1. Set Up Supabase
+
+1. Create a new project at [supabase.com](https://supabase.com)
+2. Go to **SQL Editor** and run the contents of `backend/supabase_schema.sql` — this creates all tables, RLS policies, and triggers
+3. Go to **Authentication > Providers** and enable **Google OAuth** (you'll need a Google Cloud OAuth client ID)
+4. Copy your project URL, anon key, and service key from **Settings > API**
+
+### 2. Backend
+
 ```bash
 cd backend
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+```
 
-# Edit .env with your API keys
+Create your `.env` file:
+
+```bash
 cp .env.example .env
-# Add: OPIK_API_KEY, GOOGLE_API_KEY
+```
 
+Fill in the values:
+
+```env
+# Supabase (from Settings > API in your Supabase dashboard)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_KEY=your-service-key
+
+# Opik (from comet.com/account-settings/apiKeys)
+OPIK_API_KEY=your-opik-api-key
+OPIK_WORKSPACE=your-workspace-name
+OPIK_PROJECT_NAME=resolution-lab
+
+# Google Gemini (from aistudio.google.com/apikey)
+GOOGLE_API_KEY=your-google-api-key
+```
+
+Start the server:
+
+```bash
 uvicorn main:app --reload
 ```
 
-### 2. Frontend Setup
+### 3. Frontend
+
 ```bash
 cd frontend
 npm install
+```
+
+Create your `.env.local` file:
+
+```bash
+cp .env.local.example .env.local
+```
+
+Fill in the values:
+
+```env
+# Backend API URL
+NEXT_PUBLIC_API_URL=http://localhost:8000
+
+# Supabase (same project as backend)
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+
+# Google Gemini key for streaming mode (from aistudio.google.com/apikey)
+GOOGLE_STREAMING_API_KEY=your-google-api-key
+```
+
+Start the dev server:
+
+```bash
 npm run dev
 ```
 
-### 3. Access
-- Frontend: http://localhost:3000
-- API Docs: http://localhost:8000/docs
-- Opik: https://comet.com/opik
+### 4. Access
+
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:3000 |
+| API Docs (Swagger) | http://localhost:8000/docs |
+| Opik Dashboard | https://comet.com/opik |
 
 ---
 
-## 🎬 Demo Scenarios
-
-**New User:** Agent explores all strategies, learns preferences
-**After 5 Check-ins:** Thread auto-evaluated, feedback scores visible in Opik
-**After 30 Check-ins:** Agent exploits best strategy (80% of time)
-**Per-Goal Formula:** User applies "Exercise = gamification", "Reading = gentle reminder"
-**In-App Reminders:** User sees banner for goals needing attention, interaction tracked
-**Insights Page:** User sees their personal motivation formula per goal
-
-See `USER_STORIES.md` for complete scenarios.
-
----
-
-## 🏆 Why This Wins
-
-| Criteria | Implementation |
-|----------|----------------|
-| ✅ True Agent | 6-step cognitive loop, not just LLM wrapper |
-| ⭐ **Thread Evaluation** | **Auto-evaluates conversations every 5 check-ins with feedback scores** |
-| ✅ Deep Opik | Nested traces, threads, experiments, custom metrics, feedback scores |
-| ✅ Custom Evaluators | 6 evaluators assess ALL AI outputs with grades (A-F) |
-| ✅ Feedback Scores | reminder_engagement, coherence, frustration metrics |
-| ✅ Hybrid Evaluation | Custom evaluators (40%) + LLM-as-Judge (60%) |
-| ⭐ **Auto Optimization** | **Opik Agent Optimizer auto-improves prompts after 15 interventions** |
-| ⭐ **Nano Banana Images** | **Personalized celebration images via Gemini 2.5 Flash Image** |
-| ✅ Novel Use Case | Expose experiment data TO users via per-goal formulas |
-| ✅ Production Ready | Full-stack, polished UI with evaluator visualizations |
-| ✅ Engagement Features | Voice TTS, streak calendar, micro-commitments, in-app reminders |
-| ✅ Authentication | Supabase Auth with Google OAuth, protected routes |
-
----
-
-## 📁 Key Files
+## Project Structure
 
 ```
-backend/services/coach_agent.py        # 🤖 AI Agent (6-step loop)
-backend/services/thread_evaluator.py   # ⭐ Opik Thread Evaluation (auto every 5 check-ins)
-backend/services/reminder_service.py   # 🔔 In-app reminders with Opik tracing
-backend/services/evaluators.py         # 🎯 Custom Opik Evaluators
-backend/services/experiment_engine.py  # Multi-armed bandit + per-goal formula
-backend/services/intervention_generator.py  # Message generation + evaluation
-backend/services/analysis_engine.py    # Insight generation + evaluation
-backend/services/celebration_image_generator.py  # 🎨 Nano Banana celebration images
-backend/services/auto_optimizer.py     # 🤖 Auto prompt optimization with Opik
-backend/services/prompt_optimizer.py   # Opik Agent Optimizer integration
-backend/routers/interventions.py       # API endpoints (triggers thread eval + auto-optimization)
-backend/routers/insights.py            # Per-goal formula endpoints
-backend/routers/agent.py               # Agent + optimization endpoints
-
-frontend/src/app/agent/page.tsx        # Agent visualization with voice + micro-commitment
-frontend/src/app/experiment/page.tsx   # Experiment page with grade distribution
-frontend/src/app/insights/page.tsx     # User insights with insight quality grades
-frontend/src/app/dashboard/page.tsx    # Dashboard with streak calendar
-frontend/src/components/StreakCalendar.tsx  # 📅 Visual check-in calendar
-frontend/src/components/GoalCard.tsx   # 🔥 Goal cards with per-goal formula UI
-frontend/src/components/CheckInModal.tsx    # ✨ Check-in with celebration images
-frontend/src/components/ReminderBanner.tsx  # 🔔 In-app reminder notification
-frontend/src/hooks/useTextToSpeech.ts  # 🔊 Text-to-speech hook
+resolution-lab/
+├── backend/
+│   ├── main.py                              # FastAPI app, Opik + LiteLLM config
+│   ├── config.py                            # Environment settings
+│   ├── models/
+│   │   ├── schemas.py                       # 8 strategies, goals, interventions (Pydantic)
+│   │   └── database.py                      # Database models
+│   ├── routers/
+│   │   ├── interventions.py                 # Message generation, check-in, auto-optimization trigger
+│   │   ├── agent.py                         # AI Coach agent + optimization endpoints
+│   │   ├── goals.py                         # Goal CRUD
+│   │   ├── insights.py                      # Formula discovery + strategy analytics
+│   │   ├── auth.py                          # Authentication
+│   │   └── opik_stats.py                    # Opik metrics API
+│   └── services/
+│       ├── coach_agent.py                   # 6-step cognitive loop
+│       ├── experiment_engine.py             # Epsilon-greedy multi-armed bandit
+│       ├── intervention_generator.py        # LLM message generation + evaluation
+│       ├── evaluators.py                    # Custom Opik evaluators (6 metrics)
+│       ├── thread_evaluator.py              # Opik thread lifecycle + auto-evaluation
+│       ├── auto_optimizer.py                # Background prompt optimization (ProcessPoolExecutor)
+│       ├── prompt_optimizer.py              # opik-optimizer integration (3 algorithms)
+│       ├── celebration_image_generator.py   # Gemini image generation
+│       ├── analysis_engine.py               # Sentiment analysis + recommendations
+│       ├── reminder_service.py              # In-app reminder scheduling
+│       ├── user_context_builder.py          # Personalization context
+│       └── database.py                      # Supabase operations
+├── frontend/
+│   └── src/
+│       ├── app/
+│       │   ├── page.tsx                     # Landing page
+│       │   ├── dashboard/page.tsx           # Dashboard with goals + streaks
+│       │   ├── agent/page.tsx               # AI Coach (full agent + streaming)
+│       │   ├── goals/page.tsx               # Goal management
+│       │   ├── insights/page.tsx            # Formula discovery + analytics
+│       │   └── experiment/page.tsx          # Experiment simulation
+│       ├── components/
+│       │   ├── Header.tsx                   # Navigation
+│       │   ├── GoalCard.tsx                 # Goal cards with formula UI
+│       │   ├── CheckInModal.tsx             # Check-in with celebration images
+│       │   ├── StreakCalendar.tsx            # 35-day visual calendar
+│       │   └── ReminderBanner.tsx           # Smart notification banners
+│       ├── contexts/AuthContext.tsx          # Global auth state
+│       ├── hooks/useTextToSpeech.ts         # Web Speech API
+│       └── lib/api.ts                       # API client
+└── README.md
 ```
 
 ---
 
-Built with 🧪 for the **Comet "Commit to Change" AI Agents Hackathon**
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/agent/run` | Run full 6-step AI Coach agent |
+| `POST` | `/api/interventions/generate` | Generate motivation message (bandit selects strategy) |
+| `POST` | `/api/interventions/{id}/record-outcome` | Submit check-in result |
+| `POST` | `/api/interventions/{id}/celebration` | Generate celebration image |
+| `GET` | `/api/goals` | List user goals |
+| `POST` | `/api/goals` | Create goal |
+| `GET` | `/api/insights` | Get personal motivation formula + strategy stats |
+| `GET` | `/api/agent/optimization/auto-status` | View auto-optimization status |
+| `POST` | `/api/agent/optimization/reset-counts` | Reset optimization counters |
+| `GET` | `/api/opik/stats` | Opik experiment statistics |
+
+Full interactive docs at `/docs` (Swagger UI).
+
+---
+
+## What Makes This Different
+
+| Aspect | Resolution Lab | Typical AI Coach |
+|--------|---------------|-----------------|
+| **Strategy selection** | Multi-armed bandit with real outcome data | Fixed prompts or random |
+| **Learning** | Per-user effectiveness tracking across 8 strategies | No personalization loop |
+| **Self-improvement** | Auto prompt optimization via opik-optimizer | Static prompts |
+| **Observability** | Full Opik pipeline — traces, threads, evaluators, feedback | Basic logging |
+| **Evaluation** | Hybrid: custom evaluators + LLM-as-Judge + thread-level metrics | None |
+| **Transparency** | User sees their experiment data and formula | Black box |
+| **Agent architecture** | 6-step cognitive loop with visible reasoning | Single LLM call |
+
+The core insight: **the system doesn't just coach you — it runs a scientific experiment on which coaching approach works best for you, and gets better at it over time.**
+
+---
+
+## Hackathon Categories
+
+- **Best Use of Opik** — Deep integration: tracing, threads, thread evaluation, custom evaluators, feedback scores, auto prompt optimization
+- **Productivity & Work Habits** — AI coach that helps users build and maintain habits through personalized behavioral experiments
+
+---
+
+Built for the **Comet "Commit to Change" AI Agents Hackathon**

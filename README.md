@@ -2,7 +2,7 @@
 
 > **An AI motivation coach that experiments on itself to get better at motivating YOU.**
 
-[![Built for Comet Hackathon](https://img.shields.io/badge/Comet%20AI%20Agents-Hackathon%202025-blue)](https://comet.com)
+[![Built for Comet Hackathon](https://img.shields.io/badge/Comet%20AI%20Agents-Hackathon%202026-blue)](https://comet.com)
 [![Powered by Opik](https://img.shields.io/badge/Powered%20by-Opik-purple)](https://comet.com/opik)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.128-009688)](https://fastapi.tiangolo.com)
@@ -442,13 +442,6 @@ Full interactive docs at `/docs` (Swagger UI).
 | **Agent architecture** | 6-step cognitive loop with visible reasoning | Single LLM call |
 
 The core insight: **the system doesn't just coach you — it runs a scientific experiment on which coaching approach works best for you, and gets better at it over time.**
-
----
-
-## Hackathon Categories
-
-- **Best Use of Opik** — Deep integration: tracing, threads, thread evaluation, custom evaluators, feedback scores, auto prompt optimization
-- **Productivity & Work Habits** — AI coach that helps users build and maintain habits through personalized behavioral experiments
 
 ---
 

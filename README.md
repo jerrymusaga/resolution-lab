@@ -78,6 +78,9 @@ OBSERVE → THINK → PLAN → ACT → EVALUATE → LEARN
 
 There's also a **Quick Stream mode** using the Vercel AI SDK (`useCompletion`) for instant, streamed motivation messages — same learning pipeline, faster delivery.
 
+![AI Coach Agent Interface](frontend/public/RS-agent.png)
+*6-step cognitive loop with visible reasoning at each step*
+
 ---
 
 ## Opik Integration — Deep & Production-Grade
@@ -124,6 +127,12 @@ After every 5 check-ins, the system automatically:
 3. Attaches feedback scores visible in Opik's Thread view
 4. Reopens the thread for continued tracking
 
+![Opik Thread Evaluation](frontend/public/RS-threadeval.png)
+*Auto-evaluation triggered every 5 check-ins with coherence and frustration metrics*
+
+![Thread View in Opik](frontend/public/RS-thread.png)
+*Goal-based conversation threads with all check-ins grouped together*
+
 ### 3. Custom Opik Evaluators
 
 Every AI-generated message is scored by custom evaluators:
@@ -138,6 +147,9 @@ Every AI-generated message is scored by custom evaluators:
 | **Celebration Image** | Quality assessment of AI-generated celebration images |
 
 **Hybrid scoring**: Custom evaluators (40%) + LLM-as-Judge (60%) = Overall letter grade (A–F)
+
+![Evaluation Feedback Scores](frontend/public/RS-feedback.png)
+*Custom evaluators scoring every AI-generated message with detailed metrics*
 
 ### 4. Auto Prompt Optimization (Opik Agent Optimizer)
 
@@ -170,6 +182,12 @@ Three optimization algorithms available:
 | **MetaPromptOptimizer** | LLM self-critique and iterative refinement |
 | **FewShotBayesianOptimizer** | Bayesian search for optimal few-shot examples |
 | **EvolutionaryOptimizer** | Genetic mutation/crossover for novel prompt discovery |
+
+![Auto Prompt Optimization](frontend/public/RS-optimize.png)
+*Background optimization running with opik-optimizer SDK*
+
+![Optimization Results](frontend/public/RS-improvement.png)
+*Prompt improvement scores showing before/after effectiveness*
 
 ### 5. Feedback Scores & Experiments
 
@@ -241,6 +259,9 @@ Three optimization algorithms available:
 - **Quick Stream mode** — instant streamed messages via Vercel AI SDK
 - **Voice playback** — text-to-speech using Web Speech API with voice selection
 - **Micro-commitment fallback** — if user says "not yet", offers a smaller commitment
+
+![Quick Stream Mode](frontend/public/RS-vercel.png)
+*Instant streamed motivation via Vercel AI SDK*
 
 ### Engagement
 - **Streak calendar** — 35-day visual check-in history
